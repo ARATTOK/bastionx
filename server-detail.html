@@ -39,7 +39,7 @@
           </h1>
         </div>
         <div style="display:flex;gap:0.4rem;">
-          <template x-if="isSuperAdmin">
+          <template x-if="canEdit">
             <button class="btn" @click="goEdit()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;cursor:pointer;">
               <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Editar
@@ -188,7 +188,7 @@
                 <div style="font-size:0.65rem;color:#555;margin-top:0.15rem;" x-show="t.descripcion" x-text="t.descripcion"></div>
               </div>
             </div>
-            <template x-if="isSuperAdmin">
+          <template x-if="canEdit">
               <button class="btn-icon danger" @click="deleteTask(t.id)" title="Eliminar tarea" style="flex-shrink:0;">
                 <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
@@ -196,7 +196,7 @@
           </div>
         </template>
 
-        <template x-if="isSuperAdmin">
+        <template x-if="canEdit">
           <div class="task-add-form">
             <input type="text" x-model="newTaskTitulo" placeholder="Título de la tarea" @keyup.enter="addTask()" style="flex:1;min-width:0;">
             <input type="text" x-model="newTaskDesc" placeholder="Descripción (opcional)" style="flex:1;min-width:0;">
@@ -211,7 +211,7 @@
       </div>
 
       <!-- DELETE -->
-      <div class="det-section" x-show="isSuperAdmin" style="border-top:1px solid var(--border-subtle);padding-top:1.5rem;margin-top:1.5rem;">
+      <div class="det-section" x-show="canEdit" style="border-top:1px solid var(--border-subtle);padding-top:1.5rem;margin-top:1.5rem;">
         <button class="btn danger" @click="deleteServer()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.8rem;border:1px solid #e74c3c40;border-radius:8px;font-size:0.75rem;background:#e74c3c10;color:#e74c3c;cursor:pointer;">
           <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           Eliminar servidor

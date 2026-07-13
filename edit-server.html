@@ -156,8 +156,8 @@
       </div>
 
       <!-- CREDENCIALES (solo super admin) -->
-      <div class="edit-section" x-show="isSuperAdmin">
-        <h2 class="det-section-title">Credenciales <span style="color:#6c5ce7;font-size:0.6rem;font-weight:400;">(solo admin)</span></h2>
+      <div class="edit-section" x-show="canEdit">
+        <h2 class="det-section-title">Credenciales <span style="color:#6c5ce7;font-size:0.6rem;font-weight:400;">(admin)</span></h2>
         <div class="edit-grid">
           <div class="edit-field"><label>IPMI</label><input type="text" x-model="credForm.ipmi" style="font-family:monospace;font-size:0.7rem;"></div>
           <div class="edit-field"><label>IP Servicio</label><input type="text" x-model="credForm.ip_servicio" style="font-family:monospace;font-size:0.7rem;"></div>

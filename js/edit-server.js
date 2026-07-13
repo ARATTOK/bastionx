@@ -4,6 +4,7 @@ document.addEventListener('alpine:init', () => {
     saving: false,
     user: null,
     isSuperAdmin: false,
+    canEdit: false,
     server: null,
     serverCreds: null,
     allTags: [],
@@ -26,6 +27,11 @@ document.addEventListener('alpine:init', () => {
       if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
       this.user = session.user
       this.isSuperAdmin = this.user.email === 'admin@bastionx.com'
+      this.canEdit = this.isSuperAdmin
+      try {
+        const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
+        if (data?.role === 'admin') this.canEdit = true
+      } catch(e) {}
 
       const params = new URLSearchParams(window.location.search)
       const id = params.get('id')
@@ -66,7 +72,7 @@ document.addEventListener('alpine:init', () => {
         servicios: Array.isArray(server.servicios) ? server.servicios.map(s => ({ ...s, ips: s.ips || [''] })) : [{ nombre: '', ips: [''], puerto: '', descripcion: '' }]
       }
 
-      if (this.isSuperAdmin) {
+        if (this.canEdit) {
         const { data: creds } = await sb.from('server_credentials').select('*').eq('server_id', id).maybeSingle()
         if (creds) {
           this.credForm = { ipmi: creds.ipmi || '', ip_servicio: creds.ip_servicio || '', usuario: creds.usuario || '', password: creds.password || '' }
@@ -165,7 +171,7 @@ document.addEventListener('alpine:init', () => {
           await sb.from('server_tags').insert(inserts)
         }
 
-        if (this.isSuperAdmin) {
+      if (this.canEdit) {
           const credPayload = {
             ipmi: this.credForm.ipmi,
             ip_servicio: this.credForm.ip_servicio,

@@ -3,6 +3,7 @@ document.addEventListener('alpine:init', () => {
     user: null,
     userRole: 'readonly',
     isSuperAdmin: false,
+    canEdit: false,
     loading: true,
 
     servers: [],
@@ -81,6 +82,7 @@ document.addEventListener('alpine:init', () => {
         this.userRole = 'readonly'
       }
       this.isSuperAdmin = this.user?.email === 'admin@bastionx.com'
+      this.canEdit = this.isSuperAdmin || this.userRole === 'admin'
     },
 
     async refreshServers() {

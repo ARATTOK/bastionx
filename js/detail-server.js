@@ -3,6 +3,7 @@ document.addEventListener('alpine:init', () => {
     loading: true,
     user: null,
     isSuperAdmin: false,
+    canEdit: false,
     server: null,
     serverCreds: null,
     tags: [],
@@ -19,6 +20,11 @@ document.addEventListener('alpine:init', () => {
       if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
       this.user = session.user
       this.isSuperAdmin = this.user.email === 'admin@bastionx.com'
+      this.canEdit = this.isSuperAdmin
+      try {
+        const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
+        if (data?.role === 'admin') this.canEdit = true
+      } catch(e) {}
 
       const params = new URLSearchParams(window.location.search)
       const id = params.get('id')
