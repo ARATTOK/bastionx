@@ -1,23 +1,23 @@
 const CACHE = 'bastionx-v1'
 const STATIC = [
-  '/',
-  '/login.html',
-  '/dashboard.html',
-  '/server-detail.html',
-  '/edit-server.html',
-  '/tags.html',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-180.png',
-  '/css/style.css',
-  '/js/supabase.js',
-  '/js/app.js',
-  '/js/detail-server.js',
-  '/js/edit-server.js',
-  '/js/login.js',
-  '/js/tags-app.js',
-  '/manifest.json'
+  './',
+  './login.html',
+  './dashboard.html',
+  './server-detail.html',
+  './edit-server.html',
+  './tags.html',
+  './favicon.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-180.png',
+  './css/style.css',
+  './js/supabase.js',
+  './js/app.js',
+  './js/detail-server.js',
+  './js/edit-server.js',
+  './js/login.js',
+  './js/tags-app.js',
+  './manifest.json'
 ]
 
 self.addEventListener('install', e => {
