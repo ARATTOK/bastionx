@@ -6,6 +6,10 @@ document.addEventListener('alpine:init', () => {
     server: null,
     serverCreds: null,
     tags: [],
+    tasks: [],
+    newTaskTitulo: '',
+    newTaskDesc: '',
+    newTaskCriticidad: 'normal',
     showDeleteConfirm: false,
 
     async init() {
@@ -34,6 +38,9 @@ document.addEventListener('alpine:init', () => {
         if (allTags) this.tags = allTags.filter(t => tagIds.includes(t.id))
       }
 
+      const { data: tasks } = await sb.from('server_tasks').select('*').eq('server_id', id).order('created_at')
+      if (tasks) this.tasks = tasks
+
       this.loading = false
       this.$nextTick(() => { try { lucide.createIcons() } catch(e) {} })
     },
@@ -45,12 +52,51 @@ document.addEventListener('alpine:init', () => {
     async confirmDelete() {
       await sb.from('server_tags').delete().eq('server_id', this.server.id)
       await sb.from('server_credentials').delete().eq('server_id', this.server.id)
+      await sb.from('server_tasks').delete().eq('server_id', this.server.id)
       await sb.from('servers').delete().eq('id', this.server.id)
       window.location.href = 'dashboard.html'
     },
 
     goBack() { window.location.href = 'dashboard.html' },
     goEdit() { window.location.href = 'edit-server.html?id=' + this.server.id },
+
+    async addTask() {
+      if (!this.newTaskTitulo.trim()) return
+      const { data, error } = await sb.from('server_tasks').insert({
+        server_id: this.server.id,
+        titulo: this.newTaskTitulo.trim(),
+        descripcion: this.newTaskDesc.trim(),
+        criticidad: this.newTaskCriticidad,
+        created_by: this.user.id
+      }).select().single()
+      if (error) { alert('Error: ' + error.message); return }
+      if (data) this.tasks.push(data)
+      this.newTaskTitulo = ''
+      this.newTaskDesc = ''
+      this.newTaskCriticidad = 'normal'
+    },
+
+    async toggleTask(task) {
+      const { error } = await sb.from('server_tasks').update({ completada: !task.completada }).eq('id', task.id)
+      if (!error) task.completada = !task.completada
+    },
+
+    async deleteTask(id) {
+      await sb.from('server_tasks').delete().eq('id', id)
+      this.tasks = this.tasks.filter(t => t.id !== id)
+    },
+
+    taskSeverityClass(c) {
+      if (c === 'critica') return 'tsk-critical'
+      if (c === 'configuracion') return 'tsk-config'
+      return 'tsk-normal'
+    },
+
+    taskSeverityLabel(c) {
+      if (c === 'critica') return 'Crítica'
+      if (c === 'configuracion') return 'Configuración'
+      return 'Normal'
+    },
 
     diskCount(s) {
       try {

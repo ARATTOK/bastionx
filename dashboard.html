@@ -193,7 +193,7 @@
             <span class="col-count" x-text="serversByStatus('Activo').length"></span>
           </div>
           <template x-for="s in serversByStatus('Activo')" :key="s.id">
-            <div class="kanban-card card-online" @click="gotoServer(s.id)">
+            <div class="kanban-card card-online" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
               <div class="card-top">
                 <svg class="server-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
@@ -246,6 +246,9 @@
               <div class="ram-bar" x-show="s.ram_gb > 0">
                 <div class="bar-fill" :style="'width:' + ramPercent(s) + '%;background:' + ramColor(s) + ';'"></div>
               </div>
+              <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
+              </div>
             </div>
           </template>
           <template x-if="serversByStatus('Activo').length === 0">
@@ -271,7 +274,7 @@
             <span class="col-count" x-text="serversByStatus('Inactivo').length"></span>
           </div>
           <template x-for="s in serversByStatus('Inactivo')" :key="s.id">
-            <div class="kanban-card card-offline" @click="gotoServer(s.id)">
+            <div class="kanban-card card-offline" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
               <div class="card-top">
                 <svg class="server-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
@@ -307,6 +310,9 @@
                   <span x-text="s.ram_gb + ' GB'"></span>
                 </span>
               </div>
+              <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
+              </div>
             </div>
           </template>
           <template x-if="serversByStatus('Inactivo').length === 0">
@@ -332,7 +338,7 @@
             <span class="col-count" x-text="serversByStatus('Pendiente').length"></span>
           </div>
           <template x-for="s in serversByStatus('Pendiente')" :key="s.id">
-            <div class="kanban-card card-pending" @click="gotoServer(s.id)">
+            <div class="kanban-card card-pending" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
               <div class="card-top">
                 <svg class="server-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
@@ -360,6 +366,9 @@
                   Sin especificar
                 </span>
               </div>
+              <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
+              </div>
             </div>
           </template>
           <template x-if="serversByStatus('Pendiente').length === 0">
@@ -384,7 +393,7 @@
             <span class="col-count" x-text="serversByStatus('Libre').length"></span>
           </div>
           <template x-for="s in serversByStatus('Libre')" :key="s.id">
-            <div class="kanban-card card-free" @click="gotoServer(s.id)">
+            <div class="kanban-card card-free" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
               <div class="card-top">
                 <svg class="server-icon" style="color:#444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
@@ -411,6 +420,9 @@
                   </svg>
                   Disponible
                 </span>
+              </div>
+              <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
               </div>
             </div>
           </template>

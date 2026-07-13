@@ -11,6 +11,7 @@ document.addEventListener('alpine:init', () => {
     showUserManager: false,
     serverTagsMap: {},
     allTagsMap: {},
+    pendingTasksMap: {},
     managedUsers: [],
 
     newServer: {
@@ -41,6 +42,7 @@ document.addEventListener('alpine:init', () => {
         await this.fetchUserRole()
         await this.refreshServers()
         await this.loadTags()
+        await this.loadTasks()
         this.loading = false
         this.$nextTick(() => lucide.createIcons())
       } catch (e) {
@@ -108,6 +110,30 @@ document.addEventListener('alpine:init', () => {
           if (this.allTagsMap[st.tag_id]) this.serverTagsMap[st.server_id].push(this.allTagsMap[st.tag_id])
         })
       }
+    },
+
+    async loadTasks() {
+      const { data: tasks } = await sb
+        .from('server_tasks')
+        .select('*')
+        .eq('completada', false)
+      this.pendingTasksMap = {}
+      if (tasks) {
+        tasks.forEach(t => {
+          if (!this.pendingTasksMap[t.server_id]) this.pendingTasksMap[t.server_id] = []
+          this.pendingTasksMap[t.server_id].push(t)
+        })
+      }
+    },
+
+    serverCardSeverity(serverId) {
+      const pts = this.pendingTasksMap[serverId]
+      if (!pts || pts.length === 0) return null
+      const hasCritica = pts.some(t => t.criticidad === 'critica')
+      if (hasCritica) return 'critical'
+      const hasConfig = pts.some(t => t.criticidad === 'configuracion')
+      if (hasConfig) return 'config'
+      return 'other'
     },
 
     async updateServerStatus(id, newStatus) {

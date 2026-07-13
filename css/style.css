@@ -1161,6 +1161,86 @@ body {
 }
 .ip-row input { flex: 1; }
 
+/* === TASK SEVERITY ON CARDS === */
+.kanban-card.severity-critical {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 14px rgba(231,76,60,0.12);
+}
+.kanban-card.severity-config {
+  border-color: #f39c12 !important;
+  box-shadow: 0 0 14px rgba(243,156,18,0.12);
+}
+.kanban-card.severity-other {
+  border-color: #2ecc71 !important;
+  box-shadow: 0 0 14px rgba(46,204,113,0.12);
+}
+
+.card-task-badge {
+  margin-top: 0.35rem;
+  font-size: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #555;
+}
+
+/* === TASKS IN DETAIL === */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.task-item.task-done { opacity: 0.35; }
+.task-item.task-done strong { text-decoration: line-through; }
+.task-item input[type="checkbox"] { accent-color: #6c5ce7; }
+
+.tsk-badge {
+  font-size: 0.5rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tsk-critical { background: rgba(231,76,60,0.12); color: #e74c3c; }
+.tsk-config { background: rgba(243,156,18,0.12); color: #f39c12; }
+.tsk-normal { background: rgba(46,204,113,0.12); color: #2ecc71; }
+
+.task-add-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+.task-add-form input,
+.task-add-form select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.7rem;
+  background: #0a0a12;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: #ccc;
+  outline: none;
+}
+.task-add-form input:focus,
+.task-add-form select:focus {
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 2px rgba(108,92,231,0.1);
+}
+.task-add-form .btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #6c5ce7;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  background: #6c5ce710;
+  color: #6c5ce7;
+  transition: all 0.15s;
+}
+.task-add-form .btn:hover { background: #6c5ce720; }
+
 /* === LUCIDE ICONS === */
 svg { display: inline-block; vertical-align: middle; }
 .lucide { width: 1em; height: 1em; }
