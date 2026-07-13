@@ -9,8 +9,12 @@ document.addEventListener('alpine:init', () => {
       try {
         const { data: { session } } = await sb.auth.getSession()
         if (session) {
-          window.location.href = 'dashboard.html'
-          return
+          const { error } = await sb.auth.getUser()
+          if (!error) {
+            window.location.href = 'dashboard.html'
+            return
+          }
+          await sb.auth.signOut()
         }
       } catch (e) {
         // Error de red — se muestra el formulario igual

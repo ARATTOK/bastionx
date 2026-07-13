@@ -6,11 +6,11 @@ document.addEventListener('alpine:init', () => {
     loading: true,
 
     servers: [],
-    serverCreds: null,
 
-    detailServer: null,
     showAddServer: false,
     showUserManager: false,
+    serverTagsMap: {},
+    allTagsMap: {},
     managedUsers: [],
 
     newServer: {
@@ -31,9 +31,16 @@ document.addEventListener('alpine:init', () => {
           window.location.href = 'login.html'
           return
         }
+        const { error: userErr } = await sb.auth.getUser()
+        if (userErr) {
+          await sb.auth.signOut()
+          window.location.href = 'login.html'
+          return
+        }
         this.user = session.user
         await this.fetchUserRole()
         await this.refreshServers()
+        await this.loadTags()
         this.loading = false
         this.$nextTick(() => lucide.createIcons())
       } catch (e) {
@@ -83,18 +90,30 @@ document.addEventListener('alpine:init', () => {
       this.$nextTick(() => lucide.createIcons())
     },
 
-    async openDetail(s) {
-      this.detailServer = s
-      this.serverCreds = null
-      if (this.isSuperAdmin) {
-        const { data } = await sb
-          .from('server_credentials')
-          .select('*')
-          .eq('server_id', s.id)
-          .maybeSingle()
-        if (data) this.serverCreds = data
+    gotoServer(id) {
+      window.location.href = 'server-detail.html?id=' + id
+    },
+
+    async loadTags() {
+      const { data: sts } = await sb.from('server_tags').select('*')
+      const { data: tags } = await sb.from('tags').select('*')
+      if (tags) {
+        this.allTagsMap = {}
+        tags.forEach(t => { this.allTagsMap[t.id] = t })
       }
-      this.$nextTick(() => lucide.createIcons())
+      this.serverTagsMap = {}
+      if (sts && tags) {
+        sts.forEach(st => {
+          if (!this.serverTagsMap[st.server_id]) this.serverTagsMap[st.server_id] = []
+          if (this.allTagsMap[st.tag_id]) this.serverTagsMap[st.server_id].push(this.allTagsMap[st.tag_id])
+        })
+      }
+    },
+
+    async updateServerStatus(id, newStatus) {
+      await sb.from('servers').update({ estado: newStatus }).eq('id', id)
+      await this.refreshServers()
+      await this.loadTags()
     },
 
     async addServer() {
@@ -110,7 +129,8 @@ document.addEventListener('alpine:init', () => {
             procesador: this.newServer.procesador,
             ram_gb: Number(this.newServer.ram_gb) || 0,
             estado: this.newServer.estado,
-            discos: discos
+            discos: discos,
+            servicios: []
           })
           .select()
         if (error) { alert('Error: ' + error.message); return }
@@ -121,14 +141,6 @@ document.addEventListener('alpine:init', () => {
         }
         await this.refreshServers()
       } catch (e) { alert('Error al guardar') }
-    },
-
-    async deleteServer(id) {
-      if (!confirm('¿Eliminar este servidor?')) return
-      await sb.from('server_credentials').delete().eq('server_id', id)
-      await sb.from('servers').delete().eq('id', id)
-      this.detailServer = null
-      await this.refreshServers()
     },
 
     // =============================================================
