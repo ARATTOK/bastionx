@@ -12,7 +12,7 @@ document.addEventListener('alpine:init', () => {
     form: {
       hostname: '', modelo: '', sn: '', ubicacion: '',
       procesador: '', ram_gb: 0, ram_modulos: '', ram_velocidad: '',
-      estado: 'Activo', discos_str: '[]', servicios: []
+      estado: 'Activo', raids: [], servicios: []
     },
 
     credForm: {
@@ -35,6 +35,23 @@ document.addEventListener('alpine:init', () => {
       if (!server) { window.location.href = 'dashboard.html'; return }
       this.server = server
 
+      const migrateRaids = (d) => {
+        try {
+          const raw = Array.isArray(d) ? d : (typeof d === 'string' ? JSON.parse(d) : [])
+          if (!Array.isArray(raw)) return [{ nombre: '', discos: [] }]
+          if (raw.length === 0) return [{ nombre: '', discos: [] }]
+          if (raw[0].nombre !== undefined) return raw
+          const disks = raw.filter(x => x && x.bay)
+          if (disks.length === 0) return [{ nombre: '', discos: [] }]
+          const groups = {}
+          disks.forEach(x => {
+            const key = x.raid || ''
+            if (!groups[key]) groups[key] = { nombre: key, discos: [] }
+            groups[key].discos.push({ bay: x.bay, tipo: x.tipo || '', tamano: x.tamano || '', velocidad: x.velocidad || '' })
+          })
+          return Object.values(groups)
+        } catch { return [{ nombre: '', discos: [] }] }
+      }
       this.form = {
         hostname: server.hostname || '',
         modelo: server.modelo || '',
@@ -45,7 +62,7 @@ document.addEventListener('alpine:init', () => {
         ram_modulos: server.ram_modulos || '',
         ram_velocidad: server.ram_velocidad || '',
         estado: server.estado || 'Activo',
-        discos_str: typeof server.discos === 'string' ? server.discos : JSON.stringify(server.discos || [], null, 2),
+        raids: migrateRaids(server.discos),
         servicios: Array.isArray(server.servicios) ? server.servicios.map(s => ({ ...s, ips: s.ips || [''] })) : [{ nombre: '', ips: [''], puerto: '', descripcion: '' }]
       }
 
@@ -91,12 +108,32 @@ document.addEventListener('alpine:init', () => {
 
     goBack() { window.location.href = 'server-detail.html?id=' + this.server.id },
 
+    addRaid() {
+      this.form.raids.push({ nombre: '', discos: [{ bay: '', tipo: '', tamano: '', velocidad: '' }] })
+    },
+
+    removeRaid(idx) {
+      this.form.raids.splice(idx, 1)
+    },
+
+    addDiskToRaid(raidIdx) {
+      this.form.raids[raidIdx].discos.push({ bay: '', tipo: '', tamano: '', velocidad: '' })
+    },
+
+    removeDiskFromRaid(raidIdx, diskIdx) {
+      this.form.raids[raidIdx].discos.splice(diskIdx, 1)
+    },
+
     async save() {
       this.saving = true
       try {
-        const discos = (() => {
-          try { return JSON.parse(this.form.discos_str || '[]') } catch { return [] }
-        })()
+        const discos = this.form.raids
+          .filter(r => r.nombre.trim())
+          .map(r => ({
+            nombre: r.nombre.trim(),
+            discos: r.discos.filter(d => d.bay.trim())
+          }))
+          .filter(r => r.discos.length > 0)
 
         const servicios = this.form.servicios
           .filter(s => s.nombre.trim())

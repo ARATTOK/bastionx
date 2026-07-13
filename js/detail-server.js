@@ -98,19 +98,42 @@ document.addEventListener('alpine:init', () => {
       return 'Normal'
     },
 
-    diskCount(s) {
+    parseDiscos(raw) {
       try {
-        const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
-        return Array.isArray(d) ? d.length : 0
-      } catch { return 0 }
+        const d = typeof raw === 'string' ? JSON.parse(raw) : (raw || [])
+        return Array.isArray(d) ? d : []
+      } catch { return [] }
+    },
+
+    diskCount(s) {
+      const raids = this.parseDiscos(s.discos)
+      if (raids.length === 0) return 0
+      if (raids[0].nombre !== undefined)
+        return raids.reduce((sum, r) => sum + (Array.isArray(r.discos) ? r.discos.length : 0), 0)
+      return raids.length
     },
 
     diskDetail(s) {
-      try {
-        const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
-        if (!Array.isArray(d) || d.length === 0) return ''
-        return d
-      } catch { return [] }
+      const raids = this.parseDiscos(s.discos)
+      if (!Array.isArray(raids) || raids.length === 0) return []
+      if (raids[0].nombre !== undefined) return raids
+      return raids.filter(x => x && x.bay)
+    },
+
+    groupedDisks(s) {
+      const raids = this.parseDiscos(s.discos)
+      if (!Array.isArray(raids) || raids.length === 0) return []
+      if (raids[0] && raids[0].nombre !== undefined)
+        return raids.filter(r => Array.isArray(r.discos) && r.discos.length > 0)
+      const disks = raids.filter(x => x && x.bay)
+      if (disks.length === 0) return []
+      const groups = {}
+      disks.forEach(x => {
+        const key = x.raid || ''
+        if (!groups[key]) groups[key] = { nombre: key, discos: [] }
+        groups[key].discos.push({ bay: x.bay, tipo: x.tipo || '', tamano: x.tamano || '', velocidad: x.velocidad || '' })
+      })
+      return Object.values(groups)
     },
   }))
 })

@@ -95,12 +95,26 @@
           <svg style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           Discos <span class="det-count" x-text="diskCount(server)"></span>
         </h2>
-        <div class="disk-table">
-          <div class="disk-row disk-header"><span>Bahía</span><span>Tipo</span></div>
-          <template x-for="d in diskDetail(server)" :key="d.bay">
-            <div class="disk-row"><span x-text="d.bay"></span><span x-text="d.tipo"></span></div>
-          </template>
-        </div>
+        <template x-for="(g, gi) in groupedDisks(server)" :key="gi">
+          <div class="disk-group">
+            <div class="disk-group-header" x-show="g.nombre">
+              <svg style="width:11px;height:11px;color:#555;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg>
+              <span x-text="g.nombre"></span>
+              <span class="det-count" x-text="g.discos.length + ' discos'"></span>
+            </div>
+            <div class="disk-table">
+              <div class="disk-row disk-header"><span>Bahía</span><span>Tipo</span><span>Tamaño</span><span>Velocidad</span></div>
+              <template x-for="d in g.discos" :key="d.bay">
+                <div class="disk-row">
+                  <span x-text="d.bay"></span>
+                  <span x-text="d.tipo || '—'"></span>
+                  <span x-text="d.tamano || '—'"></span>
+                  <span x-text="d.velocidad || '—'"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- SERVICIOS -->

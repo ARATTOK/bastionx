@@ -229,7 +229,11 @@ document.addEventListener('alpine:init', () => {
     diskCount(s) {
       try {
         const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
-        return Array.isArray(d) ? d.length : 0
+        if (!Array.isArray(d)) return 0
+        if (d.length === 0) return 0
+        if (d[0] && d[0].nombre !== undefined)
+          return d.reduce((sum, r) => sum + (Array.isArray(r.discos) ? r.discos.length : 0), 0)
+        return d.length
       } catch { return 0 }
     },
 
@@ -237,7 +241,11 @@ document.addEventListener('alpine:init', () => {
       try {
         const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
         if (!Array.isArray(d) || d.length === 0) return ''
-        return d.map(dd => dd.bay + ': ' + dd.tipo).join('<br>')
+        if (d[0] && d[0].nombre !== undefined) {
+          return d.flatMap(r => Array.isArray(r.discos) ? r.discos : [])
+            .map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
+        }
+        return d.map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
       } catch { return '' }
     },
 

@@ -310,6 +310,12 @@
                   <span x-text="s.ram_gb + ' GB'"></span>
                 </span>
               </div>
+              <div class="card-tags-row" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
+                <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 3)" :key="ti">
+                  <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'"><span x-text="t.name"></span></span>
+                </template>
+                <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 3" x-text="'+' + (serverTagsMap[s.id].length - 3)"></span>
+              </div>
               <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
                 <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
               </div>
@@ -366,6 +372,12 @@
                   Sin especificar
                 </span>
               </div>
+              <div class="card-tags-row" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
+                <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 3)" :key="ti">
+                  <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'"><span x-text="t.name"></span></span>
+                </template>
+                <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 3" x-text="'+' + (serverTagsMap[s.id].length - 3)"></span>
+              </div>
               <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
                 <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>
               </div>
@@ -420,6 +432,12 @@
                   </svg>
                   Disponible
                 </span>
+              </div>
+              <div class="card-tags-row" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
+                <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 3)" :key="ti">
+                  <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'"><span x-text="t.name"></span></span>
+                </template>
+                <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 3" x-text="'+' + (serverTagsMap[s.id].length - 3)"></span>
               </div>
               <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
                 <span x-text="pendingTasksMap[s.id].length + (pendingTasksMap[s.id].length === 1 ? ' tarea' : ' tareas')"></span>

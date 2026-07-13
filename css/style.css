@@ -1030,12 +1030,12 @@ body {
 /* Disk table in detail */
 .disk-table {
   font-size: 0.72rem;
-  max-width: 400px;
+  max-width: 480px;
 }
 .disk-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.5rem;
   padding: 0.25rem 0.5rem;
   border-bottom: 1px solid rgba(255,255,255,0.03);
 }
@@ -1046,7 +1046,24 @@ body {
   letter-spacing: 0.3px;
   border-bottom: 1px solid var(--border-subtle);
 }
-.disk-row span:last-child { color: #999; }
+.disk-row span { color: #999; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.disk-group {
+  margin-bottom: 0.6rem;
+}
+.disk-group:last-child { margin-bottom: 0; }
+.disk-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #aaa;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.25rem;
+  background: #0d0d14;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+}
 /* Service cards in detail */
 .svc-card {
   background: #0d0d14;

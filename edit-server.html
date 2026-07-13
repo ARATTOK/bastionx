@@ -64,8 +64,43 @@
 
       <!-- DISCOS -->
       <div class="edit-section">
-        <h2 class="det-section-title">Discos</h2>
-        <textarea x-model="form.discos_str" style="min-height:80px;font-family:monospace;font-size:0.75rem;" placeholder='[{&quot;bay&quot;:&quot;Drive 0&quot;,&quot;tipo&quot;:&quot;1TB SATA&quot;}]'></textarea>
+        <h2 class="det-section-title">RAIDs y discos</h2>
+        <template x-for="(raid, ri) in form.raids" :key="ri">
+          <div class="svc-edit-block">
+            <div class="svc-edit-header">
+              <strong style="font-size:0.75rem;color:#aaa;" x-text="'RAID #' + (ri+1)"></strong>
+              <button class="btn-icon danger" @click="removeRaid(ri)" title="Eliminar RAID">
+                <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="edit-field" style="margin-bottom:0.5rem;">
+              <label>Nombre del RAID</label>
+              <input type="text" x-model="raid.nombre" placeholder="Ej: RAID 1, RAID 5, JBOD" style="max-width:300px;">
+            </div>
+            <template x-for="(d, di) in raid.discos" :key="di">
+              <div style="padding:0.4rem 0;border-top:1px solid rgba(255,255,255,0.03);">
+                <div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.3rem;">
+                  <span style="font-size:0.6rem;color:#555;text-transform:uppercase;" x-text="'Disco #' + (di+1)"></span>
+                  <button class="btn-icon danger" @click="removeDiskFromRaid(ri, di)" title="Eliminar disco" style="margin-left:auto;">
+                    <svg style="width:10px;height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                <div class="edit-grid">
+                  <div class="edit-field"><label>Bahía *</label><input type="text" x-model="d.bay" placeholder="Ej: Bay 0"></div>
+                  <div class="edit-field"><label>Tipo</label><input type="text" x-model="d.tipo" placeholder="Ej: SSD, HDD"></div>
+                  <div class="edit-field"><label>Tamaño</label><input type="text" x-model="d.tamano" placeholder="Ej: 480GB, 2TB"></div>
+                  <div class="edit-field"><label>Velocidad</label><input type="text" x-model="d.velocidad" placeholder="Ej: 6Gbps, SAS 12Gbps"></div>
+                </div>
+              </div>
+            </template>
+            <button class="btn" @click="addDiskToRaid(ri)" style="margin-top:0.4rem;padding:0.2rem 0.5rem;font-size:0.6rem;border:1px dashed var(--border-subtle);border-radius:6px;background:transparent;color:#555;cursor:pointer;">
+              + Agregar disco a este RAID
+            </button>
+          </div>
+        </template>
+        <button class="btn" @click="addRaid()" style="margin-top:0.5rem;padding:0.35rem 0.7rem;font-size:0.7rem;border:1px dashed var(--border-subtle);border-radius:8px;background:transparent;color:#6c5ce7;cursor:pointer;">
+          + Agregar RAID
+        </button>
       </div>
 
       <!-- TAGS -->
