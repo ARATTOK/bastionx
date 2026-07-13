@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BASTIONX LAB — Inventory Control</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.338.0/font/Lucide.css">
@@ -105,6 +108,65 @@
             <line x1="6" y1="18" x2="6.01" y2="18"/>
           </svg>
           RAM: <span x-text="totalRam + ' GB'"></span>
+        </div>
+      </div>
+
+      <!-- ADMIN CARD -->
+      <div class="admin-card" x-show="isSuperAdmin && !loading">
+        <div class="admin-card-header">
+          <svg style="width:20px;height:20px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <div>
+            <h2>Panel de Administraci&oacute;n</h2>
+            <p>Gestiona servidores, usuarios y tags del inventario</p>
+          </div>
+        </div>
+        <div class="admin-card-grid">
+          <button class="admin-card-btn" @click="showAddServer = true">
+            <div class="acb-icon" style="background:#6c5ce718;color:#6c5ce7;">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <div class="acb-text">
+              <strong>Agregar servidor</strong>
+              <span>Registrar un nuevo equipo en el inventario</span>
+            </div>
+          </button>
+          <button class="admin-card-btn" @click="showUserManager = true; fetchUsers()">
+            <div class="acb-icon" style="background:#3498db18;color:#3498db;">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div class="acb-text">
+              <strong>Gestionar usuarios</strong>
+              <span>Administrar roles y accesos del sistema</span>
+            </div>
+          </button>
+          <a class="admin-card-btn" href="tags.html">
+            <div class="acb-icon" style="background:#2ecc7118;color:#2ecc71;">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            </div>
+            <div class="acb-text">
+              <strong>Gestionar tags</strong>
+              <span>Crear y editar etiquetas con colores</span>
+            </div>
+          </a>
+          <button class="admin-card-btn" @click="refreshServers()">
+            <div class="acb-icon" style="background:#f39c1218;color:#f39c12;">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </div>
+            <div class="acb-text">
+              <strong>Recargar datos</strong>
+              <span>Sincronizar cambios desde la base de datos</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -364,47 +426,6 @@
         </div>
       </div>
 
-      <!-- ADMIN PANEL -->
-      <div class="admin-panel" x-show="isSuperAdmin && !loading">
-        <h2>
-          <svg style="width:16px;height:16px;color:#6c5ce7;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          Panel de Administraci&oacute;n
-        </h2>
-        <div class="admin-actions">
-          <button class="btn" @click="showAddServer = true">
-            <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Agregar servidor
-          </button>
-          <button class="btn" @click="showUserManager = true; fetchUsers()">
-            <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            Gestionar usuarios
-          </button>
-          <a class="btn" href="tags.html">
-            <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-              <line x1="7" y1="7" x2="7.01" y2="7"/>
-            </svg>
-            Gestionar tags
-          </a>
-          <button class="btn" @click="refreshServers()">
-            <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-            </svg>
-            Recargar datos
-          </button>
-        </div>
-      </div>
     </div>
   </template>
 
