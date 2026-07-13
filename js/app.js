@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
     serverTagsMap: {},
     allTagsMap: {},
     pendingTasksMap: {},
+    credsMap: {},
     managedUsers: [],
 
     newServer: {
@@ -43,6 +44,7 @@ document.addEventListener('alpine:init', () => {
         await this.refreshServers()
         await this.loadTags()
         await this.loadTasks()
+        await this.loadCreds()
         this.loading = false
         this.$nextTick(() => lucide.createIcons())
       } catch (e) {
@@ -123,6 +125,14 @@ document.addEventListener('alpine:init', () => {
           if (!this.pendingTasksMap[t.server_id]) this.pendingTasksMap[t.server_id] = []
           this.pendingTasksMap[t.server_id].push(t)
         })
+      }
+    },
+
+    async loadCreds() {
+      const { data } = await sb.from('server_credentials').select('server_id,ipmi,ip_servicio')
+      this.credsMap = {}
+      if (data) {
+        data.forEach(c => { if (!this.credsMap[c.server_id]) this.credsMap[c.server_id] = c })
       }
     },
 
