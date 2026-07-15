@@ -21,26 +21,52 @@
   --c-offline: #e74c3c;
   --c-pending: #f39c12;
   --c-free: #777;
-  --bg-active: rgba(46, 204, 113, 0.05);
-  --bg-inactive: rgba(231, 76, 60, 0.05);
-  --bg-pending: rgba(243, 156, 18, 0.05);
-  --bg-free: rgba(119, 119, 119, 0.05);
+  --bg-active: rgba(46, 204, 113, 0.04);
+  --bg-inactive: rgba(231, 76, 60, 0.04);
+  --bg-pending: rgba(243, 156, 18, 0.04);
+  --bg-free: rgba(119, 119, 119, 0.04);
   --bg-deep: #151515;
   --bg-dark: #1e1e1e;
   --bg-card: #252525;
   --bg-raised: #2a2a2a;
   --border-subtle: #333;
-  --text-bright: #eee;
-  --text-main: #ccc;
-  --text-dim: #555;
-  --text-muted: #666;
+  --text-bright: #fff;
+  --text-main: #ddd;
+  --text-dim: #999;
+  --text-muted: #888;
+
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.07);
+  --glass-bg-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(20px);
+  --glass-radius: 14px;
 }
 
 body {
-  background: var(--bg-deep);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(108, 92, 231, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 100%, rgba(46, 204, 113, 0.08) 0%, transparent 45%),
+    var(--bg-deep);
   min-height: 100vh;
   margin: 0;
   padding: 0;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .container {
@@ -88,17 +114,16 @@ body {
 }
 
 .login-card {
-  background: var(--bg-card);
-  border: 1px solid #3a3a3a;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 2.5rem;
   max-width: 420px;
   width: 100%;
   position: relative;
-  box-shadow:
-    0 0 0 1px rgba(108, 92, 231, 0.06),
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(108, 92, 231, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow);
 }
 
 .login-card::before {
@@ -168,8 +193,8 @@ body {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.4rem;
   font-size: 0.85rem;
-  background: var(--bg-dark);
-  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-main);
   outline: none;
@@ -323,10 +348,12 @@ body {
   gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--text-muted);
-  background: var(--bg-card);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   padding: 0.35rem 0.75rem;
   border-radius: 20px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
   cursor: pointer;
 }
 
@@ -366,8 +393,11 @@ body {
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
 }
 
 .stats-row .stat-pill .s-dot {
@@ -404,129 +434,215 @@ body {
 
 .stats-row .stat-pill .s-icon { width: 13px; height: 13px; }
 
-/* === KANBAN BOARD === */
-.kanban-board {
+/* === FILTER TABS === */
+.filter-tabs {
   display: flex;
-  flex-direction: column;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 12px;
+  padding: 0.25rem;
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
+}
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-tab:hover {
+  color: var(--text-main);
+  background: rgba(255,255,255,0.03);
+}
+.filter-tab.active {
+  background: var(--glass-bg-strong);
+  color: var(--text-bright);
+  box-shadow: 0 0 0 1px var(--glass-border-hover), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.filter-tab .filter-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.filter-tab .filter-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.filter-tab .filter-dot.dot-activo { background: var(--c-online); box-shadow: 0 0 6px rgba(46,204,113,0.4); }
+.filter-tab .filter-dot.dot-inactivo { background: var(--c-offline); box-shadow: 0 0 6px rgba(231,76,60,0.4); }
+.filter-tab .filter-dot.dot-pendiente { background: var(--c-pending); box-shadow: 0 0 6px rgba(243,156,18,0.4); }
+.filter-tab .filter-dot.dot-libre { background: var(--c-free); }
+.filter-tab .filter-count {
+  font-size: 0.55rem;
+  background: rgba(255,255,255,0.05);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 0.1rem;
+}
+.filter-tab.active .filter-count {
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.08);
+}
+
+/* === BENTO GRID === */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 0.75rem;
 }
 
-.kanban-col {
-  background: var(--bg-dark);
-  border: 1px solid var(--border-subtle);
-  border-left: 3px solid transparent;
-  border-radius: 12px;
-  padding: 0.75rem;
-  position: relative;
+@media (max-width: 700px) {
+  .bento-grid { grid-template-columns: 1fr; }
 }
-
-.kanban-col.col-online { background: var(--bg-active); border-left-color: var(--c-online); box-shadow: inset 3px 0 20px -10px rgba(46,204,113,0.15); }
-.kanban-col.col-offline { background: var(--bg-inactive); border-left-color: var(--c-offline); box-shadow: inset 3px 0 20px -10px rgba(231,76,60,0.15); }
-.kanban-col.col-pending { background: var(--bg-pending); border-left-color: var(--c-pending); box-shadow: inset 3px 0 20px -10px rgba(243,156,18,0.15); }
-.kanban-col.col-free { background: var(--bg-free); border-left-color: var(--text-muted); }
-
-.col-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.5rem;
-}
-
-@media (max-width: 600px) {
-  .col-cards { grid-template-columns: 1fr; }
-}
-
-.kanban-col .col-header {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 0 0.25rem 0.5rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.kanban-col .col-header .col-icon { width: 13px; height: 13px; }
-
-.kanban-col .col-header .col-count {
-  margin-left: auto;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 0.1rem 0.5rem;
-  border-radius: 10px;
-  font-size: 0.6rem;
-  font-weight: 600;
-}
-
-.kanban-col.col-online .col-header { color: var(--c-online); }
-.kanban-col.col-online .col-count { color: var(--c-online); }
-.kanban-col.col-offline .col-header { color: var(--c-offline); }
-.kanban-col.col-offline .col-count { color: var(--c-offline); }
-.kanban-col.col-pending .col-header { color: var(--c-pending); }
-.kanban-col.col-pending .col-count { color: var(--c-pending); }
-.kanban-col.col-free .col-header { color: var(--text-muted); }
-.kanban-col.col-free .col-count { color: var(--text-muted); }
 
 .kanban-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-left: 3px solid transparent;
-  border-radius: 8px;
-  padding: 0.65rem 0.75rem;
+  border-radius: var(--glass-radius);
+  padding: 0.85rem;
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
 }
 
 .kanban-card:hover {
-  border-color: var(--text-muted);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  transform: translateY(-3px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), var(--glass-shadow);
 }
 
 .kanban-card .card-top {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.2rem;
+  gap: 0.6rem;
+  margin-bottom: 0.3rem;
 }
 
-.kanban-card .card-top .server-icon {
-  width: 13px;
-  height: 13px;
-  color: #6c5ce7;
-  flex-shrink: 0;
-}
-
-.kanban-card .card-top h4 {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-bright);
-}
-
-.kanban-card .card-meta {
+.kanban-card .card-top .card-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(108, 92, 231, 0.12);
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.55rem;
-  color: var(--text-dim);
-  margin-bottom: 0.4rem;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.08);
 }
 
-.kanban-card .card-meta .meta-icon { width: 10px; height: 10px; color: var(--text-dim); }
-.kanban-card .card-meta .status-dot { width: 6px; height: 6px; border-radius: 50%; }
-.kanban-card .card-meta .status-dot.online { background: var(--c-online); }
-.kanban-card .card-meta .status-dot.offline { background: var(--c-offline); }
-.kanban-card .card-meta .status-dot.pending { background: var(--c-pending); }
-.kanban-card .card-meta .status-dot.free { background: #555; }
+.kanban-card .card-top .card-icon-box svg {
+  width: 20px;
+  height: 20px;
+  color: #6c5ce7;
+}
+
+.kanban-card .card-top .card-title-group {
+  min-width: 0;
+}
+
+.kanban-card .card-top .card-hostname {
+  display: block;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-card .card-top .card-model-tag {
+  display: block;
+  font-size: 0.5rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-card .card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+  margin-left: 0;
+}
+
+.kanban-card .card-meta-row .meta-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.kanban-card .card-meta-row span {
+  color: var(--text-dim);
+  margin-right: 0.25rem;
+}
+
+.kanban-card .card-specs-row {
+  display: flex;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.kanban-card .card-spec-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.5rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.kanban-card .card-spec-item .spec-icon {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.kanban-card .card-spec-item .spec-value {
+  line-height: 1.2;
+}
 
 .kanban-card .card-tags {
   display: flex;
   gap: 0.25rem;
   flex-wrap: wrap;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .kanban-card .card-tags .tag {
@@ -605,17 +721,26 @@ body {
 }
 
 .kanban-card .ram-bar {
-  margin-top: 0.25rem;
-  height: 3px;
-  background: var(--bg-dark);
+  margin-top: 0.3rem;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
   border-radius: 2px;
   overflow: hidden;
+  position: relative;
 }
 
 .kanban-card .ram-bar .bar-fill {
   height: 100%;
   border-radius: 2px;
   transition: width 0.3s;
+}
+
+.kanban-card .ram-pct {
+  font-size: 0.45rem;
+  color: var(--text-muted);
+  position: absolute;
+  right: 0;
+  top: -0.1rem;
 }
 
 .kanban-card .card-section + .card-section {
@@ -652,10 +777,13 @@ body {
 .admin-card {
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
   padding: 1.25rem 1.5rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
 }
 
 .admin-card-header {
@@ -693,17 +821,20 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
-  background: var(--bg-dark);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   cursor: pointer;
   transition: all 0.15s;
   text-decoration: none;
+  box-shadow: var(--glass-shadow-sm);
 }
 
 .admin-card-btn:hover {
   border-color: #6c5ce7;
-  background: var(--bg-raised);
+  background: var(--glass-bg-hover);
 }
 
 .acb-icon {
@@ -747,14 +878,17 @@ body {
 }
 
 .modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
   padding: 1.5rem;
   max-width: 500px;
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow);
 }
 
 .modal h3 {
@@ -966,8 +1100,10 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
 }
 .tm-pill {
@@ -1054,8 +1190,10 @@ body {
   padding: 0.4rem 0.75rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
 }
 .det-status-bar.det-activo { color: var(--c-online); border-color: rgba(46,204,113,0.2); background: rgba(46,204,113,0.04); }
 .det-status-bar.det-inactivo { color: var(--c-offline); border-color: rgba(231,76,60,0.2); background: rgba(231,76,60,0.04); }
@@ -1160,13 +1298,17 @@ body {
   color: var(--text-bright);
   padding: 0.3rem 0.5rem;
   margin-bottom: 0.25rem;
-  background: var(--bg-card);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: 6px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
 }
 .svc-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   margin-bottom: 0.4rem;
@@ -1255,8 +1397,10 @@ body {
 .tag-select-btn:hover { border-color: #555; color: var(--text-main); }
 .tag-select-btn.selected { border-color: inherit; }
 .svc-edit-block {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   margin-bottom: 0.5rem;
@@ -1383,9 +1527,7 @@ svg { display: inline-block; vertical-align: middle; }
   }
   .stats-row .stat-pill .s-dot { width: 6px; height: 6px; }
 
-  .kanban-col .col-header { font-size: 0.55rem; }
-  .kanban-col .col-header .col-icon { width: 11px; height: 11px; }
-  .kanban-col .col-header .col-count { font-size: 0.5rem; padding: 0.05rem 0.4rem; }
+  .bento-grid { gap: 0.5rem; }
 
   .kanban-card { padding: 0.5rem; }
   .kanban-card .card-top h4 { font-size: 0.7rem; }
@@ -1446,4 +1588,24 @@ svg { display: inline-block; vertical-align: middle; }
 @media (hover: none) and (pointer: coarse) {
   button, .btn, .card-action-btn, .kanban-card, .admin-card-btn,
   .tag-select-btn, .btn-icon { min-height: 44px; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .kanban-card, .stat-pill, .admin-card, .modal, .user-badge,
+  .admin-card-btn, .svc-card, .svc-edit-block, .tag-manager-card,
+  .det-status-bar, .disk-group-header, .login-card {
+    background: var(--bg-card) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: none !important;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .kanban-card, .stat-pill, .admin-card, .modal, .user-badge,
+  .admin-card-btn, .svc-card, .svc-edit-block, .tag-manager-card,
+  .det-status-bar, .disk-group-header, .login-card {
+    background: rgba(30, 30, 30, 0.95) !important;
+  }
 }

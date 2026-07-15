@@ -41,7 +41,10 @@
 
       <!-- ESTADO -->
       <div class="edit-section">
-        <h2 class="det-section-title">Estado</h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Estado
+        </h2>
         <select x-model="form.estado" style="max-width:200px;">
           <option value="Activo">Activo</option>
           <option value="Inactivo">Inactivo</option>
@@ -52,7 +55,10 @@
 
       <!-- GENERAL -->
       <div class="edit-section">
-        <h2 class="det-section-title">Información general</h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#3498db;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+          Información general
+        </h2>
         <div class="edit-grid">
           <div class="edit-field"><label>Hostname *</label><input type="text" x-model="form.hostname" required></div>
           <div class="edit-field"><label>Modelo</label><input type="text" x-model="form.modelo"></div>
@@ -67,7 +73,10 @@
 
       <!-- DISCOS -->
       <div class="edit-section">
-        <h2 class="det-section-title">RAIDs y discos</h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          RAIDs y discos
+        </h2>
         <template x-for="(raid, ri) in form.raids" :key="ri">
           <div class="svc-edit-block">
             <div class="svc-edit-header">
@@ -108,7 +117,10 @@
 
       <!-- TAGS -->
       <div class="edit-section">
-        <h2 class="det-section-title">Tags</h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Tags
+        </h2>
         <div class="tags-selector" x-show="allTags.length > 0">
           <template x-for="t in allTags" :key="t.id">
             <button class="tag-select-btn" :class="selectedTagIds.includes(t.id) ? 'selected' : ''" @click="toggleTag(t.id)" :style="selectedTagIds.includes(t.id) ? 'background:' + t.color + '20;border-color:' + t.color + '60;color:' + t.color + ';' : ''">
@@ -123,7 +135,10 @@
 
       <!-- SERVICIOS -->
       <div class="edit-section">
-        <h2 class="det-section-title">Servicios</h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#f39c12;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Servicios
+        </h2>
         <template x-for="(svc, i) in form.servicios" :key="i">
           <div class="svc-edit-block">
             <div class="svc-edit-header">
@@ -160,7 +175,10 @@
 
       <!-- CREDENCIALES (solo super admin) -->
       <div class="edit-section" x-show="canEdit">
-        <h2 class="det-section-title">Credenciales <span style="color:#6c5ce7;font-size:0.6rem;font-weight:400;">(admin)</span></h2>
+        <h2 class="det-section-title">
+          <svg style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          Credenciales <span style="color:#6c5ce7;font-size:0.6rem;font-weight:400;">(admin)</span>
+        </h2>
         <div class="edit-grid">
           <div class="edit-field"><label>IPMI</label><input type="text" x-model="credForm.ipmi" style="font-family:monospace;font-size:0.7rem;"></div>
           <div class="edit-field"><label>IP Servicio</label><input type="text" x-model="credForm.ip_servicio" style="font-family:monospace;font-size:0.7rem;"></div>

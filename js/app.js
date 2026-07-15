@@ -7,6 +7,7 @@ document.addEventListener('alpine:init', () => {
     loading: true,
 
     servers: [],
+    activeFilter: 'todos',
 
     showAddServer: false,
     showUserManager: false,
@@ -215,6 +216,14 @@ document.addEventListener('alpine:init', () => {
 
     countByStatus(status) {
       return this.servers.filter(s => s.estado === status).length
+    },
+
+    get filteredServers() {
+      const sorted = [...this.servers].sort((a, b) =>
+        (a.ubicacion || '').localeCompare(b.ubicacion || '')
+      )
+      if (this.activeFilter === 'todos') return sorted
+      return sorted.filter(s => s.estado === this.activeFilter)
     },
 
     get totalRam() {
