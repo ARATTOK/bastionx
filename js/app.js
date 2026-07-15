@@ -9,24 +9,12 @@ document.addEventListener('alpine:init', () => {
     servers: [],
     activeFilter: 'todos',
 
-    showAddServer: false,
     showUserManager: false,
     serverTagsMap: {},
     allTagsMap: {},
     pendingTasksMap: {},
     credsMap: {},
     managedUsers: [],
-
-    newServer: {
-      hostname: '',
-      modelo: '',
-      sn: '',
-      ubicacion: '',
-      procesador: '',
-      ram_gb: 0,
-      estado: 'Activo',
-      discos_str: '[]'
-    },
 
     async init() {
       try {
@@ -153,33 +141,6 @@ document.addEventListener('alpine:init', () => {
       await sb.from('servers').update({ estado: newStatus }).eq('id', id)
       await this.refreshServers()
       await this.loadTags()
-    },
-
-    async addServer() {
-      try {
-        const discos = JSON.parse(this.newServer.discos_str || '[]')
-        const { error } = await sb
-          .from('servers')
-          .insert({
-            hostname: this.newServer.hostname,
-            modelo: this.newServer.modelo,
-            sn: this.newServer.sn,
-            ubicacion: this.newServer.ubicacion,
-            procesador: this.newServer.procesador,
-            ram_gb: Number(this.newServer.ram_gb) || 0,
-            estado: this.newServer.estado,
-            discos: discos,
-            servicios: []
-          })
-          .select()
-        if (error) { alert('Error: ' + error.message); return }
-        this.showAddServer = false
-        this.newServer = {
-          hostname: '', modelo: '', sn: '', ubicacion: '',
-          procesador: '', ram_gb: 0, estado: 'Activo', discos_str: '[]'
-        }
-        await this.refreshServers()
-      } catch (e) { alert('Error al guardar') }
     },
 
     // =============================================================

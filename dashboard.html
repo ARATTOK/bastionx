@@ -126,7 +126,7 @@
           </div>
         </div>
         <div class="admin-card-grid">
-          <button class="admin-card-btn" @click="showAddServer = true">
+          <a class="admin-card-btn" href="add-server.html">
             <div class="acb-icon" style="background:#6c5ce718;color:#6c5ce7;">
               <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -136,7 +136,7 @@
               <strong>Agregar servidor</strong>
               <span>Registrar un nuevo equipo en el inventario</span>
             </div>
-          </button>
+          </a>
           <button class="admin-card-btn" @click="showUserManager = true; fetchUsers()">
             <div class="acb-icon" style="background:#3498db18;color:#3498db;">
               <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -304,56 +304,6 @@
 
     </div>
   </template>
-
-  <!-- MODAL: AGREGAR SERVIDOR -->
-  <div class="modal-overlay" x-show="showAddServer" @click.self="showAddServer = false">
-    <div class="modal">
-      <h3>Agregar servidor</h3>
-      <form @submit.prevent="addServer()">
-        <div class="form-group">
-          <label>Hostname *</label>
-          <input type="text" x-model="newServer.hostname" required>
-        </div>
-        <div class="form-group">
-          <label>Modelo</label>
-          <input type="text" x-model="newServer.modelo">
-        </div>
-        <div class="form-group">
-          <label>Serial Number (SN)</label>
-          <input type="text" x-model="newServer.sn">
-        </div>
-        <div class="form-group">
-          <label>Ubicaci&oacute;n (U)</label>
-          <input type="text" x-model="newServer.ubicacion" placeholder="Ej: U34">
-        </div>
-        <div class="form-group">
-          <label>Procesador</label>
-          <input type="text" x-model="newServer.procesador">
-        </div>
-        <div class="form-group">
-          <label>RAM (GB)</label>
-          <input type="number" x-model="newServer.ram_gb">
-        </div>
-        <div class="form-group">
-          <label>Estado</label>
-          <select x-model="newServer.estado">
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Libre">Libre</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Discos (JSON)</label>
-          <textarea x-model="newServer.discos_str" placeholder='[{&quot;bay&quot;:&quot;Drive 0&quot;,&quot;tipo&quot;:&quot;1TB SATA&quot;}]'></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn" @click="showAddServer = false">Cancelar</button>
-          <button type="submit" class="btn">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- MODAL: GESTIÓN DE USUARIOS -->
   <div class="modal-overlay" x-show="showUserManager" @click.self="showUserManager = false">
