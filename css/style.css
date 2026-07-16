@@ -1446,6 +1446,54 @@ body::before {
 }
 .task-add-form .btn:hover { background: #6c5ce720; }
 
+/* === TASK LOG / BITÁCORA === */
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 0.68rem;
+}
+.log-accion {
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: center;
+}
+.log-accion.log-completada { background: rgba(46,204,113,0.12); color: #2ecc71; }
+.log-accion.log-creada { background: rgba(108,92,231,0.12); color: #8e7ff3; }
+.log-accion.log-eliminada { background: rgba(231,76,60,0.12); color: #e74c3c; }
+.log-accion.log-desmarcada { background: rgba(243,156,18,0.12); color: #f39c12; }
+.log-desc {
+  color: var(--text-main);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-date {
+  color: var(--text-dim);
+  font-size: 0.58rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* === ADD-SERVER PAGE === */
 .edit-form-card {
   background: rgba(25, 25, 35, 0.55);

@@ -8,10 +8,14 @@ document.addEventListener('alpine:init', () => {
     serverCreds: null,
     tags: [],
     tasks: [],
+    taskLogs: [],
     newTaskTitulo: '',
     newTaskDesc: '',
     newTaskCriticidad: 'normal',
     showDeleteConfirm: false,
+    showCompleteModal: false,
+    completeTaskDesc: '',
+    pendingCompleteTask: null,
 
     async init() {
       const { data: { session } } = await sb.auth.getSession()
@@ -48,6 +52,8 @@ document.addEventListener('alpine:init', () => {
       const { data: tasks } = await sb.from('server_tasks').select('*').eq('server_id', id).order('created_at')
       if (tasks) this.tasks = tasks
 
+      await this.loadTaskLogs(id)
+
       this.loading = false
       this.$nextTick(() => { try { lucide.createIcons() } catch(e) {} })
     },
@@ -77,20 +83,93 @@ document.addEventListener('alpine:init', () => {
         created_by: this.user.id
       }).select().single()
       if (error) { alert('Error: ' + error.message); return }
-      if (data) this.tasks.push(data)
+      if (data) {
+        this.tasks.push(data)
+        await this.insertLog(data.id, 'creada', null)
+      }
       this.newTaskTitulo = ''
       this.newTaskDesc = ''
       this.newTaskCriticidad = 'normal'
     },
 
+    openCompleteModal(task) {
+      this.pendingCompleteTask = task
+      this.completeTaskDesc = ''
+      this.showCompleteModal = true
+    },
+
+    async completeTask() {
+      const task = this.pendingCompleteTask
+      if (!task) return
+      const desc = this.completeTaskDesc.trim()
+      if (!desc) return
+      const { error } = await sb.from('server_tasks').update({
+        completada: true,
+        completed_at: new Date().toISOString()
+      }).eq('id', task.id)
+      if (!error) {
+        task.completada = true
+        task.completed_at = new Date().toISOString()
+        await this.insertLog(task.id, 'completada', desc)
+      }
+      this.showCompleteModal = false
+      this.pendingCompleteTask = null
+      this.completeTaskDesc = ''
+    },
+
     async toggleTask(task) {
-      const { error } = await sb.from('server_tasks').update({ completada: !task.completada }).eq('id', task.id)
-      if (!error) task.completada = !task.completada
+      if (task.completada) {
+        const { error } = await sb.from('server_tasks').update({ completada: false, completed_at: null }).eq('id', task.id)
+        if (!error) {
+          task.completada = false
+          task.completed_at = null
+          await this.insertLog(task.id, 'desmarcada', null)
+        }
+      } else {
+        this.openCompleteModal(task)
+      }
     },
 
     async deleteTask(id) {
+      await this.insertLog(id, 'eliminada', null)
       await sb.from('server_tasks').delete().eq('id', id)
       this.tasks = this.tasks.filter(t => t.id !== id)
+    },
+
+    async insertLog(taskId, accion, descripcion) {
+      await sb.from('server_task_logs').insert({
+        task_id: taskId,
+        server_id: this.server.id,
+        user_id: this.user.id,
+        accion,
+        descripcion
+      })
+      await this.loadTaskLogs(this.server.id)
+    },
+
+    async loadTaskLogs(serverId) {
+      const { data: logs } = await sb.from('server_task_logs')
+        .select('*')
+        .eq('server_id', serverId)
+        .order('created_at', { ascending: false })
+      this.taskLogs = logs || []
+    },
+
+    logUserEmail(log) {
+      return log.user_id?.slice(0, 8) + '...'
+    },
+
+    logAccionClass(accion) {
+      if (accion === 'completada') return 'log-completada'
+      if (accion === 'creada') return 'log-creada'
+      if (accion === 'eliminada') return 'log-eliminada'
+      return 'log-desmarcada'
+    },
+
+    formatDate(ts) {
+      if (!ts) return ''
+      const d = new Date(ts)
+      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     },
 
     taskSeverityClass(c) {
