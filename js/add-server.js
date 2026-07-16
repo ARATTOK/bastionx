@@ -22,6 +22,15 @@ document.addEventListener('alpine:init', () => {
       if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
       this.user = session.user
 
+      let role = 'readonly'
+      try {
+        const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
+        if (data?.role) role = data.role
+      } catch(e) {}
+      const isSuperAdmin = role === 'superadmin'
+      const canEdit = isSuperAdmin || role === 'admin'
+      if (!canEdit) { window.location.href = 'dashboard.html'; return }
+
       const { data: allTags } = await sb.from('tags').select('*').order('name')
       if (allTags) this.allTags = allTags
 

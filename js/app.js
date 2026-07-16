@@ -70,7 +70,7 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {
         this.userRole = 'readonly'
       }
-      this.isSuperAdmin = this.user?.email === 'admin@bastionx.com'
+      this.isSuperAdmin = this.userRole === 'superadmin'
       this.canEdit = this.isSuperAdmin || this.userRole === 'admin'
     },
 

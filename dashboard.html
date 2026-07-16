@@ -31,8 +31,7 @@
     Verificando sesión...
   </div>
 
-  <template x-if="user">
-    <div class="container">
+  <div class="container" x-show="user" x-cloak>
       <!-- TOP BAR -->
       <div class="topbar">
         <h1>
@@ -114,63 +113,24 @@
         </div>
       </div>
 
-      <!-- ADMIN CARD -->
-      <div class="admin-card" x-show="isSuperAdmin && !loading">
-        <div class="admin-card-header">
-          <svg style="width:20px;height:20px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <div>
-            <h2>Panel de Administraci&oacute;n</h2>
-            <p>Gestiona servidores, usuarios y tags del inventario</p>
-          </div>
-        </div>
-        <div class="admin-card-grid">
-          <a class="admin-card-btn" href="add-server.html">
-            <div class="acb-icon" style="background:#6c5ce718;color:#6c5ce7;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </div>
-            <div class="acb-text">
-              <strong>Agregar servidor</strong>
-              <span>Registrar un nuevo equipo en el inventario</span>
-            </div>
-          </a>
-          <button class="admin-card-btn" @click="showUserManager = true; fetchUsers()">
-            <div class="acb-icon" style="background:#3498db18;color:#3498db;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div class="acb-text">
-              <strong>Gestionar usuarios</strong>
-              <span>Administrar roles y accesos del sistema</span>
-            </div>
-          </button>
-          <a class="admin-card-btn" href="tags.html">
-            <div class="acb-icon" style="background:#2ecc7118;color:#2ecc71;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
-              </svg>
-            </div>
-            <div class="acb-text">
-              <strong>Gestionar tags</strong>
-              <span>Crear y editar etiquetas con colores</span>
-            </div>
-          </a>
-          <button class="admin-card-btn" @click="refreshServers()">
-            <div class="acb-icon" style="background:#f39c1218;color:#f39c12;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-              </svg>
-            </div>
-            <div class="acb-text">
-              <strong>Recargar datos</strong>
-              <span>Sincronizar cambios desde la base de datos</span>
-            </div>
-          </button>
-        </div>
+      <!-- ADMIN TOOLBAR -->
+      <div class="admin-toolbar" x-show="isSuperAdmin && !loading">
+        <a class="at-btn" href="add-server.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
+        </a>
+        <button class="at-btn" @click="showUserManager = true; fetchUsers()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Usuarios
+        </button>
+        <a class="at-btn" href="tags.html" @click.prevent="window.location.href='tags.html'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Tags
+        </a>
+        <button class="at-btn" @click="refreshServers()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Recargar
+        </button>
       </div>
 
       <!-- INVENTORY LOADING -->
@@ -292,18 +252,15 @@
         </template>
       </div>
 
-      <template x-if="!loading && servers.length === 0">
-        <div class="empty-col" style="margin-top:1.5rem;">
+      <div class="empty-col" style="margin-top:1.5rem;" x-show="!loading && servers.length === 0">
           <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
             <line x1="6" y1="6" x2="6.01" y2="6"/>
           </svg>
           No hay servidores registrados
         </div>
-      </template>
 
     </div>
-  </template>
 
   <!-- MODAL: GESTIÓN DE USUARIOS -->
   <div class="modal-overlay" x-show="showUserManager" @click.self="showUserManager = false">
@@ -323,13 +280,13 @@
           <div class="user-row">
             <span class="u-col u-email" x-text="u.email || u.id.slice(0,8) + '...'"></span>
             <span class="u-col u-role">
-              <span :class="'role-tag ' + (u.role === 'admin' ? 'admin' : 'readonly')" x-text="u.role === 'admin' ? 'admin' : 'readonly'"></span>
+              <span :class="'role-tag ' + (u.role === 'superadmin' ? 'super' : u.role === 'admin' ? 'admin' : 'readonly')" x-text="u.role === 'superadmin' ? 'superadmin' : (u.role === 'admin' ? 'admin' : 'readonly')"></span>
             </span>
             <span class="u-col u-actions">
-              <template x-if="u.email === 'admin@bastionx.com'">
+              <template x-if="u.role === 'superadmin'">
                 <span style="color:#555;font-size:0.6rem;">Protegido</span>
               </template>
-              <template x-if="u.email && u.email !== 'admin@bastionx.com'">
+              <template x-if="u.email && u.role !== 'superadmin'">
                 <button class="btn role-toggle" @click="updateUserRole(u.id, u.role === 'admin' ? 'readonly' : 'admin')" x-text="u.role === 'admin' ? 'Revocar admin' : 'Hacer admin'"></button>
               </template>
               <template x-if="!u.email">

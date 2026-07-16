@@ -9,7 +9,8 @@ document.addEventListener('alpine:init', () => {
     async init() {
       const { data: { session } } = await sb.auth.getSession()
       if (!session) { window.location.href = 'login.html'; return }
-      if (session.user.email !== 'admin@bastionx.com') { window.location.href = 'dashboard.html'; return }
+      const { data: profile } = await sb.from('user_profiles').select('role').eq('id', session.user.id).single()
+      if (profile?.role !== 'superadmin') { window.location.href = 'dashboard.html'; return }
       await this.loadTags()
       this.loading = false
     },

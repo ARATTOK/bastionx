@@ -26,12 +26,13 @@ document.addEventListener('alpine:init', () => {
       const { error: userErr } = await sb.auth.getUser()
       if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
       this.user = session.user
-      this.isSuperAdmin = this.user.email === 'admin@bastionx.com'
-      this.canEdit = this.isSuperAdmin
+      let role = 'readonly'
       try {
         const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
-        if (data?.role === 'admin') this.canEdit = true
+        if (data?.role) role = data.role
       } catch(e) {}
+      this.isSuperAdmin = role === 'superadmin'
+      this.canEdit = this.isSuperAdmin || role === 'admin'
 
       const params = new URLSearchParams(window.location.search)
       const id = params.get('id')
