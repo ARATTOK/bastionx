@@ -13,6 +13,7 @@ document.addEventListener('alpine:init', () => {
     serverTagsMap: {},
     allTagsMap: {},
     pendingTasksMap: {},
+    tasksProgressMap: {},
     credsMap: {},
     managedUsers: [],
 
@@ -109,12 +110,21 @@ document.addEventListener('alpine:init', () => {
       const { data: tasks } = await sb
         .from('server_tasks')
         .select('*')
-        .eq('completada', false)
       this.pendingTasksMap = {}
+      this.tasksProgressMap = {}
       if (tasks) {
+        const byServer = {}
         tasks.forEach(t => {
-          if (!this.pendingTasksMap[t.server_id]) this.pendingTasksMap[t.server_id] = []
-          this.pendingTasksMap[t.server_id].push(t)
+          if (!byServer[t.server_id]) byServer[t.server_id] = { all: [], pending: [] }
+          byServer[t.server_id].all.push(t)
+          if (!t.completada) byServer[t.server_id].pending.push(t)
+        })
+        Object.entries(byServer).forEach(([sid, group]) => {
+          this.tasksProgressMap[sid] = {
+            completed: group.all.length - group.pending.length,
+            total: group.all.length
+          }
+          this.pendingTasksMap[sid] = group.pending
         })
       }
     },
@@ -231,16 +241,17 @@ document.addEventListener('alpine:init', () => {
       } catch { return '' }
     },
 
-    ramPercent(s) {
-      if (!s.ram_gb || s.ram_gb === 0) return 0
-      return Math.min(100, (Number(s.ram_gb) / 384) * 100)
+    taskPercent(s) {
+      const p = this.tasksProgressMap[s.id]
+      if (!p || p.total === 0) return 0
+      return (p.completed / p.total) * 100
     },
 
-    ramColor(s) {
-      const pct = this.ramPercent(s)
-      if (pct < 25) return '#2ecc71'
-      if (pct < 50) return '#5dade2'
-      if (pct < 75) return '#f39c12'
+    taskColor(s) {
+      const pct = this.taskPercent(s)
+      if (pct >= 100) return '#2ecc71'
+      if (pct >= 50) return '#5dade2'
+      if (pct >= 25) return '#f39c12'
       return '#e74c3c'
     },
   }))

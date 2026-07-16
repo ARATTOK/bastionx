@@ -227,9 +227,9 @@
               </template>
               <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
             </div>
-            <div class="ram-bar" x-show="s.ram_gb > 0" style="position:relative;">
-              <div class="bar-fill" :style="'width:' + ramPercent(s) + '%;background:' + ramColor(s) + ';'"></div>
-              <span class="ram-pct" x-text="Math.round(ramPercent(s)) + '%'"></span>
+            <div class="ram-bar" x-show="tasksProgressMap[s.id]" style="position:relative;">
+              <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
+              <span class="ram-pct" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
             </div>
             </div>
             <div class="card-section card-section--footer">
