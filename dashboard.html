@@ -212,6 +212,10 @@
               <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
               <span x-text="pendingTasksMap[s.id].length"></span>
             </div>
+            <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')">
+              <span class="sl-dot"></span>
+              <span x-text="s.estado"></span>
+            </div>
             </div>
           </div>
         </template>
