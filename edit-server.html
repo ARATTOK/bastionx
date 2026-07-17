@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#151515">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -25,16 +25,16 @@
       <div class="topbar" style="margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <button class="btn" @click="goBack()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
-            <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
             Cancelar
           </button>
           <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
-            <svg style="width:16px;height:16px;color:#6c5ce7;margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <iconify-icon icon="lucide:pencil" style="width:16px;height:16px;color:#6c5ce7;margin-right:6px;"></iconify-icon>
             Editar: <span x-text="server.hostname" style="color:#888;font-weight:400;"></span>
           </h1>
         </div>
         <button class="btn" @click="save()" :disabled="saving" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.8rem;border:1px solid #6c5ce7;border-radius:8px;font-size:0.7rem;background:#6c5ce7;color:#fff;cursor:pointer;">
-          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <iconify-icon icon="lucide:save" style="width:12px;height:12px;"></iconify-icon>
           <span x-text="saving ? 'Guardando...' : 'Guardar'"></span>
         </button>
       </div>
@@ -42,7 +42,7 @@
       <!-- ESTADO -->
       <div class="edit-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <iconify-icon icon="lucide:clock" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
           Estado
         </h2>
         <select x-model="form.estado" style="max-width:200px;">
@@ -56,7 +56,7 @@
       <!-- GENERAL -->
       <div class="edit-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#3498db;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+          <iconify-icon icon="lucide:monitor" style="width:14px;height:14px;color:#3498db;flex-shrink:0;"></iconify-icon>
           Información general
         </h2>
         <div class="edit-grid">
@@ -74,7 +74,7 @@
       <!-- DISCOS -->
       <div class="edit-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <iconify-icon icon="lucide:hard-drive" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
           RAIDs y discos
         </h2>
         <template x-for="(raid, ri) in form.raids" :key="ri">
@@ -82,7 +82,7 @@
             <div class="svc-edit-header">
               <strong style="font-size:0.75rem;color:#aaa;" x-text="'RAID #' + (ri+1)"></strong>
               <button class="btn-icon danger" @click="removeRaid(ri)" title="Eliminar RAID">
-                <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
               </button>
             </div>
             <div class="edit-field" style="margin-bottom:0.5rem;">
@@ -94,7 +94,7 @@
                 <div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.3rem;">
                   <span style="font-size:0.6rem;color:#555;text-transform:uppercase;" x-text="'Disco #' + (di+1)"></span>
                   <button class="btn-icon danger" @click="removeDiskFromRaid(ri, di)" title="Eliminar disco" style="margin-left:auto;">
-                    <svg style="width:10px;height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <iconify-icon icon="lucide:x" style="width:10px;height:10px;"></iconify-icon>
                   </button>
                 </div>
                 <div class="edit-grid">
@@ -118,7 +118,7 @@
       <!-- TAGS -->
       <div class="edit-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <iconify-icon icon="lucide:tag" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
           Tags
         </h2>
         <div class="tags-selector" x-show="allTags.length > 0">
@@ -126,7 +126,7 @@
             <button class="tag-select-btn" :class="selectedTagIds.includes(t.id) ? 'selected' : ''" @click="toggleTag(t.id)" :style="selectedTagIds.includes(t.id) ? 'background:' + t.color + '20;border-color:' + t.color + '60;color:' + t.color + ';' : ''">
               <span class="tag-dot" :style="'background:' + t.color + ';'"></span>
               <span x-text="t.name"></span>
-              <svg x-show="selectedTagIds.includes(t.id)" style="width:11px;height:11px;margin-left:auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+               <iconify-icon icon="lucide:check" style="width:11px;height:11px;margin-left:auto;" x-show="selectedTagIds.includes(t.id)"></iconify-icon>
             </button>
           </template>
         </div>
@@ -136,7 +136,7 @@
       <!-- SERVICIOS -->
       <div class="edit-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#f39c12;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <iconify-icon icon="lucide:globe" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Servicios
         </h2>
         <template x-for="(svc, i) in form.servicios" :key="i">
@@ -144,7 +144,7 @@
             <div class="svc-edit-header">
               <strong style="font-size:0.75rem;color:#aaa;" x-text="'Servicio #' + (i+1)"></strong>
               <button class="btn-icon danger" @click="removeService(i)" title="Eliminar servicio">
-                <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
               </button>
             </div>
             <div class="edit-grid">
@@ -158,7 +158,7 @@
                 <div class="ip-row">
                   <input type="text" x-model="svc.ips[j]" placeholder="Ej: 10.0.0.1 o 10.0.0.1-10.0.0.5" style="font-family:monospace;font-size:0.7rem;">
                   <button class="btn-icon" @click="removeServiceIp(i, j)" title="Quitar IP">
-                    <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <iconify-icon icon="lucide:x" style="width:11px;height:11px;"></iconify-icon>
                   </button>
                 </div>
               </template>
@@ -176,7 +176,7 @@
       <!-- CREDENCIALES (solo super admin) -->
       <div class="edit-section" x-show="canEdit">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          <iconify-icon icon="lucide:lock" style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
           Credenciales <span style="color:#6c5ce7;font-size:0.6rem;font-weight:400;">(admin)</span>
         </h2>
         <div class="edit-grid">

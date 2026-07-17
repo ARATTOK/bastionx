@@ -55,7 +55,6 @@ document.addEventListener('alpine:init', () => {
       await this.loadTaskLogs(id)
 
       this.loading = false
-      this.$nextTick(() => { try { lucide.createIcons() } catch(e) {} })
     },
 
     deleteServer() {

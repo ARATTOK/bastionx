@@ -37,7 +37,6 @@ document.addEventListener('alpine:init', () => {
         await this.loadTasks()
         await this.loadCreds()
         this.loading = false
-        this.$nextTick(() => lucide.createIcons())
       } catch (e) {
         window.location.href = 'login.html'
         return
@@ -48,7 +47,6 @@ document.addEventListener('alpine:init', () => {
           this.user = session.user
           await this.fetchUserRole()
           await this.refreshServers()
-          this.$nextTick(() => lucide.createIcons())
         }
         if (event === 'SIGNED_OUT') {
           window.location.href = 'login.html'
@@ -83,7 +81,6 @@ document.addEventListener('alpine:init', () => {
         .order('ubicacion')
       if (data) this.servers = data
       this.loading = false
-      this.$nextTick(() => lucide.createIcons())
     },
 
     gotoServer(id) {

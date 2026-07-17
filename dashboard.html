@@ -12,9 +12,8 @@
   <link rel="manifest" href="manifest.json">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.338.0/font/Lucide.css">
 
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 
@@ -24,10 +23,7 @@
 
 <div x-data="app()" x-init="init()">
   <div class="loading-state" x-show="loading && !user">
-    <svg style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 2a10 10 0 0 1 10 10"/>
-    </svg>
+    <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
     Verificando sesión...
   </div>
 
@@ -35,27 +31,15 @@
       <!-- TOP BAR -->
       <div class="topbar">
         <h1>
-          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6"/>
-            <line x1="6" y1="18" x2="6.01" y2="18"/>
-          </svg>
+          <iconify-icon icon="lucide:server" class="logo-icon"></iconify-icon>
           BASTIONX LAB
           <small>inventory control</small>
         </h1>
         <div class="user-badge" @click="logout">
-          <svg class="u-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
+          <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
           <span x-text="user?.email"></span>
           <span class="role-badge" :class="isSuperAdmin ? 'super' : ''" x-text="isSuperAdmin ? 'super admin' : userRole"></span>
-          <svg style="width:12px;height:12px;color:#333;margin-left:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
+          <iconify-icon icon="lucide:log-out" style="width:12px;height:12px;color:#333;margin-left:4px;"></iconify-icon>
         </div>
       </div>
 
@@ -63,52 +47,30 @@
       <div class="stats-row">
         <div class="stat-pill online">
           <span class="s-dot"></span>
-          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
+          <iconify-icon icon="lucide:circle-check" class="s-icon"></iconify-icon>
           Activos <span class="s-count" x-text="countByStatus('Activo')"></span>
         </div>
         <div class="stat-pill offline">
           <span class="s-dot"></span>
-          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/>
-            <line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
+          <iconify-icon icon="lucide:circle-x" class="s-icon"></iconify-icon>
           Inactivos <span class="s-count" x-text="countByStatus('Inactivo')"></span>
         </div>
         <div class="stat-pill pending">
           <span class="s-dot"></span>
-          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
+          <iconify-icon icon="lucide:clock" class="s-icon"></iconify-icon>
           Pendientes <span class="s-count" x-text="countByStatus('Pendiente')"></span>
         </div>
         <div class="stat-pill free">
           <span class="s-dot"></span>
-          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="3" y1="9" x2="21" y2="9"/>
-          </svg>
+          <iconify-icon icon="lucide:square" class="s-icon"></iconify-icon>
           Libres <span class="s-count" x-text="countByStatus('Libre')"></span>
         </div>
         <div class="stat-pill" style="color:#666;border-color:transparent;background:transparent;">
-          <svg style="width:13px;height:13px;color:#444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
+          <iconify-icon icon="lucide:database" style="width:13px;height:13px;color:#444;"></iconify-icon>
           Total <span class="s-count" style="color:#aaa;" x-text="servers.length"></span>
         </div>
         <div class="stat-pill" style="color:#666;border-color:transparent;background:transparent;">
-          <svg style="width:13px;height:13px;color:#444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6"/>
-            <line x1="6" y1="18" x2="6.01" y2="18"/>
-          </svg>
+          <iconify-icon icon="lucide:server" style="width:13px;height:13px;color:#444;"></iconify-icon>
           RAM: <span x-text="totalRam + ' GB'"></span>
         </div>
       </div>
@@ -116,36 +78,33 @@
       <!-- ADMIN TOOLBAR -->
       <div class="admin-toolbar" x-show="isSuperAdmin && !loading">
         <a class="at-btn" href="add-server.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <iconify-icon icon="lucide:plus"></iconify-icon>
           Agregar
         </a>
         <button class="at-btn" @click="showUserManager = true; fetchUsers()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <iconify-icon icon="lucide:users"></iconify-icon>
           Usuarios
         </button>
         <a class="at-btn" href="tags.html" @click.prevent="window.location.href='tags.html'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <iconify-icon icon="lucide:tag"></iconify-icon>
           Tags
         </a>
         <button class="at-btn" @click="refreshServers()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
           Recargar
         </button>
       </div>
 
       <!-- INVENTORY LOADING -->
       <div class="loading-state" x-show="loading">
-        <svg style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 2a10 10 0 0 1 10 10"/>
-        </svg>
+        <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
         Cargando inventario...
       </div>
 
       <!-- FILTER TABS -->
       <div class="filter-tabs" x-show="!loading">
         <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
-          <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <iconify-icon icon="lucide:layout-grid" class="filter-icon"></iconify-icon>
           Todos
           <span class="filter-count" x-text="servers.length"></span>
         </button>
@@ -178,12 +137,7 @@
             <div class="card-section card-section--identity">
             <div class="card-top">
               <div class="card-icon-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
-                  <line x1="6" y1="6" x2="6.01" y2="6"/>
-                  <line x1="6" y1="18" x2="6.01" y2="18"/>
-                </svg>
+                <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
               </div>
               <div class="card-title-group">
                 <strong class="card-hostname" x-text="s.hostname"></strong>
@@ -191,10 +145,10 @@
               </div>
             </div>
             <div class="card-meta-row">
-              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
               <span x-text="s.ubicacion"></span>
               <span x-show="s.sn">
-                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M8 12a4 4 0 0 1 8 0"/><circle cx="12" cy="12" r="2"/></svg>
+                <iconify-icon icon="lucide:hash" class="meta-icon"></iconify-icon>
                 <span x-text="s.sn"></span>
               </span>
             </div>
@@ -202,50 +156,58 @@
             <div class="card-section card-section--info">
             <div class="card-specs-row">
               <span class="card-spec-item" x-show="s.procesador && s.procesador !== ''">
-                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <iconify-icon icon="lucide:cpu" class="spec-icon"></iconify-icon>
                 <span class="spec-value" x-text="shortCpu(s.procesador)"></span>
               </span>
               <span class="card-spec-item">
-                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><line x1="9" y1="2" x2="9" y2="6"/><line x1="15" y1="2" x2="15" y2="6"/></svg>
+                <iconify-icon icon="lucide:memory-stick" class="spec-icon"></iconify-icon>
                 <span class="spec-value" x-text="s.ram_gb > 0 ? s.ram_gb : '—'"></span>
               </span>
               <span class="card-spec-item" x-show="diskCount(s) > 0">
-                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                <iconify-icon icon="lucide:hard-drive" class="spec-icon"></iconify-icon>
                 <span class="spec-value" x-text="diskCount(s)"></span>
               </span>
               <span class="card-spec-item" x-show="s.servicios && s.servicios.length > 0">
-                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <iconify-icon icon="lucide:globe" class="spec-icon"></iconify-icon>
                 <span class="spec-value" x-text="s.servicios.length"></span>
               </span>
             </div>
-            <div class="card-tags-row" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
-              <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 4)" :key="ti">
-                <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'">
-                <span class="card-tag-dot" :style="'background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '80;'"></span>
-                <span x-text="t.name"></span>
-              </span>
-              </template>
-              <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
+            <div x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0" style="margin-top:0.35rem;">
+              <div class="card-tags-header">Tags</div>
+              <div class="card-tags-row">
+                <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 4)" :key="ti">
+                  <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'">
+                    <span class="card-tag-dot" :style="'background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '80;'"></span>
+                    <span x-text="t.name"></span>
+                  </span>
+                </template>
+                <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
+              </div>
             </div>
-            <div class="ram-bar" x-show="tasksProgressMap[s.id]" style="position:relative;">
-              <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
-              <span class="ram-pct" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
+            <div x-show="tasksProgressMap[s.id]" style="margin-top:0.35rem;">
+              <div class="card-progress-label">
+                <span>Task Progress</span>
+                <span class="progress-count" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
+              </div>
+              <div class="ram-bar">
+                <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
+              </div>
             </div>
             </div>
             <div class="card-section card-section--footer">
             <div class="card-actions">
               <a :href="'https://' + credsMap[s.id]?.ipmi" target="_blank" @click.stop class="card-action-btn ipmi-btn" x-show="credsMap[s.id]?.ipmi" title="Abrir IPMI">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <iconify-icon icon="lucide:monitor"></iconify-icon>
               </a>
               <a :href="'https://' + credsMap[s.id]?.ip_servicio" target="_blank" @click.stop class="card-action-btn svc-btn" x-show="credsMap[s.id]?.ip_servicio" title="Abrir Servicio">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <iconify-icon icon="lucide:globe"></iconify-icon>
               </a>
-              <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0" style="margin-left:auto;">
-                <svg x-show="serverCardSeverity(s.id) === 'critical'" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <svg x-show="serverCardSeverity(s.id) === 'config'" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <svg x-show="serverCardSeverity(s.id) === 'other'" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span x-text="pendingTasksMap[s.id].length"></span>
-              </div>
+            </div>
+            <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+              <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
+              <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>
+              <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
+              <span x-text="pendingTasksMap[s.id].length"></span>
             </div>
             </div>
           </div>
@@ -253,10 +215,7 @@
       </div>
 
       <div class="empty-col" style="margin-top:1.5rem;" x-show="!loading && servers.length === 0">
-          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6"/>
-          </svg>
+          <iconify-icon icon="lucide:server-crash" class="empty-icon"></iconify-icon>
           No hay servidores registrados
         </div>
 
@@ -301,11 +260,7 @@
       </div>
       <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
         <a class="btn" href="https://supabase.com/dashboard/project/unaadjavtrsogkzcbmev/auth/users" target="_blank" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;text-decoration:none;">
-          <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
+          <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
           Crear usuario (Dashboard)
         </a>
         <button class="btn" @click="showUserManager = false; managedUsers = []" style="margin-left:auto;">Cerrar</button>

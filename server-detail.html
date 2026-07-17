@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#151515">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -19,9 +19,7 @@
 <body>
 <div x-data="detailApp()" x-init="init()">
   <div class="loading-state" x-show="loading">
-    <svg style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/>
-    </svg>
+    <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
     Cargando servidor...
   </div>
 
@@ -31,25 +29,23 @@
       <div class="topbar" style="margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <button class="btn" @click="goBack()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
-            <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
             Volver
           </button>
           <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
-            <svg style="width:18px;height:18px;color:#6c5ce7;margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
-            </svg>
+            <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;margin-right:6px;"></iconify-icon>
             <span x-text="server.hostname"></span>
           </h1>
         </div>
         <div style="display:flex;gap:0.4rem;">
           <template x-if="canEdit">
             <button class="btn" @click="goEdit()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;cursor:pointer;">
-              <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <iconify-icon icon="lucide:pencil" style="width:12px;height:12px;"></iconify-icon>
               Editar
             </button>
           </template>
           <a href="dashboard.html" class="btn" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;text-decoration:none;">
-            <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <iconify-icon icon="lucide:layout-grid" style="width:11px;height:11px;"></iconify-icon>
             Dashboard
           </a>
         </div>
@@ -64,7 +60,7 @@
       <!-- TAGS -->
       <div class="det-section" x-show="tags.length > 0">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <iconify-icon icon="lucide:tag" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
           Tags
         </h2>
         <div class="tags-row">
@@ -80,7 +76,7 @@
       <!-- HARDWARE -->
       <div class="det-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#3498db;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+          <iconify-icon icon="lucide:cpu" style="width:14px;height:14px;color:#3498db;flex-shrink:0;"></iconify-icon>
           Hardware
         </h2>
         <div class="det-grid-2col">
@@ -95,13 +91,13 @@
       <!-- DISKS -->
       <div class="det-section" x-show="diskCount(server) > 0">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <iconify-icon icon="lucide:hard-drive" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
           Discos <span class="det-count" x-text="diskCount(server)"></span>
         </h2>
         <template x-for="(g, gi) in groupedDisks(server)" :key="gi">
           <div class="disk-group">
             <div class="disk-group-header" x-show="g.nombre">
-              <svg style="width:11px;height:11px;color:#555;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg>
+              <iconify-icon icon="lucide:server" style="width:11px;height:11px;color:#555;"></iconify-icon>
               <span x-text="g.nombre"></span>
               <span class="det-count" x-text="g.discos.length + ' discos'"></span>
             </div>
@@ -123,7 +119,7 @@
       <!-- SERVICIOS -->
       <div class="det-section" x-show="server.servicios && server.servicios.length > 0">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#f39c12;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <iconify-icon icon="lucide:globe" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Servicios <span class="det-count" x-text="server.servicios.length"></span>
         </h2>
         <template x-for="(svc, i) in server.servicios" :key="i">
@@ -133,7 +129,7 @@
               <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto: ' + svc.puerto"></span>
             </div>
             <div class="svc-ips" x-show="svc.ips && svc.ips.length > 0">
-              <svg style="width:11px;height:11px;color:#555;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg>
+              <iconify-icon icon="lucide:server" style="width:11px;height:11px;color:#555;flex-shrink:0;"></iconify-icon>
               <a class="svc-ip" :href="'https://' + ip" target="_blank" x-text="ip" style="text-decoration:none;"></a>
             </div>
             <div class="svc-desc" x-show="svc.descripcion" x-text="svc.descripcion" style="font-size:0.65rem;color:#555;margin-top:0.2rem;"></div>
@@ -144,7 +140,7 @@
       <!-- CREDENCIALES -->
       <div class="det-section" x-show="serverCreds">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          <iconify-icon icon="lucide:lock" style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
           Credenciales
         </h2>
         <div class="det-grid-2col">
@@ -158,11 +154,11 @@
         </div>
         <div class="detail-actions" style="margin-top:0.5rem;" x-show="serverCreds">
           <a class="btn" :href="'https://' + serverCreds?.ipmi" target="_blank" x-show="serverCreds?.ipmi" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;text-decoration:none;cursor:pointer;">
-            <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            <iconify-icon icon="lucide:shield" style="width:11px;height:11px;"></iconify-icon>
             Abrir IPMI
           </a>
           <a class="btn" :href="'https://' + serverCreds?.ip_servicio" target="_blank" x-show="serverCreds?.ip_servicio" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;text-decoration:none;cursor:pointer;">
-            <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            <iconify-icon icon="lucide:globe" style="width:11px;height:11px;"></iconify-icon>
             Abrir IP Servicio
           </a>
         </div>
@@ -171,7 +167,7 @@
       <!-- TAREAS PENDIENTES -->
       <div class="det-section">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#2ecc71;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+          <iconify-icon icon="lucide:list-checks" style="width:14px;height:14px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
           Tareas <span class="det-count" x-text="tasks.length"></span>
         </h2>
 
@@ -196,7 +192,7 @@
             </div>
           <template x-if="canEdit">
               <button class="btn-icon danger" @click="deleteTask(t.id)" title="Eliminar tarea" style="flex-shrink:0;">
-                <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <iconify-icon icon="lucide:trash-2" style="width:12px;height:12px;"></iconify-icon>
               </button>
             </template>
           </div>
@@ -219,7 +215,7 @@
       <!-- BITÁCORA -->
       <div class="det-section" x-show="taskLogs.length > 0">
         <h2 class="det-section-title">
-          <svg style="width:14px;height:14px;color:#f39c12;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <iconify-icon icon="lucide:history" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Bitácora
         </h2>
         <div class="log-list">
@@ -236,7 +232,7 @@
       <!-- DELETE -->
       <div class="det-section" x-show="canEdit" style="border-top:1px solid var(--border-subtle);padding-top:1.5rem;margin-top:1.5rem;">
         <button class="btn danger" @click="deleteServer()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.8rem;border:1px solid #e74c3c40;border-radius:8px;font-size:0.75rem;background:#e74c3c10;color:#e74c3c;cursor:pointer;">
-          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <iconify-icon icon="lucide:trash-2" style="width:12px;height:12px;"></iconify-icon>
           Eliminar servidor
         </button>
       </div>
