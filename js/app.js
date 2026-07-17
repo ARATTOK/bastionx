@@ -15,6 +15,7 @@ document.addEventListener('alpine:init', () => {
     pendingTasksMap: {},
     tasksProgressMap: {},
     credsMap: {},
+    openKebabId: null,
     managedUsers: [],
 
     async init() {
@@ -85,6 +86,10 @@ document.addEventListener('alpine:init', () => {
 
     gotoServer(id) {
       window.location.href = 'server-detail.html?id=' + id
+    },
+
+    svcFirstIp(svc) {
+      return (svc.ips && svc.ips[0]) ? svc.ips[0] : null
     },
 
     async loadTags() {

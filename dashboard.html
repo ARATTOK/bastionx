@@ -122,6 +122,29 @@
       <div class="bento-grid" x-show="!loading">
         <template x-for="s in filteredServers" :key="s.id">
           <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
+            <div class="kebab-wrap" x-show="canEdit" @click.outside="openKebabId = null">
+              <button class="kebab-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
+                <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
+              </button>
+              <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
+                <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click="openKebabId = null">
+                  <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
+                </a>
+                <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank"
+                   x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
+                  <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
+                </a>
+                <div class="kebab-divider"></div>
+                <div class="kebab-section-header">Servicios</div>
+                <template x-for="(svc, i) in (s.servicios || [])" :key="i">
+                  <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
+                     x-show="svcFirstIp(svc)" @click="openKebabId = null">
+                    <iconify-icon icon="lucide:globe"></iconify-icon>
+                    <span x-text="svc.nombre"></span>
+                  </a>
+                </template>
+              </div>
+            </div>
             <div class="card-section card-section--identity">
             <div class="card-top">
               <div class="card-icon-box">
@@ -183,14 +206,6 @@
             </div>
             </div>
             <div class="card-section card-section--footer">
-            <div class="card-actions">
-              <a :href="'https://' + credsMap[s.id]?.ipmi" target="_blank" @click.stop class="card-action-btn ipmi-btn" x-show="credsMap[s.id]?.ipmi" title="Abrir IPMI">
-                <iconify-icon icon="lucide:monitor"></iconify-icon>
-              </a>
-              <a :href="'https://' + credsMap[s.id]?.ip_servicio" target="_blank" @click.stop class="card-action-btn svc-btn" x-show="credsMap[s.id]?.ip_servicio" title="Abrir Servicio">
-                <iconify-icon icon="lucide:globe"></iconify-icon>
-              </a>
-            </div>
             <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
               <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
               <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>

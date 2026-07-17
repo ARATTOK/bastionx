@@ -505,7 +505,6 @@ body::before {
   transition: all 0.15s;
   position: relative;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -869,6 +868,22 @@ body::before {
   padding: 0.3rem 0.6rem 0.15rem;
   font-weight: 600;
   opacity: 0.7;
+}
+
+/* Kebab override for kanban cards */
+.kanban-card .kebab-wrap {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+}
+.kanban-card .kebab-btn {
+  width: 28px;
+  height: 28px;
+}
+.kanban-card .kebab-btn iconify-icon {
+  width: 14px;
+  height: 14px;
 }
 
 /* === MODALES === */
