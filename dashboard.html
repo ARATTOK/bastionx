@@ -45,33 +45,21 @@
 
       <!-- STATS ROW -->
       <div class="stats-row">
-        <div class="stat-pill online">
-          <span class="s-dot"></span>
-          <iconify-icon icon="lucide:circle-check" class="s-icon"></iconify-icon>
-          Activos <span class="s-count" x-text="countByStatus('Activo')"></span>
+        <div class="stat-pill" style="color:#6c5ce7;">
+          <iconify-icon icon="lucide:server" class="s-icon"></iconify-icon>
+          Servidores <span class="s-count" x-text="servers.length"></span>
         </div>
-        <div class="stat-pill offline">
-          <span class="s-dot"></span>
-          <iconify-icon icon="lucide:circle-x" class="s-icon"></iconify-icon>
-          Inactivos <span class="s-count" x-text="countByStatus('Inactivo')"></span>
+        <div class="stat-pill" style="color:#3498db;">
+          <iconify-icon icon="lucide:memory-stick" class="s-icon"></iconify-icon>
+          RAM <span class="s-count" x-text="totalRam + ' GB'"></span>
         </div>
-        <div class="stat-pill pending">
-          <span class="s-dot"></span>
-          <iconify-icon icon="lucide:clock" class="s-icon"></iconify-icon>
-          Pendientes <span class="s-count" x-text="countByStatus('Pendiente')"></span>
+        <div class="stat-pill" style="color:#1abc9c;">
+          <iconify-icon icon="lucide:hard-drive" class="s-icon"></iconify-icon>
+          Discos <span class="s-count" x-text="totalStorageTB + ' TB'"></span>
         </div>
-        <div class="stat-pill free">
-          <span class="s-dot"></span>
-          <iconify-icon icon="lucide:square" class="s-icon"></iconify-icon>
-          Libres <span class="s-count" x-text="countByStatus('Libre')"></span>
-        </div>
-        <div class="stat-pill" style="color:#666;border-color:transparent;background:transparent;">
-          <iconify-icon icon="lucide:database" style="width:13px;height:13px;color:#444;"></iconify-icon>
-          Total <span class="s-count" style="color:#aaa;" x-text="servers.length"></span>
-        </div>
-        <div class="stat-pill" style="color:#666;border-color:transparent;background:transparent;">
-          <iconify-icon icon="lucide:server" style="width:13px;height:13px;color:#444;"></iconify-icon>
-          RAM: <span x-text="totalRam + ' GB'"></span>
+        <div class="stat-pill" style="color:#f39c12;">
+          <iconify-icon icon="lucide:cpu" class="s-icon"></iconify-icon>
+          CPU <span class="s-count" x-text="totalCpuGHz + ' GHz'"></span>
         </div>
       </div>
 

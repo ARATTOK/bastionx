@@ -198,6 +198,40 @@ document.addEventListener('alpine:init', () => {
       return this.servers.reduce((acc, s) => acc + Number(s.ram_gb || 0), 0)
     },
 
+    get totalStorageTB() {
+      let totalGB = 0
+      for (const s of this.servers) {
+        try {
+          const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
+          if (!Array.isArray(d)) continue
+          const disks = (d[0] && d[0].nombre !== undefined)
+            ? d.flatMap(r => Array.isArray(r.discos) ? r.discos : [])
+            : d
+          for (const dk of disks) {
+            if (!dk.tamano) continue
+            const m = dk.tamano.match(/(\d+(?:\.\d+)?)\s*(GB|TB|MB)/i)
+            if (!m) continue
+            const val = parseFloat(m[1])
+            const unit = m[2].toUpperCase()
+            if (unit === 'TB') totalGB += val * 1024
+            else if (unit === 'MB') totalGB += val / 1024
+            else totalGB += val
+          }
+        } catch {}
+      }
+      return (totalGB / 1024).toFixed(1)
+    },
+
+    get totalCpuGHz() {
+      let total = 0
+      for (const s of this.servers) {
+        if (!s.procesador || s.procesador === 'Pendiente') continue
+        const m = s.procesador.match(/@?\s*(\d+(?:\.\d+)?)\s*GHz/i)
+        if (m) total += parseFloat(m[1])
+      }
+      return total.toFixed(1)
+    },
+
     shortCpu(cpu) {
       if (!cpu || cpu === '') return '\u2014'
       if (cpu.includes('Silver')) return cpu.split('@')[0].replace('Intel ', '').trim()

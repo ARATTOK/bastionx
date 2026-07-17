@@ -406,37 +406,10 @@ body::before {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), var(--glass-shadow-sm);
 }
 
-.stats-row .stat-pill .s-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
 .stats-row .stat-pill .s-count {
   color: var(--text-bright);
   margin-left: 0.15rem;
 }
-
-.stats-row .stat-pill.online .s-dot {
-  background: var(--c-online);
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
-}
-.stats-row .stat-pill.online { color: var(--c-online); }
-
-.stats-row .stat-pill.offline .s-dot {
-  background: var(--c-offline);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.3);
-}
-.stats-row .stat-pill.offline { color: var(--c-offline); }
-
-.stats-row .stat-pill.pending .s-dot {
-  background: var(--c-pending);
-  box-shadow: 0 0 8px rgba(243, 156, 18, 0.3);
-}
-.stats-row .stat-pill.pending { color: var(--c-pending); }
-
-.stats-row .stat-pill.free .s-dot { background: var(--c-free); }
-.stats-row .stat-pill.free { color: var(--text-muted); }
 
 .stats-row .stat-pill .s-icon { width: 13px; height: 13px; }
 
@@ -1685,7 +1658,6 @@ svg { display: inline-block; vertical-align: middle; }
     padding: 0.2rem 0.5rem;
     gap: 0.25rem;
   }
-  .stats-row .stat-pill .s-dot { width: 6px; height: 6px; }
 
   .bento-grid { gap: 0.5rem; }
 
