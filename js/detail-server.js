@@ -16,6 +16,7 @@ document.addEventListener('alpine:init', () => {
     showCompleteModal: false,
     completeTaskDesc: '',
     pendingCompleteTask: null,
+    showKebab: false,
 
     async init() {
       const { data: { session } } = await sb.auth.getSession()
@@ -71,6 +72,9 @@ document.addEventListener('alpine:init', () => {
 
     goBack() { window.location.href = 'dashboard.html' },
     goEdit() { window.location.href = 'edit-server.html?id=' + this.server.id },
+    svcFirstIp(svc) {
+      return (svc.ips && svc.ips[0]) ? svc.ips[0] : null
+    },
 
     async addTask() {
       if (!this.newTaskTitulo.trim()) return

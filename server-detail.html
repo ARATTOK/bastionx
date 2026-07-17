@@ -48,6 +48,29 @@
             <iconify-icon icon="lucide:layout-grid" style="width:11px;height:11px;"></iconify-icon>
             Dashboard
           </a>
+          <div class="kebab-wrap" x-show="canEdit" @click.outside="showKebab = false">
+            <button class="kebab-btn" @click="showKebab = !showKebab" title="Opciones">
+              <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
+            </button>
+            <div class="kebab-dropdown" x-show="showKebab" x-transition>
+              <button class="kebab-item" @click="goEdit()" x-show="canEdit">
+                <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
+              </button>
+              <a class="kebab-item" :href="'https://' + serverCreds?.ipmi" target="_blank"
+                 x-show="serverCreds?.ipmi" @click="showKebab = false">
+                <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
+              </a>
+              <div class="kebab-divider"></div>
+              <div class="kebab-section-header">Servicios</div>
+              <template x-for="(svc, i) in (server.servicios || [])" :key="i">
+                <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
+                   x-show="svcFirstIp(svc)" @click="showKebab = false">
+                  <iconify-icon icon="lucide:globe"></iconify-icon>
+                  <span x-text="svc.nombre"></span>
+                </a>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
 
