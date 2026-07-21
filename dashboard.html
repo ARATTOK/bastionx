@@ -81,6 +81,30 @@
           <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
           Recargar
         </button>
+        <button class="at-btn" @click="exportCSV()">
+          <iconify-icon icon="lucide:file-down"></iconify-icon>
+          Exportar
+        </button>
+        <a class="at-btn" href="report.html">
+          <iconify-icon icon="lucide:clipboard-list"></iconify-icon>
+          Reporte
+        </a>
+        <a class="at-btn" href="labels.html">
+          <iconify-icon icon="lucide:printer"></iconify-icon>
+          Etiquetas
+        </a>
+      </div>
+
+      <!-- UTILITY LINKS (all roles) -->
+      <div class="util-links" x-show="!loading">
+        <a href="report.html" @click.prevent="window.location.href='report.html'">
+          <iconify-icon icon="lucide:clipboard-list"></iconify-icon>
+          Reporte
+        </a>
+        <a href="labels.html" @click.prevent="window.location.href='labels.html'">
+          <iconify-icon icon="lucide:printer"></iconify-icon>
+          Etiquetas
+        </a>
       </div>
 
       <!-- INVENTORY LOADING -->

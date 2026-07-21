@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Reporte</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/report.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .report-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #333;
+    }
+    .report-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .report-header .report-date {
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .report-header .report-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .report-header .report-actions button,
+    .report-header .report-actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.85rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      color: #ccc;
+      text-decoration: none;
+    }
+    .report-header .report-actions button:hover,
+    .report-header .report-actions a:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .report-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .report-stat {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      text-align: center;
+    }
+    .report-stat .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .report-stat .stat-label {
+      font-size: 0.7rem;
+      color: #888;
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .report-table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+    }
+    .report-table th {
+      background: #252525;
+      color: #aaa;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 0.65rem 0.65rem;
+      text-align: left;
+      border-bottom: 1px solid #333;
+      white-space: nowrap;
+    }
+    .report-table td {
+      padding: 0.55rem 0.65rem;
+      border-bottom: 1px solid #2a2a2a;
+      color: #ccc;
+      vertical-align: middle;
+    }
+    .report-table tr:last-child td {
+      border-bottom: none;
+    }
+    .report-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .report-table .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+    .report-table .status-dot.activo { background: #2ecc71; }
+    .report-table .status-dot.inactivo { background: #e74c3c; }
+    .report-table .status-dot.pendiente { background: #f39c12; }
+    .report-table .status-dot.libre { background: #888; }
+
+    .report-footer {
+      margin-top: 1.5rem;
+      font-size: 0.7rem;
+      color: #666;
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+      }
+      .report-page {
+        padding: 0.5in !important;
+      }
+      .report-header {
+        border-bottom-color: #ccc !important;
+      }
+      .report-header h1 {
+        color: #000 !important;
+      }
+      .report-header .report-date {
+        color: #666 !important;
+      }
+      .report-header .report-actions {
+        display: none !important;
+      }
+      .report-stat {
+        background: #f5f5f5 !important;
+        border-color: #ddd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .report-stat .stat-value {
+        color: #000 !important;
+      }
+      .report-stat .stat-label {
+        color: #666 !important;
+      }
+      .report-table-wrap {
+        border-color: #ddd !important;
+        background: #fff !important;
+      }
+      .report-table th {
+        background: #eee !important;
+        color: #333 !important;
+        border-bottom-color: #ccc !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .report-table td {
+        color: #333 !important;
+        border-bottom-color: #eee !important;
+      }
+      .report-table tr:hover td {
+        background: none !important;
+      }
+      .report-footer {
+        color: #999 !important;
+        border-top-color: #eee !important;
+      }
+      .report-table .status-dot {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .report-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .report-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+<div x-data="reportApp()" x-init="init()">
+  <div class="loading-state" x-show="loading" style="padding:3rem;text-align:center;">
+    <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
+    Generando reporte...
+  </div>
+
+  <div x-show="!loading" class="report-page">
+    <!-- HEADER -->
+    <div class="report-header">
+      <div>
+        <h1>
+          <iconify-icon icon="lucide:clipboard-list" style="width:22px;height:22px;color:#6c5ce7;"></iconify-icon>
+          BASTIONX LAB — Reporte de Inventario
+        </h1>
+        <div class="report-date" x-text="'Generado: ' + reportDate"></div>
+      </div>
+      <div class="report-actions">
+        <button @click="print()">
+          <iconify-icon icon="lucide:printer" style="width:13px;height:13px;"></iconify-icon>
+          Imprimir
+        </button>
+        <a href="dashboard.html">
+          <iconify-icon icon="lucide:arrow-left" style="width:13px;height:13px;"></iconify-icon>
+          Volver
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="report-stats">
+      <div class="report-stat">
+        <div class="stat-value" x-text="servers.length"></div>
+        <div class="stat-label">Servidores</div>
+      </div>
+      <div class="report-stat">
+        <div class="stat-value" x-text="totalRAM + ' GB'"></div>
+        <div class="stat-label">RAM Total</div>
+      </div>
+      <div class="report-stat">
+        <div class="stat-value" x-text="totalStorageTB + ' TB'"></div>
+        <div class="stat-label">Discos</div>
+      </div>
+      <div class="report-stat">
+        <div class="stat-value" x-text="totalCpuGHz + ' GHz'"></div>
+        <div class="stat-label">CPU Total</div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Hostname</th>
+            <th>SN</th>
+            <th>Modelo</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+            <th>CPU</th>
+            <th>RAM</th>
+            <th>Discos</th>
+            <th>IPMI</th>
+            <th>Tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="s in servers" :key="s.id">
+            <tr>
+              <td style="font-weight:600;color:#e0e0e0;" x-text="s.hostname"></td>
+              <td x-text="s.sn || '—'"></td>
+              <td x-text="s.modelo || '—'"></td>
+              <td x-text="s.ubicacion || '—'"></td>
+              <td>
+                <span class="status-dot" :class="s.estado || 'libre'"></span>
+                <span x-text="s.estado ? s.estado.charAt(0).toUpperCase() + s.estado.slice(1) : 'Libre'"></span>
+              </td>
+              <td x-text="s.procesador || '—'"></td>
+              <td x-text="s.ram_gb ? s.ram_gb + ' GB' : '—'"></td>
+              <td x-text="diskCount(s)"></td>
+              <td x-text="credField(s, 'ipmi')"></td>
+              <td x-text="serverTags(s)" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="report-footer">
+      <span x-text="'Generado el ' + reportDate + ' — ' + servers.length + ' servidores en total'"></span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

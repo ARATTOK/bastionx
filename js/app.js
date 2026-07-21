@@ -92,6 +92,22 @@ document.addEventListener('alpine:init', () => {
       return (svc.ips && svc.ips[0]) ? svc.ips[0] : null
     },
 
+    exportCSV() {
+      const headers = ['Hostname','SN','Modelo','Ubicación','Estado','CPU','RAM (GB)','Discos','Servicios','Tags','IPMI','IP Servicio']
+      const rows = this.servers.map(s => {
+        const tags = this.serverTagsMap[s.id]?.map(t => t.name).join('; ') || ''
+        const creds = this.credsMap[s.id] || {}
+        return [s.hostname, s.sn, s.modelo, s.ubicacion, s.estado, s.procesador, s.ram_gb, this.diskCount(s), s.servicios?.length || 0, tags, creds.ipmi || '', creds.ip_servicio || '']
+      })
+      const csv = [headers, ...rows].map(r => r.map(v => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `bastionx-inventory-${new Date().toISOString().slice(0,10)}.csv`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    },
+
     async loadTags() {
       const { data: sts } = await sb.from('server_tags').select('*')
       const { data: tags } = await sb.from('tags').select('*')
