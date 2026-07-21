@@ -15,9 +15,12 @@
 
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 
   <link rel="stylesheet" href="css/style.css">
+  <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body>
 
@@ -61,6 +64,22 @@
           <iconify-icon icon="lucide:cpu" class="s-icon"></iconify-icon>
           CPU <span class="s-count" x-text="totalCpuGHz + ' GHz'"></span>
         </div>
+      </div>
+
+      <!-- TASK SUMMARY -->
+      <div class="task-summary" x-show="!loading && pendingTasksSummary.total > 0">
+        <span class="task-summary-item critical" x-show="pendingTasksSummary.critica > 0">
+          <iconify-icon icon="lucide:triangle-alert" style="width:12px;height:12px;"></iconify-icon>
+          Cr&iacute;ticas: <strong x-text="pendingTasksSummary.critica"></strong>
+        </span>
+        <span class="task-summary-item config" x-show="pendingTasksSummary.configuracion > 0">
+          <iconify-icon icon="lucide:settings" style="width:12px;height:12px;"></iconify-icon>
+          Config: <strong x-text="pendingTasksSummary.configuracion"></strong>
+        </span>
+        <span class="task-summary-item normal" x-show="pendingTasksSummary.normal > 0">
+          <iconify-icon icon="lucide:info" style="width:12px;height:12px;"></iconify-icon>
+          Normales: <strong x-text="pendingTasksSummary.normal"></strong>
+        </span>
       </div>
 
       <!-- ADMIN TOOLBAR -->
@@ -107,150 +126,667 @@
         </a>
       </div>
 
-      <!-- INVENTORY LOADING -->
-      <div class="loading-state" x-show="loading">
-        <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
-        Cargando inventario...
-      </div>
-
-      <!-- FILTER TABS -->
-      <div class="filter-tabs" x-show="!loading">
-        <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
-          <iconify-icon icon="lucide:layout-grid" class="filter-icon"></iconify-icon>
-          Todos
-          <span class="filter-count" x-text="servers.length"></span>
-        </button>
-        <button class="filter-tab" :class="activeFilter === 'Activo' ? 'active' : ''" @click="activeFilter = 'Activo'">
-          <span class="filter-dot dot-activo"></span>
-          Activo
-          <span class="filter-count" x-text="countByStatus('Activo')"></span>
-        </button>
-        <button class="filter-tab" :class="activeFilter === 'Inactivo' ? 'active' : ''" @click="activeFilter = 'Inactivo'">
-          <span class="filter-dot dot-inactivo"></span>
-          Inactivo
-          <span class="filter-count" x-text="countByStatus('Inactivo')"></span>
-        </button>
-        <button class="filter-tab" :class="activeFilter === 'Pendiente' ? 'active' : ''" @click="activeFilter = 'Pendiente'">
-          <span class="filter-dot dot-pendiente"></span>
-          Pendiente
-          <span class="filter-count" x-text="countByStatus('Pendiente')"></span>
-        </button>
-        <button class="filter-tab" :class="activeFilter === 'Libre' ? 'active' : ''" @click="activeFilter = 'Libre'">
-          <span class="filter-dot dot-libre"></span>
-          Libre
-          <span class="filter-count" x-text="countByStatus('Libre')"></span>
+      <!-- SEARCH BAR -->
+      <div class="search-bar" x-show="!loading">
+        <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+        <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar por hostname, SN, modelo, IP, servicio..." @input.debounce="filterServers()">
+        <button class="sb-clear" x-show="searchQuery" @click="searchQuery='';filterServers()">
+          <iconify-icon icon="lucide:x"></iconify-icon>
         </button>
       </div>
 
-      <!-- BENTO GRID -->
-      <div class="bento-grid" x-show="!loading">
-        <template x-for="s in filteredServers" :key="s.id">
-          <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
-            <div class="kebab-wrap" x-show="canEdit" @click.outside="openKebabId = null">
-              <button class="kebab-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
-                <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
-              </button>
-              <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
-                <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click="openKebabId = null">
-                  <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
-                </a>
-                <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank"
-                   x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
-                  <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
-                </a>
-                <div class="kebab-divider"></div>
-                <div class="kebab-section-header">Servicios</div>
-                <template x-for="(svc, i) in (s.servicios || [])" :key="i">
-                  <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
-                     x-show="svcFirstIp(svc)" @click="openKebabId = null">
-                    <iconify-icon icon="lucide:globe"></iconify-icon>
-                    <span x-text="svc.nombre"></span>
-                  </a>
-                </template>
-              </div>
-            </div>
-            <div class="card-section card-section--identity">
-            <div class="card-top">
-              <div class="card-icon-box">
-                <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
-              </div>
-              <div class="card-title-group">
-                <strong class="card-hostname" x-text="s.hostname"></strong>
-                <span class="card-model-tag" x-show="s.modelo" x-text="s.modelo"></span>
-              </div>
-            </div>
-            <div class="card-meta-row">
-              <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
-              <span x-text="s.ubicacion"></span>
-              <span x-show="s.sn">
-                <iconify-icon icon="lucide:hash" class="meta-icon"></iconify-icon>
-                <span x-text="s.sn"></span>
-              </span>
-            </div>
-            </div>
-            <div class="card-section card-section--info">
-            <div class="card-specs-row">
-              <span class="card-spec-item" x-show="s.procesador && s.procesador !== ''">
-                <iconify-icon icon="lucide:cpu" class="spec-icon"></iconify-icon>
-                <span class="spec-value" x-text="shortCpu(s.procesador)"></span>
-              </span>
-              <span class="card-spec-item">
-                <iconify-icon icon="lucide:memory-stick" class="spec-icon"></iconify-icon>
-                <span class="spec-value" x-text="s.ram_gb > 0 ? s.ram_gb : '—'"></span>
-              </span>
-              <span class="card-spec-item" x-show="diskCount(s) > 0">
-                <iconify-icon icon="lucide:hard-drive" class="spec-icon"></iconify-icon>
-                <span class="spec-value" x-text="diskCount(s)"></span>
-              </span>
-              <span class="card-spec-item" x-show="s.servicios && s.servicios.length > 0">
-                <iconify-icon icon="lucide:globe" class="spec-icon"></iconify-icon>
-                <span class="spec-value" x-text="s.servicios.length"></span>
-              </span>
-            </div>
-            <div x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0" style="margin-top:0.35rem;">
-              <div class="card-tags-header">Tags</div>
-              <div class="card-tags-row">
-                <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 4)" :key="ti">
-                  <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'">
-                    <span class="card-tag-dot" :style="'background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '80;'"></span>
-                    <span x-text="t.name"></span>
-                  </span>
-                </template>
-                <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
-              </div>
-            </div>
-            <div x-show="tasksProgressMap[s.id]" style="margin-top:0.35rem;">
-              <div class="card-progress-label">
-                <span>Task Progress</span>
-                <span class="progress-count" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
-              </div>
-              <div class="ram-bar">
-                <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
-              </div>
-            </div>
-            </div>
-            <div class="card-section card-section--footer">
-            <div class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
-              <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
-              <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>
-              <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
-              <span x-text="pendingTasksMap[s.id].length"></span>
-            </div>
-            <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')">
-              <span class="sl-dot"></span>
-              <span x-text="s.estado"></span>
-            </div>
-            </div>
+      <!-- VIEW TABS -->
+      <div class="view-tabs" x-show="!loading">
+        <button class="view-tab" :class="activeView === 'servers' ? 'active' : ''" @click="activeView='servers'">
+          <iconify-icon icon="lucide:server"></iconify-icon>
+          Servidores
+        </button>
+        <button class="view-tab" :class="activeView === 'services' ? 'active' : ''" @click="activeView='services'">
+          <iconify-icon icon="lucide:layout-grid"></iconify-icon>
+          Servicios
+        </button>
+        <button class="view-tab" :class="activeView === 'network' ? 'active' : ''" @click="activeView='network'">
+          <iconify-icon icon="lucide:globe"></iconify-icon>
+          Redes
+        </button>
+        <button class="view-tab" :class="activeView === 'all' ? 'active' : ''" @click="activeView='all'">
+          <iconify-icon icon="lucide:layers"></iconify-icon>
+          Infraestructura
+        </button>
+        <button class="view-tab" :class="activeView === 'admin' ? 'active' : ''" @click="activeView='admin'" x-show="isSuperAdmin">
+          <iconify-icon icon="lucide:shield"></iconify-icon>
+          Admin
+        </button>
+      </div>
+
+      <!-- SKELETON LOADING -->
+      <div class="bento-grid" x-show="loading">
+        <template x-for="i in 8" :key="i">
+          <div class="kanban-card" style="padding:1rem;">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-text" style="margin-top:0.75rem;"></div>
+            <div class="skeleton skeleton-text w60"></div>
+            <div class="skeleton skeleton-text w40"></div>
           </div>
         </template>
       </div>
 
-      <div class="empty-col" style="margin-top:1.5rem;" x-show="!loading && servers.length === 0">
-          <iconify-icon icon="lucide:server-crash" class="empty-icon"></iconify-icon>
-          No hay servidores registrados
-        </div>
+      <!-- ===== VIEW: SERVIDORES ===== -->
+      <template x-if="activeView === 'servers'">
+        <div>
+          <!-- FILTER TABS -->
+          <div class="filter-tabs" x-show="!loading">
+            <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
+              <iconify-icon icon="lucide:layout-grid" class="filter-icon"></iconify-icon>
+              Todos
+              <span class="filter-count" x-text="servers.length"></span>
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Activo' ? 'active' : ''" @click="activeFilter = 'Activo'">
+              <span class="filter-dot dot-activo"></span>
+              Activo
+              <span class="filter-count" x-text="countByStatus('Activo')"></span>
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Inactivo' ? 'active' : ''" @click="activeFilter = 'Inactivo'">
+              <span class="filter-dot dot-inactivo"></span>
+              Inactivo
+              <span class="filter-count" x-text="countByStatus('Inactivo')"></span>
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Pendiente' ? 'active' : ''" @click="activeFilter = 'Pendiente'">
+              <span class="filter-dot dot-pendiente"></span>
+              Pendiente
+              <span class="filter-count" x-text="countByStatus('Pendiente')"></span>
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Libre' ? 'active' : ''" @click="activeFilter = 'Libre'">
+              <span class="filter-dot dot-libre"></span>
+              Libre
+              <span class="filter-count" x-text="countByStatus('Libre')"></span>
+            </button>
+          </div>
 
+          <!-- BENTO GRID -->
+          <div class="bento-grid" x-show="filteredServers.length > 0">
+            <template x-for="s in filteredServers" :key="s.id">
+              <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
+                <!-- Kebab -->
+                <div class="kebab-wrap" x-show="canEdit" @click.outside="openKebabId = null">
+                  <button class="kebab-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
+                    <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
+                  </button>
+                  <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
+                    <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click="openKebabId = null">
+                      <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
+                    </a>
+                    <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank"
+                       x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
+                      <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
+                    </a>
+                    <div class="kebab-divider"></div>
+                    <div class="kebab-section-header">Servicios</div>
+                    <template x-for="(svc, i) in (s.servicios || [])" :key="i">
+                      <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
+                         x-show="svcFirstIp(svc)" @click="openKebabId = null">
+                        <iconify-icon icon="lucide:globe"></iconify-icon>
+                        <span x-text="svc.nombre"></span>
+                      </a>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Card Identity -->
+                <div class="card-section card-section--identity">
+                  <div class="card-top">
+                    <div class="card-icon-box">
+                      <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
+                    </div>
+                    <div class="card-title-group">
+                      <strong class="card-hostname" x-text="s.hostname"></strong>
+                      <span class="card-model-tag" x-show="s.modelo" x-text="s.modelo"></span>
+                    </div>
+                  </div>
+                  <div class="card-meta-row">
+                    <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
+                    <span x-text="s.ubicacion"></span>
+                    <span x-show="s.sn">
+                      <iconify-icon icon="lucide:hash" class="meta-icon"></iconify-icon>
+                      <span x-text="s.sn"></span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Card Info -->
+                <div class="card-section card-section--info">
+                  <div class="card-specs-row">
+                    <span class="card-spec-item" x-show="s.procesador && s.procesador !== ''">
+                      <iconify-icon icon="lucide:cpu" class="spec-icon"></iconify-icon>
+                      <span class="spec-value" x-text="shortCpu(s.procesador)"></span>
+                    </span>
+                    <span class="card-spec-item">
+                      <iconify-icon icon="lucide:memory-stick" class="spec-icon"></iconify-icon>
+                      <span class="spec-value" x-text="s.ram_gb > 0 ? s.ram_gb : '—'"></span>
+                    </span>
+                    <span class="card-spec-item" x-show="diskCount(s) > 0">
+                      <iconify-icon icon="lucide:hard-drive" class="spec-icon"></iconify-icon>
+                      <span class="spec-value" x-text="diskCount(s)"></span>
+                    </span>
+                    <span class="card-spec-item" x-show="s.servicios && s.servicios.length > 0">
+                      <iconify-icon icon="lucide:globe" class="spec-icon"></iconify-icon>
+                      <span class="spec-value" x-text="s.servicios.length"></span>
+                    </span>
+                  </div>
+
+                  <!-- Tags -->
+                  <div x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0" style="margin-top:0.35rem;">
+                    <div class="card-tags-header">Tags</div>
+                    <div class="card-tags-row">
+                      <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 4)" :key="ti">
+                        <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'">
+                          <span class="card-tag-dot" :style="'background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '80;'"></span>
+                          <span x-text="t.name"></span>
+                        </span>
+                      </template>
+                      <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
+                    </div>
+                  </div>
+
+                  <!-- Task Progress -->
+                  <div x-show="tasksProgressMap[s.id]" style="margin-top:0.35rem;">
+                    <div class="card-progress-label">
+                      <span>Task Progress</span>
+                      <span class="progress-count" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
+                    </div>
+                    <div class="ram-bar">
+                      <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Footer -->
+                <div class="card-section card-section--footer">
+                  <a :href="'server-detail.html?id=' + s.id" @click.prevent="window.location.href='server-detail.html?id=' + s.id" class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                    <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
+                    <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>
+                    <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
+                    <span x-text="pendingTasksMap[s.id].length"></span>
+                  </a>
+                  <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')">
+                    <span class="sl-dot"></span>
+                    <span x-text="s.estado"></span>
+                  </div>
+                  <button class="card-expand" @click.stop="toggleExpand(s.id)">
+                    <iconify-icon icon="lucide:chevron-down" :style="expandedCard === s.id ? 'transform:rotate(180deg)' : ''"></iconify-icon>
+                  </button>
+                </div>
+
+                <!-- Expandable content -->
+                <div x-show="expandedCard === s.id" x-collapse class="card-expanded-content">
+                  <div class="ec-section" x-show="credsMap[s.id]?.ipmi">
+                    <strong style="color:#aaa;">IPMI:</strong>
+                    <a :href="'https://' + credsMap[s.id].ipmi" target="_blank" style="color:#6c5ce7;font-size:0.72rem;text-decoration:none;margin-left:0.3rem;" x-text="credsMap[s.id].ipmi">
+                    </a>
+                  </div>
+                  <div class="ec-section" x-show="credsMap[s.id]?.ip_servicio" style="margin-top:0.3rem;">
+                    <strong style="color:#aaa;">IP Servicio:</strong>
+                    <a :href="'https://' + credsMap[s.id].ip_servicio" target="_blank" style="color:#6c5ce7;font-size:0.72rem;text-decoration:none;margin-left:0.3rem;" x-text="credsMap[s.id].ip_servicio">
+                    </a>
+                  </div>
+                  <div class="ec-section" x-show="s.servicios && s.servicios.length > 0" style="margin-top:0.3rem;">
+                    <strong style="color:#aaa;">Servicios (<span x-text="s.servicios.length"></span>):</strong>
+                    <template x-for="svc in (s.servicios || [])" :key="svc.nombre">
+                      <div style="font-size:0.68rem;color:#888;margin-top:0.15rem;display:flex;align-items:center;gap:0.3rem;">
+                        <iconify-icon icon="lucide:globe" style="width:10px;height:10px;color:#555;flex-shrink:0;"></iconify-icon>
+                        <span x-text="svc.nombre" style="font-weight:500;"></span>
+                        <template x-for="ip in (svc.ips || []).slice(0, 2)" :key="ip">
+                          <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;" x-text="ip"></a>
+                        </template>
+                        <span x-show="(svc.ips || []).length > 2" style="color:#555;font-size:0.55rem;" x-text="'+' + ((svc.ips || []).length - 2)"></span>
+                      </div>
+                    </template>
+                  </div>
+                  <div class="ec-section" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" style="margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid var(--border-subtle);">
+                    <strong style="color:#aaa;">Tags adicionales:</strong>
+                    <div style="display:flex;gap:0.2rem;flex-wrap:wrap;margin-top:0.2rem;">
+                      <template x-for="t in (serverTagsMap[s.id] || []).slice(4)" :key="t.id">
+                        <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-state" x-show="!loading && filteredServers.length === 0">
+            <iconify-icon icon="lucide:server"></iconify-icon>
+            <h3 x-show="activeFilter !== 'todos' || searchQuery">Sin resultados</h3>
+            <h3 x-show="activeFilter === 'todos' && !searchQuery">No hay servidores registrados</h3>
+            <p x-show="activeFilter === 'todos' && !searchQuery">Agrega tu primer servidor para comenzar</p>
+            <p x-show="activeFilter !== 'todos'">Ning&uacute;n servidor con estado <strong x-text="activeFilter"></strong></p>
+            <p x-show="searchQuery">Ning&uacute;n servidor coincide con "<strong x-text="searchQuery"></strong>"</p>
+            <a class="btn" href="add-server.html" x-show="canEdit && activeFilter === 'todos' && !searchQuery" @click.prevent="window.location.href='add-server.html'">Agregar servidor</a>
+          </div>
+        </div>
+      </template>
+
+      <!-- ===== VIEW: SERVICIOS ===== -->
+      <template x-if="activeView === 'services'">
+        <div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
+            <button class="view-export" @click="exportServicesCSV()" title="Exportar servicios">
+              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
+              Exportar
+            </button>
+          </div>
+          <div class="services-grid">
+            <template x-for="svc in allServices" :key="svc.nombre">
+              <div class="svc-card">
+                <div class="svc-header">
+                  <iconify-icon icon="lucide:box"></iconify-icon>
+                  <span x-text="svc.nombre"></span>
+                  <span class="svc-count" x-text="svc.servers.length + ' servidores'"></span>
+                  <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto: ' + svc.puerto"></span>
+                </div>
+                <div class="svc-servers">
+                  <template x-for="s in svc.servers" :key="s.id">
+                    <a :href="s._svcIp ? 'https://' + s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '') : 'server-detail.html?id=' + s.id"
+                       target="_blank" class="svc-server-link" @click.prevent="s._svcIp ? null : gotoServer(s.id)">
+                      <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')"></span>
+                      <span class="hover-trigger">
+                        <span x-text="s.hostname"></span>
+                        <div class="hover-card">
+                          <strong x-text="s.hostname" style="color:#e0e0e0;font-size:0.8rem;"></strong>
+                          <div style="color:#888;font-size:0.65rem;margin-top:0.2rem;">
+                            <div x-text="s.modelo || '—'"></div>
+                            <div x-show="serverTagsMap[s.id]">
+                              <template x-for="t in (serverTagsMap[s.id] || []).slice(0, 4)" :key="t.id">
+                                <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;margin-right:0.15rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
+                      </span>
+                      <span class="svc-ip" x-show="s._svcIp">
+                        <a :href="'https://' + s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')" target="_blank" style="color:#6c5ce7;text-decoration:none;" x-text="s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')"></a>
+                      </span>
+                      <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;color:#6c5ce7;margin-left:auto;flex-shrink:0;" x-show="s._svcIp"></iconify-icon>
+                    </a>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div class="empty-state" x-show="allServices.length === 0">
+            <iconify-icon icon="lucide:box"></iconify-icon>
+            <h3>Sin servicios registrados</h3>
+            <p>Los servicios aparecer&aacute;n aqu&iacute; cuando los agregues a un servidor</p>
+          </div>
+        </div>
+      </template>
+
+      <!-- ===== VIEW: REDES ===== -->
+      <template x-if="activeView === 'network'">
+        <div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
+            <button class="view-export" @click="exportNetworkCSV()" title="Exportar redes">
+              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
+              Exportar
+            </button>
+          </div>
+          <div class="network-stats">
+            <div class="net-stat">
+              <span class="net-stat-value" x-text="allIPs.length"></span>
+              IPs totales
+            </div>
+            <div class="net-stat">
+              <span class="net-stat-value" x-text="uniqueSubnets.length"></span>
+              Subredes
+            </div>
+          </div>
+          <div class="network-subnet-filter" x-show="uniqueSubnets.length > 1">
+            <button :class="{ active: netSubnetFilter === '' }" @click="netSubnetFilter = ''">Todas</button>
+            <template x-for="sub in uniqueSubnets" :key="sub">
+              <button :class="{ active: netSubnetFilter === sub }" @click="netSubnetFilter = sub" x-text="sub"></button>
+            </template>
+          </div>
+          <div class="network-table-wrap">
+            <template x-for="group in groupedIPs" :key="group.subnet">
+              <div class="net-group" x-show="!netSubnetFilter || netSubnetFilter === group.subnet.replace('.0/24','').replace('/24','')">
+                <div class="net-group-title">
+                  <iconify-icon icon="lucide:folder-tree" style="width:12px;height:12px;color:#6c5ce7;"></iconify-icon>
+                  <span x-text="group.subnet"></span>
+                  <span class="net-group-count" x-text="group.ips.length + ' IPs'"></span>
+                </div>
+                <table class="network-table">
+                  <thead>
+                    <tr>
+                      <th>Direcci&oacute;n IP</th>
+                      <th>Tipo</th>
+                      <th>Hostname</th>
+                      <th>Acci&oacute;n</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="entry in group.ips" :key="entry.ip + entry.type + entry.server.id">
+                      <tr>
+                        <td><code x-text="entry.ip"></code></td>
+                        <td><span class="ip-badge" x-text="entry.type"></span></td>
+                        <td><span class="hover-trigger"><span class="status-dot" :class="'dot-' + (entry.server.estado ? entry.server.estado.toLowerCase() : 'libre')" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:0.3rem;vertical-align:middle;"></span><span x-text="entry.server.hostname"></span><div class="hover-card" style="bottom:auto;top:100%;left:0;transform:none;min-width:180px;"><strong x-text="entry.server.hostname" style="color:#e0e0e0;font-size:0.75rem;"></strong><div style="color:#888;font-size:0.6rem;margin-top:0.2rem;"><div x-text="entry.server.modelo || '—'"></div><div x-text="'RAM: ' + (entry.server.ram_gb || '0') + ' GB'"></div></div></div></span></td>
+                        <td><a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#6c5ce7;text-decoration:none;font-size:0.65rem;">Ver detalle</a></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
+          <div class="empty-state" x-show="allIPs.length === 0">
+            <iconify-icon icon="lucide:globe"></iconify-icon>
+            <h3>Sin direcciones IP registradas</h3>
+            <p>Las IPs aparecer&aacute;n aqu&iacute; cuando agregues credenciales o servicios a un servidor</p>
+          </div>
+        </div>
+      </template>
+
+      <!-- ===== VIEW: INFRAESTRUCTURA ===== -->
+      <template x-if="activeView === 'all'">
+        <div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
+            <button class="view-export" @click="exportInfraCSV()" title="Exportar infraestructura">
+              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
+              Exportar
+            </button>
+          </div>
+          <div class="infra-summary">
+            <div class="infra-stat">Servidores: <strong x-text="servers.length"></strong></div>
+            <div class="infra-stat">RAM: <strong x-text="totalRam + ' GB'"></strong></div>
+            <div class="infra-stat">Discos: <strong x-text="totalStorageTB + ' TB'"></strong></div>
+            <div class="infra-stat">CPU: <strong x-text="totalCpuGHz + ' GHz'"></strong></div>
+            <div class="infra-stat">Servicios: <strong x-text="allServices.length"></strong></div>
+            <div class="infra-stat">IPs: <strong x-text="allIPs.length"></strong></div>
+          </div>
+          <div class="infra-list">
+            <template x-for="s in servers" :key="s.id">
+              <div class="infra-row hover-trigger" @click="gotoServer(s.id)">
+                <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')" style="flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block;"></span>
+                <strong x-text="s.hostname" style="flex:0 0 130px;color:#e0e0e0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></strong>
+                <div class="hover-card" style="bottom:auto;top:-10px;left:0;transform:none;min-width:220px;">
+                  <strong x-text="s.hostname" style="color:#e0e0e0;font-size:0.8rem;"></strong>
+                  <div style="color:#888;font-size:0.65rem;margin-top:0.2rem;">
+                    <div x-text="s.modelo || '—'"></div>
+                    <div x-text="'SN: ' + (s.sn || '—')" style="color:#555;"></div>
+                    <div x-show="serverTagsMap[s.id]">
+                      <template x-for="t in (serverTagsMap[s.id] || []).slice(0, 6)" :key="t.id">
+                        <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;margin-right:0.15rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
+                      </template>
+                    </div>
+                    <div x-show="s.procesador" style="margin-top:0.15rem;" x-text="s.procesador"></div>
+                    <div x-text="'RAM: ' + (s.ram_gb || '0') + ' GB'"></div>
+                  </div>
+                </div>
+                <span x-text="s.modelo || '—'" style="flex:0 0 110px;color:#888;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                <span x-text="s.ubicacion || '—'" style="flex:0 0 80px;color:#888;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                <div class="infra-ram-cell" style="flex:0 0 100px;">
+                  <div class="infra-ram-bar" style="display:flex;align-items:center;gap:0.3rem;">
+                    <div class="infra-ram-track" style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                      <div class="infra-ram-fill" :style="'width:' + Math.min(100, (s.ram_gb || 0) / (totalRam || 1) * 100) + '%'" style="height:100%;background:linear-gradient(90deg,#6c5ce7,#a29bfe);border-radius:3px;"></div>
+                    </div>
+                    <span style="font-size:0.6rem;color:#999;white-space:nowrap;" x-text="(s.ram_gb || '—') + ' GB'"></span>
+                  </div>
+                </div>
+                <span x-text="diskCount(s) + ' discos'" style="flex:0 0 60px;color:#888;font-size:0.62rem;text-align:center;"></span>
+                <div class="infra-tags" style="flex:1;min-width:0;">
+                  <template x-for="t in (serverTagsMap[s.id] || [])" :key="t.id">
+                    <span class="infra-tag" :style="'background:'+t.color+'22;color:'+t.color+';border-color:'+t.color+'44'" x-text="t.name"></span>
+                  </template>
+                </div>
+                <span class="infra-svc-count" x-text="(s.servicios?.length || 0) + ' svc'" style="flex:0 0 42px;"></span>
+                <iconify-icon icon="lucide:chevron-right" style="width:14px;height:14px;color:#444;flex-shrink:0;"></iconify-icon>
+              </div>
+            </template>
+          </div>
+          <div class="empty-state" x-show="servers.length === 0">
+            <iconify-icon icon="lucide:layers"></iconify-icon>
+            <h3>Sin servidores en la infraestructura</h3>
+            <p>Agrega servidores para ver la vista completa de infraestructura</p>
+          </div>
+        </div>
+      </template>
+
+      <!-- ===== VIEW: ADMIN (Superadmin only) ===== -->
+      <template x-if="activeView === 'admin'">
+        <div>
+          <!-- Stats row 1: Users -->
+          <div class="admin-stats-grid">
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:users" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
+              Usuarios
+              <strong x-text="managedUsers.length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-dot super"></span> Superadmins
+              <strong x-text="managedUsers.filter(u => u.role === 'superadmin').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-dot admin"></span> Admins
+              <strong x-text="managedUsers.filter(u => u.role === 'admin').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-dot ro"></span> Read-only
+              <strong x-text="managedUsers.filter(u => u.role === 'readonly').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:server" style="width:13px;height:13px;color:#3498db;"></iconify-icon>
+              Servidores
+              <strong x-text="servers.length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:activity" style="width:13px;height:13px;color:#2ecc71;"></iconify-icon>
+              Activos
+              <strong x-text="servers.filter(s => s.estado === 'Activo').length"></strong>
+            </div>
+          </div>
+          <!-- Stats row 2: Infrastructure -->
+          <div class="admin-stats-grid" style="margin-top:0.4rem;">
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:hard-drive" style="width:13px;height:13px;color:#1abc9c;"></iconify-icon>
+              Discos
+              <strong x-text="servers.reduce((sum, s) => sum + diskCount(s), 0)"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:globe" style="width:13px;height:13px;color:#f39c12;"></iconify-icon>
+              Servicios
+              <strong x-text="allServices.length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:wifi" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
+              IPs
+              <strong x-text="allIPs.length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:layers" style="width:13px;height:13px;color:#888;"></iconify-icon>
+              Subredes
+              <strong x-text="uniqueSubnets.length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:memory-stick" style="width:13px;height:13px;color:#a29bfe;"></iconify-icon>
+              RAM
+              <strong x-text="totalRam + ' GB'"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:cpu" style="width:13px;height:13px;color:#e74c3c;"></iconify-icon>
+              Almacenamiento
+              <strong x-text="totalStorageTB + ' TB'"></strong>
+            </div>
+          </div>
+
+          <!-- Stats row 3: Status breakdown -->
+          <div class="admin-stats-grid" style="margin-top:0.4rem;">
+            <div class="admin-stat">
+              <span class="status-dot dot-activo" style="margin-right:0.2rem;"></span> Activos
+              <strong x-text="servers.filter(s => s.estado === 'Activo').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="status-dot dot-inactivo" style="margin-right:0.2rem;"></span> Inactivos
+              <strong x-text="servers.filter(s => s.estado === 'Inactivo').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="status-dot dot-pendiente" style="margin-right:0.2rem;"></span> Pendientes
+              <strong x-text="servers.filter(s => s.estado === 'Pendiente').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <span class="status-dot dot-libre" style="margin-right:0.2rem;"></span> Libres
+              <strong x-text="servers.filter(s => s.estado === 'Libre').length"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:map-pin" style="width:13px;height:13px;color:#f39c12;"></iconify-icon>
+              Ubicaciones
+              <strong x-text="new Set(servers.filter(s => s.ubicacion).map(s => s.ubicacion)).size"></strong>
+            </div>
+            <div class="admin-stat">
+              <iconify-icon icon="lucide:boxes" style="width:13px;height:13px;color:#1abc9c;"></iconify-icon>
+              Modelos
+              <strong x-text="new Set(servers.filter(s => s.modelo).map(s => s.modelo)).size"></strong>
+            </div>
+          </div>
+
+          <!-- User search + table -->
+          <div style="margin-top:1rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+              <div class="admin-search" style="display:flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);border-radius:8px;padding:0.2rem 0.5rem;flex:1;">
+                <iconify-icon icon="lucide:search" style="width:12px;height:12px;color:#666;flex-shrink:0;"></iconify-icon>
+                <input type="text" x-model="adminUserSearch" placeholder="Buscar usuario por email o rol..." style="flex:1;border:none;background:transparent;color:#e0e0e0;font-size:0.7rem;outline:none;padding:0.2rem 0;">
+                <button x-show="adminUserSearch" @click="adminUserSearch = ''" style="border:none;background:transparent;color:#666;cursor:pointer;">
+                  <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+                </button>
+              </div>
+              <button class="at-btn" @click="fetchUsers()" style="font-size:0.65rem;padding:0.25rem 0.5rem;border:1px solid var(--border-subtle);border-radius:8px;white-space:nowrap;">
+                <iconify-icon icon="lucide:refresh-cw" style="width:11px;height:11px;"></iconify-icon>
+                Recargar
+              </button>
+              <a class="at-btn" href="https://supabase.com/dashboard/project/unaadjavtrsogkzcbmev/auth/users" target="_blank" style="font-size:0.65rem;padding:0.25rem 0.5rem;border:1px solid var(--border-subtle);border-radius:8px;white-space:nowrap;">
+                <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
+                Crear usuario
+              </a>
+            </div>
+            <div class="admin-user-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="u in filteredManagedUsers" :key="u.id">
+                    <tr>
+                      <td x-text="u.email || u.id.slice(0,8) + '...'" style="font-size:0.7rem;"></td>
+                      <td><span :class="'role-tag ' + (u.role === 'superadmin' ? 'super' : u.role === 'admin' ? 'admin' : 'readonly')" x-text="u.role"></span></td>
+                      <td>
+                        <template x-if="u.role === 'superadmin'">
+                          <span style="color:#555;font-size:0.6rem;">Protegido</span>
+                        </template>
+                        <template x-if="u.email && u.role !== 'superadmin'">
+                          <button class="btn role-toggle" @click="updateUserRole(u.id, u.role === 'admin' ? 'readonly' : 'admin')" x-text="u.role === 'admin' ? 'Revocar admin' : 'Hacer admin'"></button>
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr x-show="filteredManagedUsers.length === 0">
+                    <td colspan="3" style="text-align:center;color:#444;padding:0.75rem 0;font-size:0.65rem;">
+                      <span x-show="adminUserSearch">Sin usuarios que coincidan con "<strong x-text="adminUserSearch"></strong>"</span>
+                      <span x-show="!adminUserSearch">No hay usuarios registrados</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- AUDIT LOG -->
+          <div class="admin-section" style="margin-top:1.5rem;">
+            <h2 class="det-section-title">
+              <iconify-icon icon="lucide:clipboard-list" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+              Auditoría
+              <span class="det-count" x-text="auditLogs.length"></span>
+            </h2>
+
+            <div class="log-filters">
+              <button :class="{ active: auditActionFilter === 'all' }" @click="auditActionFilter = 'all'">Todas</button>
+              <button :class="{ active: auditActionFilter === 'server.creada' }" @click="auditActionFilter = 'server.creada'">Creadas</button>
+              <button :class="{ active: auditActionFilter === 'server.actualizada' }" @click="auditActionFilter = 'server.actualizada'">Actualizadas</button>
+              <button :class="{ active: auditActionFilter === 'server.eliminada' }" @click="auditActionFilter = 'server.eliminada'">Eliminadas</button>
+            </div>
+
+            <div class="admin-user-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Servidor</th>
+                    <th>Cambios</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="a in filteredAuditLogs" :key="a.id">
+                    <tr>
+                      <td style="font-size:0.6rem;white-space:nowrap;" x-text="formatDate(a.created_at)"></td>
+                      <td style="font-size:0.65rem;" x-text="a.user_email || a.user_id?.slice(0,8)"></td>
+                      <td><span class="log-accion" :class="logAccionClassAudit(a.accion)" x-text="a.accion.replace('server.', '')"></span></td>
+                      <td style="font-size:0.65rem;">
+                        <template x-if="a.server_id">
+                          <a :href="'server-detail.html?id=' + a.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="a.descripcion?.replace('Servidor creado: ','').replace('Servidor eliminado: ','')?.split(':')[0] || '#' + a.server_id"></a>
+                        </template>
+                        <span x-show="!a.server_id" style="color:#444;">—</span>
+                      </td>
+                      <td style="font-size:0.55rem;">
+                        <button @click="viewAuditDetail(a)" style="background:transparent;border:1px solid var(--border-subtle);border-radius:6px;color:#888;cursor:pointer;font-size:0.6rem;padding:0.15rem 0.4rem;transition:all 0.15s;" @mouseenter="$el.style.borderColor='#6c5ce7';$el.style.color='#6c5ce7'" @mouseleave="$el.style.borderColor='';$el.style.color=''">
+                          Ver
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr x-show="filteredAuditLogs.length === 0">
+                    <td colspan="5" style="text-align:center;color:#444;padding:1rem 0;font-size:0.7rem;">Sin registros de auditoría</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:0.5rem;">
+              <button class="at-btn" @click="loadAuditLogs()" style="font-size:0.7rem;padding:0.3rem 0.6rem;border:1px solid var(--border-subtle);border-radius:6px;">
+                <iconify-icon icon="lucide:refresh-cw" style="width:11px;height:11px;"></iconify-icon>
+                Recargar auditoría
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+    </div><!-- /.container -->
+
+  <!-- COMMAND PALETTE -->
+  <div class="palette-overlay" x-show="showPalette" x-cloak @click.self="showPalette = false" @keydown.escape="showPalette = false" x-trap.noreturn="showPalette">
+    <div class="palette-modal">
+      <div class="palette-input-wrap">
+        <iconify-icon icon="lucide:search"></iconify-icon>
+        <input type="text" class="palette-input" x-model="paletteQuery" placeholder="Buscar acci&oacute;n o servidor..." @keydown.enter="executePalette(); showPalette = false" @keydown.down.prevent="paletteIndex = Math.min(paletteIndex + 1, filteredPalette.length - 1)" @keydown.up.prevent="paletteIndex = Math.max(paletteIndex - 1, 0)" x-ref="paletteInput" autofocus>
+      </div>
+      <div class="palette-list">
+        <template x-for="(item, i) in filteredPalette" :key="item.label">
+          <div class="palette-item" :class="paletteIndex === i ? 'active' : ''" @click="item.action(); showPalette = false" @mouseenter="paletteIndex = i">
+            <iconify-icon :icon="item.icon" style="width:16px;height:16px;color:#666;flex-shrink:0;"></iconify-icon>
+            <span x-text="item.label"></span>
+            <span class="pi-shortcut" x-show="item.shortcut" x-text="item.shortcut"></span>
+          </div>
+        </template>
+        <div class="empty-state" x-show="filteredPalette.length === 0" style="padding:1.5rem 1rem;">
+          <h3 style="font-size:0.8rem;">Sin resultados</h3>
+        </div>
+      </div>
     </div>
+  </div>
 
   <!-- MODAL: GESTIÓN DE USUARIOS -->
   <div class="modal-overlay" x-show="showUserManager" @click.self="showUserManager = false">
@@ -298,9 +834,65 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL: DETALLE DE AUDITORÍA -->
+  <div class="modal-overlay" x-show="auditDetailItem" @click.self="auditDetailItem = null">
+    <div class="modal" style="max-width:600px;">
+      <template x-if="auditDetailItem">
+        <div>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+            <h3 style="margin:0;font-size:0.9rem;">Detalle de auditoría</h3>
+            <span class="log-accion" :class="logAccionClassAudit(auditDetailItem.accion)" x-text="auditDetailItem.accion.replace('server.', '')" style="font-size:0.65rem;"></span>
+          </div>
+          <div class="det-meta" style="display:flex;gap:0.75rem;font-size:0.65rem;color:#666;margin-bottom:1rem;flex-wrap:wrap;">
+            <span><span style="color:#999;">Fecha:</span> <span x-text="formatDate(auditDetailItem.created_at)" style="color:#ccc;"></span></span>
+            <span><span style="color:#999;">Usuario:</span> <span x-text="auditDetailItem.user_email || auditDetailItem.user_id?.slice(0,8)" style="color:#ccc;"></span></span>
+            <span x-show="auditDetailItem.server_id"><span style="color:#999;">Servidor:</span>
+              <a :href="'server-detail.html?id=' + auditDetailItem.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="auditDetailItem.descripcion?.split(':')[0] || '#' + auditDetailItem.server_id"></a>
+            </span>
+          </div>
+          <template x-if="auditDetailItem.cambios && typeof auditDetailItem.cambios === 'object' && Object.keys(auditDetailItem.cambios).length > 0">
+            <div>
+              <div style="font-size:0.65rem;color:#999;margin-bottom:0.4rem;">Campos modificados:</div>
+              <div class="audit-diff-table">
+                <template x-for="(val, field) in auditDetailItem.cambios" :key="field">
+                  <div class="audit-diff-row">
+                    <div class="ad-field" x-text="field"></div>
+                    <div class="ad-values">
+                      <div class="ad-old" x-text="formatDiffVal(val.old)"></div>
+                      <div class="ad-arrow"><iconify-icon icon="lucide:arrow-right" style="width:12px;height:12px;"></iconify-icon></div>
+                      <div class="ad-new" x-text="formatDiffVal(val.new)"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <div x-show="!auditDetailItem.cambios || Object.keys(auditDetailItem.cambios).length === 0" style="color:#555;font-size:0.7rem;padding:0.5rem 0;">
+            Sin detalle de cambios
+          </div>
+          <button class="btn" @click="auditDetailItem = null" style="margin-top:1rem;">Cerrar</button>
+        </div>
+      </template>
+    </div>
+  </div>
 </div>
 
 <script src="js/supabase.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/audit.js"></script>
 <script src="js/app.js"></script>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
 </body>
 </html>

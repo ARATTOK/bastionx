@@ -16,6 +16,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <script defer src="js/supabase.js"></script>
+  <script defer src="js/toast.js"></script>
   <script defer src="js/report.js"></script>
   <style>
     [x-cloak] { display: none !important; }
@@ -141,6 +142,99 @@
     .report-table .status-dot.pendiente { background: #f39c12; }
     .report-table .status-dot.libre { background: #888; }
 
+    .report-charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 700px) {
+      .report-charts { grid-template-columns: 1fr; }
+    }
+    .chart-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle,#333);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .chart-title {
+      font-size: 0.75rem;
+      color: #999;
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .chart-body {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .chart-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      color: #ccc;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-count {
+      margin-left: auto;
+      color: #888;
+      font-weight: 600;
+    }
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      width: 100%;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .bar-label {
+      flex: 0 0 80px;
+      font-size: 0.65rem;
+      color: #aaa;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bar-track {
+      flex: 1;
+      height: 18px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .bar-value {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
+      color: #fff;
+      font-weight: 600;
+    }
+
     .report-footer {
       margin-top: 1.5rem;
       font-size: 0.7rem;
@@ -150,10 +244,19 @@
       border-top: 1px solid #2a2a2a;
     }
 
-    @media print {
-      body {
-        background: #fff !important;
-      }
+      @media print {
+        body {
+          background: #fff !important;
+        }
+        .report-charts {
+          break-inside: avoid;
+        }
+        .chart-card {
+          background: #fafafa !important;
+          border-color: #ddd !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
       .report-page {
         padding: 0.5in !important;
       }
@@ -270,6 +373,109 @@
       </div>
     </div>
 
+    <!-- CHARTS -->
+    <div class="report-charts">
+      <!-- Status Pie -->
+      <div class="chart-card">
+        <h3 class="chart-title">Servidores por estado</h3>
+        <div class="chart-body">
+          <svg viewBox="0 0 42 42" width="160" height="160" style="transform:rotate(-90deg);">
+            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#2a2a2a" stroke-width="3"/>
+            <template x-for="(seg, i) in statusData" :key="seg.label">
+              <circle cx="21" cy="21" r="15.915" fill="transparent"
+                :stroke="['#2ecc71','#e74c3c','#f39c12','#777'][i]"
+                stroke-width="3"
+                :stroke-dasharray="(seg.count / servers.length * 100) + ' ' + (100 - seg.count / servers.length * 100)"
+                :stroke-dashoffset="statusData.slice(0,i).reduce((a,s) => a - (s.count / servers.length * 100), 25)"/>
+            </template>
+          </svg>
+          <div class="chart-legend">
+            <template x-for="seg in statusData" :key="seg.label">
+              <div class="legend-item">
+                <span class="legend-dot" :style="'background:' + ['#2ecc71','#e74c3c','#f39c12','#777'][['Activo','Inactivo','Pendiente','Libre'].indexOf(seg.label)]"></span>
+                <span class="legend-label" x-text="seg.label"></span>
+                <span class="legend-count" x-text="seg.count"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Bar -->
+      <div class="chart-card">
+        <h3 class="chart-title">Servidores por ubicación</h3>
+        <div class="chart-body">
+          <div class="bar-chart">
+            <template x-for="loc in locationData" :key="loc.label">
+              <div class="bar-row">
+                <span class="bar-label" x-text="loc.label"></span>
+                <div class="bar-track">
+                  <div class="bar-fill" :style="'width:' + (loc.count / Math.max(...locationData.map(l => l.count)) * 100) + '%'"></div>
+                  <span class="bar-value" x-text="loc.count"></span>
+                </div>
+              </div>
+            </template>
+            <div class="bar-row" x-show="locationData.length === 0">
+              <span class="bar-label" style="color:#555;">Sin datos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Disk Type Pie -->
+      <div class="chart-card">
+        <h3 class="chart-title">Discos por tipo</h3>
+        <div class="chart-body">
+          <svg viewBox="0 0 42 42" width="160" height="160" style="transform:rotate(-90deg);">
+            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#2a2a2a" stroke-width="3"/>
+            <template x-for="(seg, i) in diskTypeData" :key="seg.label">
+              <circle cx="21" cy="21" r="15.915" fill="transparent"
+                :stroke="['#3498db','#e74c3c','#9b59b6','#777'][i]"
+                stroke-width="3"
+                :stroke-dasharray="(seg.count / diskTypeData.reduce((a,s) => a + s.count, 0) * 100) + ' ' + (100 - seg.count / diskTypeData.reduce((a,s) => a + s.count, 0) * 100)"
+                :stroke-dashoffset="diskTypeData.slice(0,i).reduce((a,s) => a - (s.count / diskTypeData.reduce((a2,s2) => a2 + s2.count, 0) * 100), 25)"/>
+            </template>
+          </svg>
+          <div class="chart-legend">
+            <template x-for="seg in diskTypeData" :key="seg.label">
+              <div class="legend-item">
+                <span class="legend-dot" :style="'background:' + ['#3498db','#e74c3c','#9b59b6','#777'][['SSD','HDD','NVMe','Otro'].indexOf(seg.label)]"></span>
+                <span class="legend-label" x-text="seg.label"></span>
+                <span class="legend-count" x-text="seg.count"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services Overview -->
+      <div class="chart-card" style="grid-column:1/-1;">
+        <h3 class="chart-title">Servicios registrados</h3>
+        <div class="chart-body" style="flex-direction:column;">
+          <template x-if="serviceOverview.length > 0">
+            <table class="report-table" style="font-size:0.7rem;">
+              <thead>
+                <tr>
+                  <th>Servicio</th>
+                  <th>Servidores</th>
+                  <th>Nombres</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="svc in serviceOverview" :key="svc.nombre">
+                  <tr>
+                    <td style="font-weight:600;color:#e0e0e0;" x-text="svc.nombre"></td>
+                    <td x-text="svc.count"></td>
+                    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;color:#888;" x-text="svc.servers.join(', ')"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+          <div x-show="serviceOverview.length === 0" style="color:#555;font-size:0.75rem;padding:1rem 0;text-align:center;">Sin servicios registrados</div>
+        </div>
+      </div>
+    </div>
+
     <!-- TABLE -->
     <div class="report-table-wrap">
       <table class="report-table">
@@ -314,6 +520,18 @@
       <span x-text="'Generado el ' + reportDate + ' — ' + servers.length + ' servidores en total'"></span>
     </div>
   </div>
+</div>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
 </div>
 </body>
 </html>

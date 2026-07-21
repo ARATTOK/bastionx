@@ -73,6 +73,57 @@ document.addEventListener('alpine:init', () => {
       return (totalGB / 1024).toFixed(1)
     },
 
+    get statusData() {
+      const counts = { Activo: 0, Inactivo: 0, Pendiente: 0, Libre: 0 }
+      for (const s of this.servers) {
+        const st = s.estado || 'Libre'
+        if (counts[st] !== undefined) counts[st]++
+      }
+      return Object.entries(counts).filter(([, c]) => c > 0).map(([label, count]) => ({ label, count }))
+    },
+
+    get diskTypeData() {
+      const types = { SSD: 0, HDD: 0, NVMe: 0, Otro: 0 }
+      for (const s of this.servers) {
+        try {
+          const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
+          if (!Array.isArray(d)) continue
+          const disks = (d[0] && d[0].nombre !== undefined) ? d.flatMap(r => Array.isArray(r.discos) ? r.discos : []) : d
+          for (const dk of disks) {
+            const tipo = (dk.tipo || '').toUpperCase()
+            if (tipo.includes('SSD') || tipo.includes('SOLID') || tipo === 'SATA SSD') types.SSD++
+            else if (tipo.includes('NVME') || tipo.includes('NVMe')) types.NVMe++
+            else if (tipo.includes('HDD') || tipo.includes('SAS') || tipo === 'SATA') types.HDD++
+            else types.Otro++
+          }
+        } catch {}
+      }
+      return Object.entries(types).filter(([, c]) => c > 0).map(([label, count]) => ({ label, count }))
+    },
+
+    get serviceOverview() {
+      const svcMap = {}
+      for (const s of this.servers) {
+        const svcs = Array.isArray(s.servicios) ? s.servicios : []
+        for (const svc of svcs) {
+          const name = svc.nombre || 'Sin nombre'
+          if (!svcMap[name]) svcMap[name] = { nombre: name, count: 0, servers: [] }
+          svcMap[name].count++
+          svcMap[name].servers.push(s.hostname)
+        }
+      }
+      return Object.values(svcMap).sort((a, b) => b.count - a.count)
+    },
+
+    get locationData() {
+      const locs = {}
+      for (const s of this.servers) {
+        const l = s.ubicacion || 'Sin ubicación'
+        locs[l] = (locs[l] || 0) + 1
+      }
+      return Object.entries(locs).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([label, count]) => ({ label, count }))
+    },
+
     get totalCpuGHz() {
       let total = 0
       for (const s of this.servers) {

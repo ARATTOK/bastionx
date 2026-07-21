@@ -9,6 +9,7 @@ document.addEventListener('alpine:init', () => {
     tags: [],
     tasks: [],
     taskLogs: [],
+    logFilter: 'all',
     newTaskTitulo: '',
     newTaskDesc: '',
     newTaskCriticidad: 'normal',
@@ -16,6 +17,8 @@ document.addEventListener('alpine:init', () => {
     showCompleteModal: false,
     completeTaskDesc: '',
     pendingCompleteTask: null,
+    showEvidenceModal: false,
+    evidenceTask: null,
     showKebab: false,
 
     async init() {
@@ -58,16 +61,24 @@ document.addEventListener('alpine:init', () => {
       this.loading = false
     },
 
+    get filteredLogs() {
+      if (this.logFilter === 'all') return this.taskLogs
+      return this.taskLogs.filter(l => l.accion === this.logFilter)
+    },
+
     deleteServer() {
       this.showDeleteConfirm = true
     },
 
     async confirmDelete() {
+      await auditLog(this.server.id, this.user.id, 'server.eliminada', null, 'Servidor eliminado: ' + this.server.hostname)
       await sb.from('server_tags').delete().eq('server_id', this.server.id)
       await sb.from('server_credentials').delete().eq('server_id', this.server.id)
       await sb.from('server_tasks').delete().eq('server_id', this.server.id)
       await sb.from('servers').delete().eq('id', this.server.id)
-      window.location.href = 'dashboard.html'
+      const t = Alpine.store('toast')
+      if (t) t.success('Servidor eliminado')
+      setTimeout(() => { window.location.href = 'dashboard.html' }, 400)
     },
 
     goBack() { window.location.href = 'dashboard.html' },
@@ -85,7 +96,11 @@ document.addEventListener('alpine:init', () => {
         criticidad: this.newTaskCriticidad,
         created_by: this.user.id
       }).select().single()
-      if (error) { alert('Error: ' + error.message); return }
+      if (error) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Error: ' + error.message)
+        return
+      }
       if (data) {
         this.tasks.push(data)
         await this.insertLog(data.id, 'creada', null)
@@ -114,6 +129,8 @@ document.addEventListener('alpine:init', () => {
         task.completada = true
         task.completed_at = new Date().toISOString()
         await this.insertLog(task.id, 'completada', desc)
+        const t = Alpine.store('toast')
+        if (t) t.success('Tarea completada')
       }
       this.showCompleteModal = false
       this.pendingCompleteTask = null
@@ -122,14 +139,20 @@ document.addEventListener('alpine:init', () => {
 
     async toggleTask(task) {
       if (task.completada) {
-        const { error } = await sb.from('server_tasks').update({ completada: false, completed_at: null }).eq('id', task.id)
-        if (!error) {
-          task.completada = false
-          task.completed_at = null
-          await this.insertLog(task.id, 'desmarcada', null)
-        }
+        this.viewEvidence(task)
       } else {
         this.openCompleteModal(task)
+      }
+    },
+
+    async reopenTask(task) {
+      const { error } = await sb.from('server_tasks').update({ completada: false, completed_at: null }).eq('id', task.id)
+      if (!error) {
+        task.completada = false
+        task.completed_at = null
+        await this.insertLog(task.id, 'desmarcada', null)
+        this.showEvidenceModal = false
+        this.evidenceTask = null
       }
     },
 
@@ -155,11 +178,32 @@ document.addEventListener('alpine:init', () => {
         .select('*')
         .eq('server_id', serverId)
         .order('created_at', { ascending: false })
-      this.taskLogs = logs || []
+      if (logs) {
+        const userIds = [...new Set(logs.map(l => l.user_id))]
+        const { data: profiles } = await sb
+          .from('user_profiles')
+          .select('id, email')
+          .in('id', userIds)
+        const emailMap = {}
+        if (profiles) profiles.forEach(p => { emailMap[p.id] = p.email })
+        this.taskLogs = logs.map(l => ({ ...l, user_email: emailMap[l.user_id] || l.user_id.slice(0, 8) }))
+      } else {
+        this.taskLogs = []
+      }
+    },
+
+    viewEvidence(task) {
+      this.evidenceTask = task
+      this.showEvidenceModal = true
+    },
+
+    taskEvidenceDesc(taskId) {
+      const log = this.taskLogs.find(l => l.task_id === taskId && l.accion === 'completada')
+      return log ? log.descripcion : ''
     },
 
     logUserEmail(log) {
-      return log.user_id?.slice(0, 8) + '...'
+      return log.user_email || log.user_id?.slice(0, 8) + '...'
     },
 
     logAccionClass(accion) {
@@ -182,8 +226,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     taskSeverityLabel(c) {
-      if (c === 'critica') return 'Crítica'
-      if (c === 'configuracion') return 'Configuración'
+      if (c === 'critica') return 'Cr\u00edtica'
+      if (c === 'configuracion') return 'Configuraci\u00f3n'
       return 'Normal'
     },
 

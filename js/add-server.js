@@ -8,6 +8,8 @@ document.addEventListener('alpine:init', () => {
     tagSearch: '',
     showTagDropdown: false,
     showAdvanced: false,
+    errors: {},
+    diskErrors: {},
 
     form: {
       hostname: '', sn: '', modelo: '', ubicacion: '',
@@ -35,6 +37,47 @@ document.addEventListener('alpine:init', () => {
       if (allTags) this.allTags = allTags
 
       this.loading = false
+    },
+
+    validateField(name) {
+      this.errors[name] = null
+      if (name === 'hostname') {
+        if (!this.form.hostname.trim()) this.errors.hostname = 'El hostname es obligatorio'
+        else if (this.form.hostname.trim().length < 3) this.errors.hostname = 'M\u00ednimo 3 caracteres'
+      }
+      if (name === 'sn') {
+        if (!this.form.sn.trim()) this.errors.sn = 'El n\u00famero de serie es obligatorio'
+      }
+      if (name === 'modelo') {
+        if (!this.form.modelo.trim()) this.errors.modelo = 'El modelo es obligatorio'
+      }
+    },
+
+    validateDisk(raidIdx, diskIdx) {
+      const disk = this.form.raids[raidIdx]?.discos[diskIdx]
+      if (!disk) return
+      const key = raidIdx + '-' + diskIdx
+      const errs = {}
+      if (!disk.bay?.trim()) errs.bay = 'Requerido'
+      else {
+        const dup = this.form.raids[raidIdx].discos.some((d, i) => i !== diskIdx && d.bay?.trim() === disk.bay.trim())
+        if (dup) errs.bay = 'Bay duplicada en este RAID'
+      }
+      if (!disk.tipo) errs.tipo = 'Selecciona tipo'
+      if (!disk.tamano?.trim()) errs.tamano = 'Requerido'
+      else if (isNaN(parseFloat(disk.tamano))) errs.tamano = 'Debe ser un n\u00famero'
+      this.diskErrors[key] = Object.keys(errs).length > 0 ? errs : null
+    },
+
+    validateAll() {
+      this.validateField('hostname')
+      this.validateField('sn')
+      this.validateField('modelo')
+      this.form.raids.forEach((raid, ri) => {
+        raid.discos.forEach((_, di) => this.validateDisk(ri, di))
+      })
+      const hasDiskErr = Object.values(this.diskErrors).some(Boolean)
+      return !Object.values(this.errors).some(Boolean) && !hasDiskErr
     },
 
     get filteredTags() {
@@ -78,19 +121,22 @@ document.addEventListener('alpine:init', () => {
     goBack() { window.location.href = 'dashboard.html' },
 
     addRaid() {
-      this.form.raids.push({ nombre: '', discos: [{ bay: '', tipo: '', tamano: '', velocidad: '' }] })
+      this.form.raids.push({ nombre: '', discos: [{ bay: '', tipo: '', tamano: '', tamano_unit: 'GB', velocidad: '' }] })
+      this.diskErrors = {}
     },
 
     removeRaid(idx) {
       this.form.raids.splice(idx, 1)
+      this.diskErrors = {}
     },
 
     addDiskToRaid(raidIdx) {
-      this.form.raids[raidIdx].discos.push({ bay: '', tipo: '', tamano: '', velocidad: '' })
+      this.form.raids[raidIdx].discos.push({ bay: '', tipo: '', tamano: '', tamano_unit: 'GB', velocidad: '' })
     },
 
     removeDiskFromRaid(raidIdx, diskIdx) {
       this.form.raids[raidIdx].discos.splice(diskIdx, 1)
+      this.diskErrors = {}
     },
 
     addService() {
@@ -111,8 +157,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     async save() {
-      if (!this.form.hostname.trim()) { alert('El hostname es obligatorio'); return }
-      if (!this.form.sn.trim()) { alert('El serial number (SN) es obligatorio'); return }
+      if (!this.validateAll()) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Corrige los errores en el formulario antes de guardar')
+        return
+      }
 
       this.saving = true
       try {
@@ -120,7 +169,14 @@ document.addEventListener('alpine:init', () => {
           .filter(r => r.nombre.trim())
           .map(r => ({
             nombre: r.nombre.trim(),
-            discos: r.discos.filter(d => d.bay.trim())
+            discos: r.discos
+              .filter(d => d.bay.trim())
+              .map(d => ({
+                bay: d.bay.trim(),
+                tipo: d.tipo?.trim() || '',
+                tamano: d.tamano.trim() ? d.tamano.trim() + (d.tamano_unit || '') : '',
+                velocidad: d.velocidad?.trim() || ''
+              }))
           }))
           .filter(r => r.discos.length > 0)
 
@@ -149,18 +205,28 @@ document.addEventListener('alpine:init', () => {
             servicios: servicios
           })
           .select()
-        if (error) { alert('Error al guardar: ' + error.message); this.saving = false; return }
+        if (error) {
+          const t = Alpine.store('toast')
+          if (t) t.error('Error al guardar: ' + error.message)
+          this.saving = false
+          return
+        }
 
         const serverId = data[0].id
+
+        await auditLog(serverId, this.user.id, 'server.creada', null, 'Servidor creado: ' + this.form.hostname.trim())
 
         if (this.selectedTagIds.length > 0) {
           const inserts = this.selectedTagIds.map(tagId => ({ server_id: serverId, tag_id: tagId }))
           await sb.from('server_tags').insert(inserts)
         }
 
-        window.location.href = 'server-detail.html?id=' + serverId
+        const t = Alpine.store('toast')
+        if (t) t.success('Servidor creado correctamente')
+        setTimeout(() => { window.location.href = 'server-detail.html?id=' + serverId }, 500)
       } catch (e) {
-        alert('Error al guardar: ' + (e.message || e))
+        const t = Alpine.store('toast')
+        if (t) t.error('Error al guardar: ' + (e.message || e))
         this.saving = false
       }
     }

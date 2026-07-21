@@ -8,6 +8,12 @@ document.addEventListener('alpine:init', () => {
 
     servers: [],
     activeFilter: 'todos',
+    activeView: 'servers',
+    searchQuery: '',
+    expandedCard: null,
+    showPalette: false,
+    paletteQuery: '',
+    paletteIndex: 0,
 
     showUserManager: false,
     serverTagsMap: {},
@@ -17,6 +23,11 @@ document.addEventListener('alpine:init', () => {
     credsMap: {},
     openKebabId: null,
     managedUsers: [],
+    auditLogs: [],
+    auditDetailItem: null,
+    netSubnetFilter: '',
+    adminUserSearch: '',
+    auditActionFilter: 'all',
 
     async init() {
       try {
@@ -37,11 +48,14 @@ document.addEventListener('alpine:init', () => {
         await this.loadTags()
         await this.loadTasks()
         await this.loadCreds()
+        await this.loadAuditLogs()
         this.loading = false
       } catch (e) {
         window.location.href = 'login.html'
         return
       }
+
+      document.addEventListener('keydown', (e) => this.openPalette(e))
 
       sb.auth.onAuthStateChange(async (event, session) => {
         if (session && event === 'SIGNED_IN') {
@@ -92,20 +106,127 @@ document.addEventListener('alpine:init', () => {
       return (svc.ips && svc.ips[0]) ? svc.ips[0] : null
     },
 
-    exportCSV() {
-      const headers = ['Hostname','SN','Modelo','Ubicación','Estado','CPU','RAM (GB)','Discos','Servicios','Tags','IPMI','IP Servicio']
-      const rows = this.servers.map(s => {
-        const tags = this.serverTagsMap[s.id]?.map(t => t.name).join('; ') || ''
-        const creds = this.credsMap[s.id] || {}
-        return [s.hostname, s.sn, s.modelo, s.ubicacion, s.estado, s.procesador, s.ram_gb, this.diskCount(s), s.servicios?.length || 0, tags, creds.ipmi || '', creds.ip_servicio || '']
+    toggleExpand(id) {
+      this.expandedCard = this.expandedCard === id ? null : id
+    },
+
+    filterServers() {
+    },
+
+    openPalette(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        this.showPalette = !this.showPalette
+        if (this.showPalette) {
+          this.paletteQuery = ''
+          this.paletteIndex = 0
+          this.$nextTick(() => { this.$refs.paletteInput?.focus() })
+        }
+      }
+      if (e.key === 'Escape' && this.showPalette) {
+        this.showPalette = false
+      }
+    },
+
+    executePalette() {
+      const items = this.filteredPalette
+      if (items.length > 0 && items[this.paletteIndex]) {
+        items[this.paletteIndex].action()
+      }
+    },
+
+    buildPalette() {
+      const actions = [
+        { icon: 'lucide:plus', label: 'Agregar servidor', action: () => window.location.href='add-server.html' },
+        { icon: 'lucide:file-down', label: 'Exportar CSV', action: () => this.exportCSV() },
+        { icon: 'lucide:clipboard-list', label: 'Abrir reporte', action: () => window.location.href='report.html' },
+        { icon: 'lucide:refresh-cw', label: 'Recargar inventario', action: () => this.refreshServers() },
+        { icon: 'lucide:printer', label: 'Imprimir etiquetas', action: () => window.location.href='labels.html' },
+        { icon: 'lucide:tag', label: 'Administrar tags', action: () => window.location.href='tags.html' },
+      ]
+      if (this.canEdit) {
+        actions.push({ icon: 'lucide:users', label: 'Gestionar usuarios (admin)', action: () => { this.fetchUsers(); this.showUserManager = true } })
+      }
+      actions.push({ type: 'divider' })
+      this.servers.forEach(s => {
+        actions.push({
+          icon: 'lucide:server',
+          label: 'Ir a ' + s.hostname + (s.modelo ? ' (' + s.modelo + ')' : ''),
+          action: () => this.gotoServer(s.id),
+          shortcut: ''
+        })
       })
+      return actions
+    },
+
+    get filteredPalette() {
+      const items = this.buildPalette()
+      if (!this.paletteQuery.trim()) return items
+      const q = this.paletteQuery.toLowerCase()
+      return items.filter(a => a.label.toLowerCase().includes(q))
+    },
+
+    downloadCSV(headers, rows, filename) {
       const csv = [headers, ...rows].map(r => r.map(v => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n')
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
-      a.download = `bastionx-inventory-${new Date().toISOString().slice(0,10)}.csv`
+      a.download = `bastionx-${filename}-${new Date().toISOString().slice(0,10)}.csv`
       a.click()
       URL.revokeObjectURL(a.href)
+      const t = Alpine.store('toast')
+      if (t) t.success('CSV exportado correctamente')
+    },
+
+    exportCSV() {
+      const isRestricted = !this.canEdit
+      const headers = ['Hostname','SN','Modelo','Ubicaci\u00f3n','Estado','CPU','RAM (GB)','Discos','Servicios','Tags']
+      if (!isRestricted) headers.push('IPMI', 'IP Servicio')
+      const rows = this.servers.map(s => {
+        const tags = this.serverTagsMap[s.id]?.map(t => t.name).join('; ') || ''
+        const creds = this.credsMap[s.id] || {}
+        const row = [s.hostname, s.sn, s.modelo, s.ubicacion, s.estado, s.procesador, s.ram_gb, this.diskCount(s), s.servicios?.length || 0, tags]
+        if (!isRestricted) row.push(creds.ipmi || '', creds.ip_servicio || '')
+        return row
+      })
+      this.downloadCSV(headers, rows, 'inventario')
+    },
+
+    exportServicesCSV() {
+      const headers = ['Servidor','Hostname','Servicio','IP','Puerto']
+      const rows = []
+      for (const s of this.servers) {
+        const svcs = Array.isArray(s.servicios) ? s.servicios : []
+        for (const svc of svcs) {
+          const ips = Array.isArray(svc.ips) && svc.ips.length > 0 ? svc.ips : ['']
+          for (const ip of ips) {
+            rows.push([s.id, s.hostname, svc.nombre || '', ip, svc.puerto || ''])
+          }
+        }
+      }
+      this.downloadCSV(headers, rows, 'servicios')
+    },
+
+    exportNetworkCSV() {
+      const headers = ['Subred','IP','Hostname','Servidor']
+      const rows = this.allIPs.map(entry => [
+        entry.subnet || '',
+        entry.ip,
+        entry.hostname,
+        entry.serverId
+      ])
+      this.downloadCSV(headers, rows, 'redes')
+    },
+
+    exportInfraCSV() {
+      const headers = ['Hostname','Modelo','CPU','RAM (GB)','Discos','Servicios','Tags','Estado']
+      const rows = this.servers.map(s => [
+        s.hostname, s.modelo || '', s.procesador || '', s.ram_gb || 0,
+        this.diskCount(s), s.servicios?.length || 0,
+        this.serverTagsMap[s.id]?.map(t => t.name).join('; ') || '',
+        s.estado || ''
+      ])
+      this.downloadCSV(headers, rows, 'infraestructura')
     },
 
     async loadTags() {
@@ -172,7 +293,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     // =============================================================
-    // USERS — admin-only, queries user_profiles
+    // USERS
     // =============================================================
 
     async fetchUsers() {
@@ -189,14 +310,67 @@ document.addEventListener('alpine:init', () => {
         .update({ role: newRole })
         .eq('id', userId)
       if (error) {
-        alert('Error al actualizar rol: ' + error.message)
+        const t = Alpine.store('toast')
+        if (t) t.error('Error al actualizar rol: ' + error.message)
       } else {
         await this.fetchUsers()
-        // Si el admin cambió su propio rol, actualiza localmente
         if (userId === this.user.id) {
           this.userRole = newRole
         }
+        const t = Alpine.store('toast')
+        if (t) t.success('Rol actualizado correctamente')
       }
+    },
+
+    async loadAuditLogs() {
+      try {
+        const { data } = await sb
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50)
+        if (data) {
+          const userIds = [...new Set(data.map(a => a.user_id))]
+          const { data: profiles } = await sb
+            .from('user_profiles')
+            .select('id, email')
+            .in('id', userIds)
+          const emailMap = {}
+          if (profiles) profiles.forEach(p => { emailMap[p.id] = p.email })
+          this.auditLogs = data.map(a => ({ ...a, user_email: emailMap[a.user_id] || a.user_id.slice(0, 8) }))
+        }
+      } catch (e) {
+      }
+    },
+
+    viewAuditDetail(a) {
+      this.auditDetailItem = a
+    },
+
+    formatDiffVal(v) {
+      if (v === null || v === undefined) return '—'
+      if (typeof v === 'object') {
+        if (Array.isArray(v)) {
+          if (v.length === 0) return '(vacío)'
+          return JSON.stringify(v.length > 3 ? v.slice(0, 3).map(x => x.nombre || x.bay || JSON.stringify(x)).join(', ') + '...' : v.map(x => x.nombre || x.bay || JSON.stringify(x)).join(', '))
+        }
+        if (v.nombre !== undefined) return v.nombre
+        return JSON.stringify(v).slice(0, 80)
+      }
+      if (typeof v === 'string' && v.length > 60) return v.slice(0, 60) + '...'
+      return String(v)
+    },
+
+    logAccionClassAudit(accion) {
+      if (accion === 'server.creada') return 'log-creada'
+      if (accion === 'server.eliminada') return 'log-eliminada'
+      return 'log-completada'
+    },
+
+    formatDate(ts) {
+      if (!ts) return ''
+      const d = new Date(ts)
+      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     },
 
     serversByStatus(status) {
@@ -211,8 +385,20 @@ document.addEventListener('alpine:init', () => {
       const sorted = [...this.servers].sort((a, b) =>
         (a.ubicacion || '').localeCompare(b.ubicacion || '')
       )
-      if (this.activeFilter === 'todos') return sorted
-      return sorted.filter(s => s.estado === this.activeFilter)
+      let list = this.activeFilter === 'todos' ? sorted : sorted.filter(s => s.estado === this.activeFilter)
+      if (this.searchQuery.trim()) {
+        const q = this.searchQuery.toLowerCase()
+        list = list.filter(s =>
+          s.hostname?.toLowerCase().includes(q) ||
+          s.sn?.toLowerCase().includes(q) ||
+          s.modelo?.toLowerCase().includes(q) ||
+          s.ubicacion?.toLowerCase().includes(q) ||
+          (s.servicios || []).some(svc => svc.nombre?.toLowerCase().includes(q)) ||
+          (this.serverTagsMap[s.id] || []).some(t => t.name.toLowerCase().includes(q)) ||
+          (this.credsMap[s.id]?.ipmi || '').includes(q)
+        )
+      }
+      return list
     },
 
     get totalRam() {
@@ -287,9 +473,9 @@ document.addEventListener('alpine:init', () => {
         if (!Array.isArray(d) || d.length === 0) return ''
         if (d[0] && d[0].nombre !== undefined) {
           return d.flatMap(r => Array.isArray(r.discos) ? r.discos : [])
-            .map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
+            .map(dd => dd.bay + ': ' + (dd.tipo || '\u2014')).join('<br>')
         }
-        return d.map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
+        return d.map(dd => dd.bay + ': ' + (dd.tipo || '\u2014')).join('<br>')
       } catch { return '' }
     },
 
@@ -306,5 +492,94 @@ document.addEventListener('alpine:init', () => {
       if (pct >= 25) return '#f39c12'
       return '#e74c3c'
     },
+
+    // ===== VIEW GETTERS =====
+
+    get allServices() {
+      const svcMap = {}
+      for (const s of this.servers) {
+        for (const svc of (s.servicios || [])) {
+          const key = svc.nombre || 'sin-nombre'
+          if (!svcMap[key]) svcMap[key] = { nombre: key, servers: [], puerto: '' }
+          if (!svcMap[key].servers.some(ex => ex.id === s.id)) {
+            svcMap[key].servers.push({ ...s, _svcIp: (svc.ips || [])[0] || '', _svcPuerto: svc.puerto || '' })
+          }
+          if (svc.puerto && !svcMap[key].puerto) svcMap[key].puerto = svc.puerto
+        }
+      }
+      return Object.values(svcMap)
+    },
+
+    get allIPs() {
+      const ips = []
+      const seen = new Set()
+      for (const s of this.servers) {
+        const creds = this.credsMap[s.id]
+        if (creds?.ipmi && !seen.has(creds.ipmi)) {
+          seen.add(creds.ipmi)
+          ips.push({ ip: creds.ipmi, type: 'IPMI', server: s })
+        }
+        if (creds?.ip_servicio && !seen.has(creds.ip_servicio)) {
+          seen.add(creds.ip_servicio)
+          ips.push({ ip: creds.ip_servicio, type: 'Servicio', server: s })
+        }
+        for (const svc of (s.servicios || [])) {
+          for (const ip of (svc.ips || [])) {
+            if (ip && !seen.has(ip)) {
+              seen.add(ip)
+              ips.push({ ip, type: svc.nombre, server: s })
+            }
+          }
+        }
+      }
+      return ips
+    },
+
+    get uniqueSubnets() {
+      const subnets = new Set()
+      for (const entry of this.allIPs) {
+        const parts = entry.ip.split('.')
+        if (parts.length === 4) {
+          subnets.add(parts.slice(0, 3).join('.'))
+        }
+      }
+      return [...subnets].sort()
+    },
+
+    get groupedIPs() {
+      const groups = {}
+      for (const entry of this.allIPs) {
+        const parts = entry.ip.split('.')
+        const subnet = parts.length === 4 ? parts.slice(0, 3).join('.') + '.0/24' : 'Otros'
+        if (!groups[subnet]) groups[subnet] = { subnet, ips: [] }
+        groups[subnet].ips.push(entry)
+      }
+      return Object.values(groups).sort((a, b) => a.subnet.localeCompare(b.subnet))
+    },
+
+    get filteredManagedUsers() {
+      if (!this.adminUserSearch.trim()) return this.managedUsers
+      const q = this.adminUserSearch.toLowerCase()
+      return this.managedUsers.filter(u =>
+        (u.email || '').toLowerCase().includes(q) || (u.role || '').includes(q)
+      )
+    },
+
+    get filteredAuditLogs() {
+      if (this.auditActionFilter === 'all') return this.auditLogs
+      return this.auditLogs.filter(a => a.accion === this.auditActionFilter)
+    },
+
+    get pendingTasksSummary() {
+      const summary = { critica: 0, configuracion: 0, normal: 0, total: 0 }
+      for (const sid in this.pendingTasksMap) {
+        for (const t of this.pendingTasksMap[sid]) {
+          const c = t.criticidad || 'normal'
+          if (summary[c] !== undefined) summary[c]++
+          summary.total++
+        }
+      }
+      return summary
+    }
   }))
 })

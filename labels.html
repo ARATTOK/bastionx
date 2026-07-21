@@ -16,6 +16,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <script defer src="js/supabase.js"></script>
+  <script defer src="js/toast.js"></script>
   <script defer src="js/labels.js"></script>
   <style>
     [x-cloak] { display: none !important; }
@@ -187,6 +188,18 @@
       </template>
     </div>
   </div>
+</div>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
 </div>
 </body>
 </html>

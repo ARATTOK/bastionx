@@ -15,10 +15,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body>
 <div x-data="tagsApp()" x-init="init()">
   <div class="container" style="max-width:700px;padding:2rem 1rem;">
+    <nav class="breadcrumbs" style="margin-bottom:0.5rem;">
+      <a href="dashboard.html">Dashboard</a>
+      <span class="sep">/</span>
+      <span class="current">Tags</span>
+    </nav>
     <div class="topbar" style="margin-bottom:1.5rem;">
       <h1 style="font-size:1.15rem;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:0.6rem;">
         <iconify-icon icon="lucide:tag" style="width:22px;height:22px;color:#6c5ce7;"></iconify-icon>
@@ -89,6 +95,19 @@
 </div>
 
 <script src="js/supabase.js"></script>
+<script src="js/toast.js"></script>
 <script src="js/tags-app.js"></script>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
 </body>
 </html>

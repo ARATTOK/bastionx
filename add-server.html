@@ -16,6 +16,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body>
 <div x-data="addServerApp()" x-init="init()">
@@ -26,6 +27,13 @@
 
   <template x-if="!loading">
     <div class="container" style="max-width:720px;padding:2rem 1rem;">
+      <!-- BREADCRUMBS -->
+      <nav aria-label="Breadcrumb" class="breadcrumbs">
+        <a href="dashboard.html">Dashboard</a>
+        <iconify-icon icon="lucide:chevron-right" class="bc-sep"></iconify-icon>
+        <span aria-current="page">Agregar servidor</span>
+      </nav>
+
       <!-- TOP BAR -->
       <div class="topbar" style="margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -43,33 +51,36 @@
       <!-- CARD -->
       <div class="edit-form-card">
 
-        <!-- ESSENTIAL: Hostname + SN + Modelo + Ubicación + Tags -->
+        <!-- INFORMACION DEL SERVIDOR -->
         <div class="edit-section">
           <h2 class="det-section-title">
             <iconify-icon icon="lucide:server" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
             Informaci&oacute;n del servidor
           </h2>
           <div class="edit-grid">
-            <div class="edit-field">
-              <label>Hostname *</label>
-              <input type="text" x-model="form.hostname" placeholder="Ej: srv-prod-01" required>
+            <div class="field-group">
+              <label for="add-hostname">Hostname <span style="color:#e74c3c;">*</span></label>
+              <input id="add-hostname" type="text" x-model="form.hostname" placeholder="Ej: srv-prod-01" required @blur="validateField('hostname')" :class="errors.hostname ? 'is-invalid' : ''">
+              <div class="field-error" :class="errors.hostname ? 'show' : ''" x-text="errors.hostname"></div>
             </div>
-            <div class="edit-field">
-              <label>Serial Number *</label>
-              <input type="text" x-model="form.sn" placeholder="Ej: XCV1234ABCD" required>
+            <div class="field-group">
+              <label for="add-sn">Serial Number <span style="color:#e74c3c;">*</span></label>
+              <input id="add-sn" type="text" x-model="form.sn" placeholder="Ej: XCV1234ABCD" required @blur="validateField('sn')" :class="errors.sn ? 'is-invalid' : ''">
+              <div class="field-error" :class="errors.sn ? 'show' : ''" x-text="errors.sn"></div>
             </div>
-            <div class="edit-field">
-              <label>Modelo</label>
-              <input type="text" x-model="form.modelo" placeholder="Ej: PowerEdge R740">
+            <div class="field-group">
+              <label for="add-modelo">Modelo <span style="color:#e74c3c;">*</span></label>
+              <input id="add-modelo" type="text" x-model="form.modelo" placeholder="Ej: PowerEdge R740" required @blur="validateField('modelo')" :class="errors.modelo ? 'is-invalid' : ''">
+              <div class="field-error" :class="errors.modelo ? 'show' : ''" x-text="errors.modelo"></div>
             </div>
-            <div class="edit-field">
-              <label>Ubicaci&oacute;n</label>
-              <input type="text" x-model="form.ubicacion" placeholder="Ej: Rack A, U12">
+            <div class="field-group">
+              <label for="add-ubicacion">Ubicaci&oacute;n</label>
+              <input id="add-ubicacion" type="text" x-model="form.ubicacion" placeholder="Ej: Rack A, U12">
             </div>
           </div>
         </div>
 
-        <!-- TAGS (token field) -->
+        <!-- TAGS -->
         <div class="edit-section">
           <h2 class="det-section-title">
             <iconify-icon icon="lucide:tag" style="width:14px;height:14px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
@@ -109,17 +120,17 @@
         <!-- ADVANCED FIELDS -->
         <div class="advanced-content" x-show="showAdvanced" x-collapse>
 
-          <!-- PROCESADOR + RAM -->
+          <!-- HARDWARE -->
           <div class="edit-section">
             <h2 class="det-section-title">
               <iconify-icon icon="lucide:cpu" style="width:14px;height:14px;color:#3498db;flex-shrink:0;"></iconify-icon>
               Hardware
             </h2>
             <div class="edit-grid">
-              <div class="edit-field"><label>Procesador</label><input type="text" x-model="form.procesador" placeholder="Ej: Intel Xeon Silver 4314"></div>
-              <div class="edit-field"><label>RAM (GB)</label><input type="number" x-model="form.ram_gb" placeholder="Ej: 64"></div>
-              <div class="edit-field"><label>M&oacute;dulos RAM</label><input type="text" x-model="form.ram_modulos" placeholder="Ej: 4"></div>
-              <div class="edit-field"><label>Velocidad RAM</label><input type="text" x-model="form.ram_velocidad" placeholder="Ej: 3200MHz"></div>
+              <div class="field-group"><label>Procesador</label><input type="text" x-model="form.procesador" placeholder="Ej: Intel Xeon Silver 4314"></div>
+              <div class="field-group"><label>RAM (GB)</label><input type="number" x-model="form.ram_gb" placeholder="Ej: 64"></div>
+              <div class="field-group"><label>M&oacute;dulos RAM</label><input type="text" x-model="form.ram_modulos" placeholder="Ej: 4"></div>
+              <div class="field-group"><label>Velocidad RAM</label><input type="text" x-model="form.ram_velocidad" placeholder="Ej: 3200MHz"></div>
             </div>
           </div>
 
@@ -129,41 +140,85 @@
               <iconify-icon icon="lucide:hard-drive" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
               RAIDs y discos <span style="color:#555;font-size:0.6rem;font-weight:400;">(opcional)</span>
             </h2>
+
+            <!-- RAID Preview -->
+            <div class="raid-preview" x-show="form.raids.some(r => r.discos.some(d => d.bay))">
+              <template x-for="(raid, ri) in form.raids" :key="ri">
+                <div class="raid-preview-item" x-show="raid.discos.some(d => d.bay)">
+                  <iconify-icon icon="lucide:layers" style="width:12px;height:12px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
+                  <span x-text="raid.nombre || 'RAID ' + (ri + 1)"></span>
+                  <span class="rp-count" x-text="raid.discos.filter(d => d.bay).length + ' discos'"></span>
+                  <span class="rp-detail" x-text="raid.discos.filter(d => d.bay).map(d => (d.tamano || '?') + (d.tamano_unit || '') + ' ' + (d.tipo || '?')).join(' + ')"></span>
+                </div>
+              </template>
+            </div>
+
             <template x-for="(raid, ri) in form.raids" :key="ri">
-              <div class="svc-edit-block">
-                <div class="svc-edit-header">
-                  <strong style="font-size:0.75rem;color:#aaa;" x-text="'RAID #' + (ri+1)"></strong>
-                  <button class="btn-icon danger" @click="removeRaid(ri)" title="Eliminar RAID" type="button">
-                    <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+              <div class="raid-block">
+                <div class="raid-header">
+                  <iconify-icon icon="lucide:layers" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
+                  <input type="text" x-model="raid.nombre" placeholder="Nombre del RAID (ej: RAID 1, Virtual Disk 0)">
+                  <button class="btn-icon" @click="removeRaid(ri)" title="Eliminar RAID" type="button">
+                    <iconify-icon icon="lucide:trash-2"></iconify-icon>
                   </button>
                 </div>
-                <div class="edit-field" style="margin-bottom:0.5rem;">
-                  <label>Nombre del RAID</label>
-                  <input type="text" x-model="raid.nombre" placeholder="Ej: RAID 1, RAID 5, JBOD" style="max-width:300px;">
-                </div>
-                <template x-for="(d, di) in raid.discos" :key="di">
-                  <div style="padding:0.4rem 0;border-top:1px solid rgba(255,255,255,0.03);">
-                    <div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.3rem;">
-                      <span style="font-size:0.6rem;color:#555;text-transform:uppercase;" x-text="'Disco #' + (di+1)"></span>
-                      <button class="btn-icon danger" @click="removeDiskFromRaid(ri, di)" title="Eliminar disco" style="margin-left:auto;" type="button">
-                        <iconify-icon icon="lucide:x" style="width:10px;height:10px;"></iconify-icon>
-                      </button>
-                    </div>
-                    <div class="edit-grid">
-                      <div class="edit-field"><label>Bah&iacute;a *</label><input type="text" x-model="d.bay" placeholder="Ej: Bay 0"></div>
-                      <div class="edit-field"><label>Tipo</label><input type="text" x-model="d.tipo" placeholder="Ej: SSD, HDD"></div>
-                      <div class="edit-field"><label>Tama&ntilde;o</label><input type="text" x-model="d.tamano" placeholder="Ej: 480GB, 2TB"></div>
-                      <div class="edit-field"><label>Velocidad</label><input type="text" x-model="d.velocidad" placeholder="Ej: 6Gbps, SAS 12Gbps"></div>
-                    </div>
+                <div class="raid-disks">
+                  <div class="disk-row header">
+                    <span>Bay</span>
+                    <span>Tipo</span>
+                    <span>Tama&ntilde;o</span>
+                    <span>Velocidad</span>
+                    <span></span>
                   </div>
-                </template>
-                <button class="btn" @click="addDiskToRaid(ri)" style="margin-top:0.4rem;padding:0.2rem 0.5rem;font-size:0.6rem;border:1px dashed var(--border-subtle);border-radius:6px;background:transparent;color:#555;cursor:pointer;" type="button">
-                  + Agregar disco a este RAID
-                </button>
+                  <template x-for="(disk, di) in raid.discos" :key="di">
+                    <div>
+                      <div class="disk-row" :class="diskErrors[ri + '-' + di] ? 'has-error' : ''">
+                        <div class="disk-field-wrap">
+                          <input type="text" x-model="disk.bay" placeholder="0" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.bay ? 'is-invalid' : ''">
+                          <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.bay" x-text="diskErrors[ri + '-' + di]?.bay"></div>
+                        </div>
+                        <div class="disk-field-wrap">
+                          <select x-model="disk.tipo" @change="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.tipo ? 'is-invalid' : ''">
+                            <option value="">—</option>
+                            <option value="SSD">SSD</option>
+                            <option value="HDD">HDD</option>
+                            <option value="NVMe">NVMe</option>
+                            <option value="SAS">SAS</option>
+                          </select>
+                          <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.tipo" x-text="diskErrors[ri + '-' + di]?.tipo"></div>
+                        </div>
+                        <div class="disk-field-wrap">
+                          <div class="disk-size-field">
+                            <input type="text" x-model="disk.tamano" placeholder="480" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.tamano ? 'is-invalid' : ''">
+                            <select x-model="disk.tamano_unit">
+                              <option value="GB">GB</option>
+                              <option value="TB">TB</option>
+                            </select>
+                          </div>
+                          <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.tamano" x-text="diskErrors[ri + '-' + di]?.tamano"></div>
+                        </div>
+                        <div class="disk-field-wrap">
+                          <select x-model="disk.velocidad">
+                            <option value="">—</option>
+                            <option value="6Gbps">6 Gbps</option>
+                            <option value="12Gbps">12 Gbps</option>
+                            <option value="3Gbps">3 Gbps</option>
+                          </select>
+                        </div>
+                        <button class="btn-icon" @click="removeDiskFromRaid(ri, di)" title="Eliminar disco" type="button">
+                          <iconify-icon icon="lucide:x"></iconify-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                  <button class="btn-add-disk" @click="addDiskToRaid(ri)" type="button">
+                    <iconify-icon icon="lucide:plus"></iconify-icon> A&ntilde;adir disco
+                  </button>
+                </div>
               </div>
             </template>
-            <button class="btn" @click="addRaid()" style="margin-top:0.5rem;padding:0.35rem 0.7rem;font-size:0.7rem;border:1px dashed var(--border-subtle);border-radius:8px;background:transparent;color:#6c5ce7;cursor:pointer;" type="button">
-              + Agregar RAID
+            <button class="btn-add-raid" @click="addRaid()" type="button">
+              <iconify-icon icon="lucide:hard-drive"></iconify-icon> A&ntilde;adir RAID / Grupo
             </button>
           </div>
 
@@ -177,20 +232,20 @@
               <div class="svc-edit-block">
                 <div class="svc-edit-header">
                   <strong style="font-size:0.75rem;color:#aaa;" x-text="'Servicio #' + (i+1)"></strong>
-                  <button class="btn-icon danger" @click="removeService(i)" title="Eliminar servicio" type="button">
+                  <button class="btn-icon" @click="removeService(i)" title="Eliminar servicio" type="button">
                     <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
                   </button>
                 </div>
                 <div class="edit-grid">
-                  <div class="edit-field"><label>Nombre del servicio *</label><input type="text" x-model="svc.nombre" placeholder="Ej: PostgreSQL"></div>
-                  <div class="edit-field"><label>Puerto</label><input type="text" x-model="svc.puerto" placeholder="Ej: 5432"></div>
+                  <div class="field-group"><label>Nombre del servicio *</label><input type="text" x-model="svc.nombre" placeholder="Ej: PostgreSQL"></div>
+                  <div class="field-group"><label>Puerto</label><input type="text" x-model="svc.puerto" placeholder="Ej: 5432"></div>
                 </div>
-                <div class="edit-field"><label>Descripci&oacute;n</label><input type="text" x-model="svc.descripcion" placeholder="Ej: Base de datos principal"></div>
-                <div class="edit-field">
+                <div class="field-group"><label>Descripci&oacute;n</label><input type="text" x-model="svc.descripcion" placeholder="Ej: Base de datos principal"></div>
+                <div class="field-group">
                   <label>IPs / Rangos</label>
                   <template x-for="(ip, j) in svc.ips" :key="j">
                     <div class="ip-row">
-                      <input type="text" x-model="svc.ips[j]" placeholder="Ej: 10.0.0.1 o 10.0.0.1-10.0.0.5" style="font-family:monospace;font-size:0.7rem;">
+                      <input type="text" x-model="svc.ips[j]" placeholder="Ej: 10.0.0.1" style="font-family:monospace;font-size:0.7rem;">
                         <button class="btn-icon" @click="removeServiceIp(i, j)" title="Quitar IP" type="button">
                           <iconify-icon icon="lucide:x" style="width:11px;height:11px;"></iconify-icon>
                         </button>
@@ -222,6 +277,20 @@
   </template>
 </div>
 <script src="js/supabase.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/audit.js"></script>
 <script src="js/add-server.js"></script>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
 </body>
 </html>

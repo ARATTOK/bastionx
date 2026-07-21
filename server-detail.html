@@ -15,6 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body>
 <div x-data="detailApp()" x-init="init()">
@@ -73,6 +74,13 @@
           </div>
         </div>
       </div>
+
+      <!-- BREADCRUMBS -->
+      <nav class="breadcrumbs" style="margin-bottom:0.75rem;">
+        <a href="dashboard.html">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current" x-text="server.hostname"></span>
+      </nav>
 
       <!-- STATUS BAR -->
       <div class="det-status-bar" :class="'det-' + (server.estado ? server.estado.toLowerCase() : '')">
@@ -211,6 +219,11 @@
                 <div style="font-size:0.55rem;color:#444;margin-top:0.15rem;" x-show="t.completada && t.completed_at">
                   Completada el <span x-text="formatDate(t.completed_at)"></span>
                 </div>
+                <template x-if="t.completada && taskEvidenceDesc(t.id)">
+                  <button @click="viewEvidence(t)" style="background:transparent;border:none;color:#2ecc71;cursor:pointer;font-size:0.6rem;padding:0;margin-top:0.15rem;text-decoration:underline;text-underline-offset:2px;">
+                    Ver evidencia
+                  </button>
+                </template>
               </div>
             </div>
           <template x-if="canEdit">
@@ -241,11 +254,22 @@
           <iconify-icon icon="lucide:history" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Bitácora
         </h2>
+
+        <!-- Log filters -->
+        <div class="log-filters" style="display:flex;gap:0.4rem;margin-bottom:0.6rem;">
+          <button :class="{ active: logFilter === 'all' }" @click="logFilter = 'all'">Todas</button>
+          <button :class="{ active: logFilter === 'completada' }" @click="logFilter = 'completada'">Completadas</button>
+          <button :class="{ active: logFilter === 'creada' }" @click="logFilter = 'creada'">Creadas</button>
+          <button :class="{ active: logFilter === 'eliminada' }" @click="logFilter = 'eliminada'">Eliminadas</button>
+          <button :class="{ active: logFilter === 'desmarcada' }" @click="logFilter = 'desmarcada'">Desmarcadas</button>
+        </div>
+
         <div class="log-list">
-          <template x-for="log in taskLogs" :key="log.id">
+          <template x-for="log in filteredLogs" :key="log.id">
             <div class="log-item">
               <span class="log-accion" :class="logAccionClass(log.accion)" x-text="log.accion"></span>
               <span class="log-desc" x-show="log.descripcion" x-text="log.descripcion"></span>
+              <span class="log-user" x-text="log.user_email || logUserEmail(log)" style="font-size:0.55rem;color:#888;"></span>
               <span class="log-date" x-text="formatDate(log.created_at)"></span>
             </div>
           </template>
@@ -274,22 +298,89 @@
 
       <!-- COMPLETE TASK MODAL -->
       <div class="modal-overlay" x-show="showCompleteModal" @click.self="showCompleteModal = false">
-        <div class="modal" style="max-width:420px;">
-          <h3>Completar tarea</h3>
+        <div class="modal" style="max-width:480px;">
+          <h3>
+            <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;color:#2ecc71;margin-right:6px;"></iconify-icon>
+            Completar tarea
+          </h3>
+          <div class="det-field" style="margin-bottom:0.5rem;" x-show="pendingCompleteTask">
+            <span class="det-label" style="font-size:0.65rem;">Tarea</span>
+            <span class="det-value" x-text="pendingCompleteTask?.titulo" style="font-size:0.78rem;color:#ccc;"></span>
+          </div>
           <div style="font-size:0.72rem;color:#888;margin-bottom:0.75rem;">
-            Describe brevemente qué se hizo:
+            Describe brevemente qué se hizo (se registrará tu usuario y fecha como evidencia):
           </div>
           <textarea x-model="completeTaskDesc" rows="3" placeholder="Ej: Se actualizó el firmware del iLO a versión 2.95..." style="width:100%;padding:0.5rem;font-size:0.78rem;background:var(--bg-dark);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-main);resize:vertical;font-family:inherit;outline:none;"></textarea>
+          <div style="display:flex;gap:0.5rem;margin-top:0.5rem;font-size:0.6rem;color:#555;">
+            <span><iconify-icon icon="lucide:user" style="width:10px;height:10px;margin-right:3px;"></iconify-icon><span x-text="user?.email || user?.id?.slice(0,8)"></span></span>
+            <span><iconify-icon icon="lucide:clock" style="width:10px;height:10px;margin-right:3px;"></iconify-icon><span x-text="new Date().toLocaleString('es-ES')"></span></span>
+          </div>
           <div class="modal-actions" style="margin-top:0.75rem;">
             <button class="btn" @click="showCompleteModal = false" style="border:1px solid var(--border-subtle);border-radius:6px;font-size:0.7rem;background:var(--bg-dark);color:#888;cursor:pointer;">Cancelar</button>
             <button class="btn" @click="completeTask()" :disabled="!completeTaskDesc.trim()" style="border:1px solid #2ecc7140;border-radius:6px;font-size:0.7rem;background:#2ecc7110;color:#2ecc71;cursor:pointer;">Marcar completa</button>
           </div>
         </div>
       </div>
+      <!-- EVIDENCE MODAL -->
+      <div class="modal-overlay" x-show="showEvidenceModal" @click.self="showEvidenceModal = false">
+        <div class="modal" style="max-width:480px;">
+          <template x-if="evidenceTask">
+            <div>
+              <h3>
+                <iconify-icon icon="lucide:clipboard-check" style="width:16px;height:16px;color:#2ecc71;margin-right:6px;"></iconify-icon>
+                Evidencia
+              </h3>
+              <div class="det-field" style="margin-bottom:0.5rem;">
+                <span class="det-label" style="font-size:0.65rem;">Tarea</span>
+                <span class="det-value" x-text="evidenceTask.titulo" style="font-size:0.78rem;color:#e0e0e0;"></span>
+              </div>
+              <div class="det-field" style="margin-bottom:0.5rem;">
+                <span class="det-label" style="font-size:0.65rem;">Completada</span>
+                <span class="det-value" x-text="formatDate(evidenceTask.completed_at)" style="font-size:0.72rem;color:#2ecc71;"></span>
+              </div>
+              <div class="det-field" style="margin-bottom:0.75rem;">
+                <span class="det-label" style="font-size:0.65rem;">Severidad</span>
+                <span class="tsk-badge" :class="taskSeverityClass(evidenceTask.criticidad)" x-text="taskSeverityLabel(evidenceTask.criticidad)"></span>
+              </div>
+              <div x-show="taskEvidenceDesc(evidenceTask.id)">
+                <div style="font-size:0.72rem;color:#888;margin-bottom:0.4rem;">Notas / evidencia:</div>
+                <div style="background:rgba(0,0,0,0.15);border:1px solid var(--border-subtle);border-radius:8px;padding:0.6rem;font-size:0.75rem;color:#ccc;line-height:1.5;white-space:pre-wrap;">
+                  <span x-text="taskEvidenceDesc(evidenceTask.id)"></span>
+                </div>
+              </div>
+              <div x-show="!taskEvidenceDesc(evidenceTask.id)" style="color:#555;font-size:0.7rem;padding:0.5rem 0;">
+                Sin notas adicionales
+              </div>
+              <div class="modal-actions" style="margin-top:1rem;">
+                <button class="btn" @click="showEvidenceModal = false" style="border:1px solid var(--border-subtle);border-radius:6px;font-size:0.7rem;background:var(--bg-dark);color:#888;cursor:pointer;">Cerrar</button>
+                <button class="btn" @click="reopenTask(evidenceTask)" x-show="canEdit" style="border:1px solid #f39c1240;border-radius:6px;font-size:0.7rem;background:#f39c1210;color:#f39c12;cursor:pointer;">
+                  <iconify-icon icon="lucide:rotate-ccw" style="width:11px;height:11px;margin-right:3px;"></iconify-icon>
+                  Reabrir tarea
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
     </div>
   </template>
 </div>
 <script src="js/supabase.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/audit.js"></script>
 <script src="js/detail-server.js"></script>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
 </body>
 </html>
