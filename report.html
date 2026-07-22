@@ -342,11 +342,15 @@
         <div class="report-date" x-text="'Generado: ' + reportDate"></div>
       </div>
       <div class="report-actions">
-        <button @click="print()">
-          <iconify-icon icon="lucide:printer" style="width:13px;height:13px;"></iconify-icon>
-          Imprimir
+        <button @click="exportCSV()" title="Descargar inventario en CSV">
+          <iconify-icon icon="lucide:file-down" style="width:13px;height:13px;"></iconify-icon>
+          Exportar CSV
         </button>
-        <a href="dashboard.html">
+        <button @click="print()" title="Imprimir o guardar como PDF">
+          <iconify-icon icon="lucide:printer" style="width:13px;height:13px;"></iconify-icon>
+          Imprimir / PDF
+        </button>
+        <a href="dashboard.html" @click.prevent="window.location.href='dashboard.html'">
           <iconify-icon icon="lucide:arrow-left" style="width:13px;height:13px;"></iconify-icon>
           Volver
         </a>
@@ -489,7 +493,7 @@
             <th>CPU</th>
             <th>RAM</th>
             <th>Discos</th>
-            <th>IPMI</th>
+            <th x-show="canEdit">IPMI</th>
             <th>Tags</th>
           </tr>
         </thead>
@@ -507,7 +511,7 @@
               <td x-text="s.procesador || '—'"></td>
               <td x-text="s.ram_gb ? s.ram_gb + ' GB' : '—'"></td>
               <td x-text="diskCount(s)"></td>
-              <td x-text="credField(s, 'ipmi')"></td>
+              <td x-text="credField(s, 'ipmi')" x-show="canEdit"></td>
               <td x-text="serverTags(s)" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;"></td>
             </tr>
           </template>

@@ -184,18 +184,31 @@
       <div class="edit-section">
         <h2 class="det-section-title">
           <iconify-icon icon="lucide:tag" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
-          Tags
+          Tags <span style="color:#555;font-size:0.6rem;font-weight:400;">(opcional)</span>
         </h2>
-        <div class="tags-selector" x-show="allTags.length > 0">
-          <template x-for="t in allTags" :key="t.id">
-            <button class="tag-select-btn" :class="selectedTagIds.includes(t.id) ? 'selected' : ''" @click="toggleTag(t.id)" :style="selectedTagIds.includes(t.id) ? 'background:' + t.color + '20;border-color:' + t.color + '60;color:' + t.color + ';' : ''">
-              <span class="tag-dot" :style="'background:' + t.color + ';'"></span>
-              <span x-text="t.name"></span>
-              <iconify-icon icon="lucide:check" style="width:11px;height:11px;margin-left:auto;" x-show="selectedTagIds.includes(t.id)"></iconify-icon>
-            </button>
-          </template>
+        <div class="token-field-wrap" @click.outside="showTagDropdown = false">
+          <div class="token-field">
+            <template x-for="tid in selectedTagIds" :key="tid">
+              <span class="token-pill" :style="'border-color:' + (allTags.find(t => t.id === tid)?.color || '#6c5ce7') + '60;'">
+                <span class="tag-dot" :style="'background:' + (allTags.find(t => t.id === tid)?.color || '#6c5ce7') + ';'"></span>
+                <span x-text="allTags.find(t => t.id === tid)?.name || '?'"></span>
+                <button class="token-remove" @click="removeTag(tid)" type="button">&times;</button>
+              </span>
+            </template>
+            <input class="token-input" type="text" x-model="tagSearch" @input="onTagInput" @keydown="onTagKeydown" @focus="onTagInput" placeholder="Buscar tags..." style="border:none;background:transparent;outline:none;flex:1;min-width:100px;font-size:0.75rem;color:var(--text-main);padding:2px 0;">
+          </div>
+          <div class="token-dropdown" x-show="showTagDropdown && filteredTags.length > 0">
+            <template x-for="tag in filteredTags" :key="tag.id">
+              <button class="token-dropdown-item" type="button" @click="selectTag(tag)" :style="'--td-color:' + tag.color + ';'">
+                <span class="tag-dot" :style="'background:' + tag.color + ';'"></span>
+                <span x-text="tag.name"></span>
+              </button>
+            </template>
+          </div>
         </div>
-        <div x-show="allTags.length === 0" style="color:#555;font-size:0.7rem;">No hay tags. Cr&eacute;alos desde <a href="tags.html" style="color:#6c5ce7;">tags.html</a></div>
+        <div x-show="allTags.length === 0" style="font-size:0.65rem;color:#555;margin-top:0.3rem;">
+          No hay tags. Cr&eacute;alos desde <a href="tags.html" style="color:#6c5ce7;">tags.html</a>
+        </div>
       </div>
 
       <!-- SERVICIOS -->
@@ -204,6 +217,7 @@
           <iconify-icon icon="lucide:globe" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Servicios
         </h2>
+        <div class="field-error" x-show="errors.servicios" x-text="errors.servicios" style="margin-bottom:0.5rem;"></div>
         <template x-for="(svc, i) in form.servicios" :key="i">
           <div class="svc-edit-block">
             <div class="svc-edit-header">
@@ -250,13 +264,6 @@
           <div class="field-group"><label>Usuario</label><input type="text" x-model="credForm.usuario" style="font-family:monospace;font-size:0.7rem;"></div>
           <div class="field-group"><label>Password</label><input type="text" x-model="credForm.password" style="font-family:monospace;font-size:0.7rem;"></div>
         </div>
-      </div>
-
-      <div style="margin-top:2rem;display:flex;gap:0.5rem;justify-content:flex-end;">
-        <button class="btn" @click="goBack()" style="padding:0.4rem 0.8rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.75rem;background:#12121a;color:#888;cursor:pointer;">Cancelar</button>
-        <button class="btn" @click="save()" :disabled="saving" style="padding:0.4rem 0.8rem;border:1px solid #6c5ce7;border-radius:8px;font-size:0.75rem;background:#6c5ce7;color:#fff;cursor:pointer;">
-          <span x-text="saving ? 'Guardando...' : 'Guardar cambios'"></span>
-        </button>
       </div>
     </div>
   </template>

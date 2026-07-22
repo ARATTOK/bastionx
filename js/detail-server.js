@@ -19,46 +19,60 @@ document.addEventListener('alpine:init', () => {
     pendingCompleteTask: null,
     showEvidenceModal: false,
     evidenceTask: null,
-    showKebab: false,
 
     async init() {
-      const { data: { session } } = await sb.auth.getSession()
-      if (!session) { window.location.href = 'login.html'; return }
-      const { error: userErr } = await sb.auth.getUser()
-      if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
-      this.user = session.user
-      let role = 'readonly'
       try {
-        const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
-        if (data?.role) role = data.role
-      } catch(e) {}
-      this.isSuperAdmin = role === 'superadmin'
-      this.canEdit = this.isSuperAdmin || role === 'admin'
+        const { data: { session } } = await sb.auth.getSession()
+        if (!session) { window.location.href = 'login.html'; return }
+        const { error: userErr } = await sb.auth.getUser()
+        if (userErr) { await sb.auth.signOut(); window.location.href = 'login.html'; return }
+        this.user = session.user
+        let role = 'readonly'
+        try {
+          const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
+          if (data?.role) role = data.role
+        } catch(e) {}
+        this.isSuperAdmin = role === 'superadmin'
+        this.canEdit = this.isSuperAdmin || role === 'admin'
 
-      const params = new URLSearchParams(window.location.search)
-      const id = params.get('id')
-      if (!id) { window.location.href = 'dashboard.html'; return }
+        const params = new URLSearchParams(window.location.search)
+        const id = params.get('id')
+        if (!id) { window.location.href = 'dashboard.html'; return }
 
-      const { data: server } = await sb.from('servers').select('*').eq('id', id).single()
-      if (!server) { window.location.href = 'dashboard.html'; return }
-      this.server = server
+        const { data: server, error: srvErr } = await sb.from('servers').select('*').eq('id', id).maybeSingle()
+        if (srvErr || !server) {
+          this.loading = false
+          this.server = null
+          return
+        }
+        this.server = server
 
-      const { data: creds } = await sb.from('server_credentials').select('*').eq('server_id', id).maybeSingle()
-      if (creds) this.serverCreds = creds
+        const { data: creds } = await sb.from('server_credentials').select('*').eq('server_id', id).maybeSingle()
+        if (creds) this.serverCreds = creds
 
-      const { data: sts } = await sb.from('server_tags').select('tag_id').eq('server_id', id)
-      if (sts && sts.length > 0) {
-        const tagIds = sts.map(s => s.tag_id)
-        const { data: allTags } = await sb.from('tags').select('*')
-        if (allTags) this.tags = allTags.filter(t => tagIds.includes(t.id))
+        const { data: sts } = await sb.from('server_tags').select('tag_id').eq('server_id', id)
+        if (sts && sts.length > 0) {
+          const tagIds = sts.map(s => s.tag_id)
+          const { data: tags } = await sb.from('tags').select('*').in('id', tagIds)
+          if (tags) this.tags = tags
+        }
+        await this.loadTasks()
+        this.loading = false
+      } catch (err) {
+        console.error('Init error:', err)
+        Alpine.store('toast').error('Error al cargar datos del servidor')
+        this.loading = false
       }
+    },
 
-      const { data: tasks } = await sb.from('server_tasks').select('*').eq('server_id', id).order('created_at')
-      if (tasks) this.tasks = tasks
-
-      await this.loadTaskLogs(id)
-
-      this.loading = false
+    async loadTasks() {
+      if (!this.server) return
+      const { data: tasks } = await sb.from('server_tasks')
+        .select('*')
+        .eq('server_id', this.server.id)
+        .order('created_at', { ascending: false })
+      this.tasks = tasks || []
+      await this.loadTaskLogs(this.server.id)
     },
 
     get filteredLogs() {
@@ -83,9 +97,6 @@ document.addEventListener('alpine:init', () => {
 
     goBack() { window.location.href = 'dashboard.html' },
     goEdit() { window.location.href = 'edit-server.html?id=' + this.server.id },
-    svcFirstIp(svc) {
-      return (svc.ips && svc.ips[0]) ? svc.ips[0] : null
-    },
 
     async addTask() {
       if (!this.newTaskTitulo.trim()) return
@@ -178,15 +189,17 @@ document.addEventListener('alpine:init', () => {
         .select('*')
         .eq('server_id', serverId)
         .order('created_at', { ascending: false })
-      if (logs) {
-        const userIds = [...new Set(logs.map(l => l.user_id))]
-        const { data: profiles } = await sb
-          .from('user_profiles')
-          .select('id, email')
-          .in('id', userIds)
+      if (logs && logs.length > 0) {
+        const userIds = [...new Set(logs.map(l => l.user_id).filter(Boolean))]
         const emailMap = {}
-        if (profiles) profiles.forEach(p => { emailMap[p.id] = p.email })
-        this.taskLogs = logs.map(l => ({ ...l, user_email: emailMap[l.user_id] || l.user_id.slice(0, 8) }))
+        if (userIds.length > 0) {
+          const { data: profiles } = await sb
+            .from('user_profiles')
+            .select('id, email')
+            .in('id', userIds)
+          if (profiles) profiles.forEach(p => { emailMap[p.id] = p.email })
+        }
+        this.taskLogs = logs.map(l => ({ ...l, user_email: emailMap[l.user_id] || (l.user_id ? l.user_id.slice(0, 8) : '—') }))
       } else {
         this.taskLogs = []
       }
@@ -203,7 +216,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     logUserEmail(log) {
-      return log.user_email || log.user_id?.slice(0, 8) + '...'
+      return log?.user_email || (log?.user_id ? log.user_id.slice(0, 8) + '...' : '—')
     },
 
     logAccionClass(accion) {

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Panel de Control de Superadmin</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    [x-cloak] { display: none !important; }
+    .admin-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .admin-header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .admin-nav-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .admin-stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .admin-stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(108,92,231,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c5ce7;
+      flex-shrink: 0;
+    }
+    .admin-stat-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .admin-stat-lbl {
+      font-size: 0.68rem;
+      color: #888;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .admin-card-section {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .admin-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    .role-superadmin { background: rgba(108,92,231,0.18); color: #8e7ff3; border: 1px solid rgba(108,92,231,0.3); }
+    .role-admin { background: rgba(46,204,113,0.18); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+    .role-readonly { background: rgba(255,255,255,0.06); color: #aaa; border: 1px solid rgba(255,255,255,0.1); }
+    .role-select {
+      background: #12121a !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: #ccc !important;
+      font-size: 0.72rem !important;
+      padding: 0.25rem 0.5rem !important;
+      border-radius: 6px !important;
+      outline: none !important;
+      width: auto !important;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div x-data="adminApp()" x-init="init()">
+  <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+    <iconify-icon icon="lucide:loader" style="width:24px;height:24px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
+    Cargando Panel de Control de Superadmin...
+  </div>
+
+  <div x-show="!loading && isSuperAdmin" class="admin-page" x-cloak>
+    <!-- HEADER -->
+    <div class="admin-header">
+      <div>
+        <h1>
+          <iconify-icon icon="lucide:shield-check" style="width:26px;height:26px;color:#6c5ce7;"></iconify-icon>
+          BASTIONX LAB — Panel de Control
+        </h1>
+        <div style="font-size:0.75rem;color:#888;margin-top:0.25rem;">Gestión centralizada de permisos, usuarios y bitácoras globales</div>
+      </div>
+      <div class="admin-nav-actions">
+        <a class="btn" href="tags.html" @click.prevent="window.location.href='tags.html'" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;padding:0.4rem 0.85rem;background:rgba(108,92,231,0.12);color:#8e7ff3;border:1px solid rgba(108,92,231,0.3);border-radius:8px;text-decoration:none;">
+          <iconify-icon icon="lucide:tag"></iconify-icon>
+          Gestión de Tags
+        </a>
+        <a class="btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;padding:0.4rem 0.85rem;background:#181824;color:#ccc;border:1px solid var(--border-subtle);border-radius:8px;text-decoration:none;">
+          <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+          Volver al Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+          <iconify-icon icon="lucide:users" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div>
+          <div class="admin-stat-val" x-text="users.length"></div>
+          <div class="admin-stat-lbl">Usuarios Totales</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background:rgba(108,92,231,0.2);color:#8e7ff3;">
+          <iconify-icon icon="lucide:shield" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div>
+          <div class="admin-stat-val" x-text="roleStats.superadmin"></div>
+          <div class="admin-stat-lbl">Superadmins</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background:rgba(46,204,113,0.15);color:#2ecc71;">
+          <iconify-icon icon="lucide:user-check" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div>
+          <div class="admin-stat-val" x-text="roleStats.admin"></div>
+          <div class="admin-stat-lbl">Administradores</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background:rgba(255,255,255,0.06);color:#aaa;">
+          <iconify-icon icon="lucide:user" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div>
+          <div class="admin-stat-val" x-text="roleStats.readonly"></div>
+          <div class="admin-stat-lbl">Lectura (Readonly)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USER MANAGEMENT SECTION -->
+    <div class="admin-card-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="admin-section-title" style="margin:0;">
+          <iconify-icon icon="lucide:user-cog" style="color:#6c5ce7;"></iconify-icon>
+          Gestión de Usuarios y Asignación de Roles
+        </div>
+        <div class="search-compact" style="width:280px;">
+          <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+          <input type="text" class="sb-input" x-model="searchUserQuery" placeholder="Buscar por email o rol...">
+          <button class="sb-clear" x-show="searchUserQuery" @click="searchUserQuery=''" title="Limpiar">
+            <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-user-table" style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle);text-align:left;color:#777;font-size:0.68rem;text-transform:uppercase;">
+              <th style="padding:0.6rem;">Usuario / Email</th>
+              <th style="padding:0.6rem;">Rol Actual</th>
+              <th style="padding:0.6rem;">ID de Usuario</th>
+              <th style="padding:0.6rem;text-align:right;">Cambiar Rol</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="u in filteredUsers" :key="u.id">
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td style="padding:0.65rem 0.6rem;">
+                  <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <iconify-icon icon="lucide:mail" style="color:#666;width:13px;height:13px;"></iconify-icon>
+                    <strong style="color:#fff;" x-text="u.email || u.id.slice(0,8)"></strong>
+                    <span x-show="u.id === user?.id" style="font-size:0.58rem;background:rgba(108,92,231,0.2);color:#8e7ff3;padding:0.05rem 0.35rem;border-radius:4px;">(Tú)</span>
+                  </div>
+                </td>
+                <td style="padding:0.65rem 0.6rem;">
+                  <span class="role-badge" :class="'role-' + (u.role || 'readonly')">
+                    <span x-text="u.role || 'readonly'"></span>
+                  </span>
+                </td>
+                <td style="padding:0.65rem 0.6rem;color:#666;font-family:monospace;font-size:0.68rem;" x-text="u.id"></td>
+                <td style="padding:0.65rem 0.6rem;text-align:right;">
+                  <select class="role-select" :value="u.role || 'readonly'" @change="changeUserRole(u.id, $event.target.value, u.email)">
+                    <option value="superadmin">Superadmin</option>
+                    <option value="admin">Admin</option>
+                    <option value="readonly">Readonly</option>
+                  </select>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <div x-show="filteredUsers.length === 0" style="text-align:center;padding:2rem;color:#666;font-size:0.75rem;">
+          Sin usuarios coincidentes con "<span x-text="searchUserQuery"></span>"
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT LOGS SECTION -->
+    <div class="admin-card-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="admin-section-title" style="margin:0;">
+          <iconify-icon icon="lucide:history" style="color:#f39c12;"></iconify-icon>
+          Bitácora y Registro de Auditoría del Sistema
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <select x-model="auditActionFilter" class="role-select" style="padding:0.35rem 0.6rem !important;">
+            <option value="all">Todas las acciones</option>
+            <option value="server.creada">server.creada</option>
+            <option value="server.editada">server.editada</option>
+            <option value="server.eliminada">server.eliminada</option>
+            <option value="task.completada">task.completada</option>
+            <option value="user.role_changed">user.role_changed</option>
+          </select>
+          <div class="search-compact" style="width:240px;">
+            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+            <input type="text" class="sb-input" x-model="searchAuditQuery" placeholder="Buscar en bitácora...">
+            <button class="sb-clear" x-show="searchAuditQuery" @click="searchAuditQuery=''" title="Limpiar">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.74rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle);text-align:left;color:#777;font-size:0.65rem;text-transform:uppercase;">
+              <th style="padding:0.5rem;">Acción</th>
+              <th style="padding:0.5rem;">Usuario</th>
+              <th style="padding:0.5rem;">Descripción / Evidencia</th>
+              <th style="padding:0.5rem;">Fecha y Hora</th>
+              <th style="padding:0.5rem;text-align:right;">Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="log in filteredAuditLogs" :key="log.id">
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td style="padding:0.55rem 0.5rem;">
+                  <span class="log-accion" :class="logAccionClass(log.accion)" x-text="log.accion"></span>
+                </td>
+                <td style="padding:0.55rem 0.5rem;color:#ccc;" x-text="log.user_email"></td>
+                <td style="padding:0.55rem 0.5rem;color:#bbb;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="log.descripcion || '—'"></td>
+                <td style="padding:0.55rem 0.5rem;color:#777;" x-text="formatDate(log.created_at)"></td>
+                <td style="padding:0.55rem 0.5rem;text-align:right;">
+                  <button class="btn" @click="viewAuditDetail(log)" style="font-size:0.62rem;padding:0.15rem 0.45rem;background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);color:#aaa;border-radius:4px;cursor:pointer;">
+                    Ver Cambios
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <div x-show="filteredAuditLogs.length === 0" style="text-align:center;padding:2rem;color:#666;font-size:0.75rem;">
+          Sin registros de auditoría
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- AUDIT DETAIL MODAL -->
+  <div class="modal-overlay" x-show="Boolean(auditDetailItem)" x-cloak @click.self="auditDetailItem = null" @keydown.escape.window="auditDetailItem = null">
+    <div class="modal" style="max-width:540px;padding:1.5rem;" x-show="Boolean(auditDetailItem)">
+      <template x-if="auditDetailItem">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-subtle);">
+            <h3 style="margin:0;font-size:1rem;color:#fff;">Detalle de Auditoría</h3>
+            <span class="log-accion" :class="logAccionClass(auditDetailItem.accion)" x-text="auditDetailItem.accion"></span>
+          </div>
+          <div style="font-size:0.7rem;color:#aaa;margin-bottom:1rem;display:flex;flex-direction:column;gap:0.3rem;">
+            <div><strong style="color:#777;">Usuario:</strong> <span x-text="auditDetailItem.user_email"></span></div>
+            <div><strong style="color:#777;">Fecha:</strong> <span x-text="formatDate(auditDetailItem.created_at)"></span></div>
+            <div x-show="auditDetailItem.descripcion"><strong style="color:#777;">Descripción:</strong> <span x-text="auditDetailItem.descripcion"></span></div>
+          </div>
+          <div x-show="auditDetailItem.cambios" style="background:rgba(0,0,0,0.3);border:1px solid var(--border-subtle);border-radius:6px;padding:0.75rem;">
+            <div style="font-size:0.62rem;color:#888;text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;">Objeto de Cambios (JSON)</div>
+            <pre style="font-size:0.7rem;color:#2ecc71;margin:0;white-space:pre-wrap;font-family:monospace;" x-text="JSON.stringify(auditDetailItem.cambios, null, 2)"></pre>
+          </div>
+          <div style="margin-top:1.25rem;display:flex;justify-content:flex-end;">
+            <button class="btn" @click="auditDetailItem = null" style="font-size:0.75rem;padding:0.35rem 0.85rem;background:var(--bg-dark);border:1px solid var(--border-subtle);color:#888;border-radius:6px;cursor:pointer;">Cerrar</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
+
+<script src="js/supabase.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/audit.js"></script>
+<script src="js/admin.js"></script>
+
+<!-- Toast container -->
+<div x-data x-show="$store.toast.items.length" class="toast-container">
+  <template x-for="t in $store.toast.items" :key="t.id">
+    <div class="toast" :class="t.type">
+      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
+</body>
+</html>

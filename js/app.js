@@ -15,16 +15,17 @@ document.addEventListener('alpine:init', () => {
     paletteQuery: '',
     paletteIndex: 0,
 
-    showUserManager: false,
     serverTagsMap: {},
     allTagsMap: {},
     pendingTasksMap: {},
     tasksProgressMap: {},
     credsMap: {},
     openKebabId: null,
+    expandedServerId: null,
     managedUsers: [],
     auditLogs: [],
     auditDetailItem: null,
+    quickServerItem: null,
     netSubnetFilter: '',
     adminUserSearch: '',
     auditActionFilter: 'all',
@@ -110,9 +111,6 @@ document.addEventListener('alpine:init', () => {
       this.expandedCard = this.expandedCard === id ? null : id
     },
 
-    filterServers() {
-    },
-
     openPalette(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
@@ -144,8 +142,7 @@ document.addEventListener('alpine:init', () => {
         { icon: 'lucide:printer', label: 'Imprimir etiquetas', action: () => window.location.href='labels.html' },
         { icon: 'lucide:tag', label: 'Administrar tags', action: () => window.location.href='tags.html' },
       ]
-      if (this.canEdit) {
-        actions.push({ icon: 'lucide:users', label: 'Gestionar usuarios (admin)', action: () => { this.fetchUsers(); this.showUserManager = true } })
+      if (this.isSuperAdmin) {
       }
       actions.push({ type: 'divider' })
       this.servers.forEach(s => {
@@ -344,7 +341,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     viewAuditDetail(a) {
-      this.auditDetailItem = a
+      if (!a) return
+      let item = { ...a }
+      if (typeof item.cambios === 'string') {
+        try {
+          item.cambios = JSON.parse(item.cambios)
+        } catch (e) {
+          item.cambios = null
+        }
+      }
+      this.auditDetailItem = item
     },
 
     formatDiffVal(v) {
@@ -492,6 +498,29 @@ document.addEventListener('alpine:init', () => {
       if (pct >= 25) return '#f39c12'
       return '#e74c3c'
     },
+    toggleExpand(id) {
+      this.expandedCard = this.expandedCard === id ? null : id
+      this.expandedServerId = this.expandedCard
+    },
+
+    openQuickServer(s) {
+      this.quickServerItem = s
+    },
+
+    closeQuickServer() {
+      this.quickServerItem = null
+    },
+
+    diskList(s) {
+      try {
+        const d = typeof s.discos === 'string' ? JSON.parse(s.discos) : (s.discos || [])
+        if (!Array.isArray(d) || d.length === 0) return []
+        if (d[0] && d[0].nombre !== undefined) {
+          return d.flatMap(r => Array.isArray(r.discos) ? r.discos.map(dd => ({ bay: dd.bay || '—', tipo: dd.tipo || '', tamano: dd.tamano || '', raid: r.nombre })) : [])
+        }
+        return d.map(dd => ({ bay: dd.bay || '—', tipo: dd.tipo || '', tamano: dd.tamano || '' }))
+      } catch { return [] }
+    },
 
     // ===== VIEW GETTERS =====
 
@@ -558,11 +587,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     get filteredManagedUsers() {
-      if (!this.adminUserSearch.trim()) return this.managedUsers
-      const q = this.adminUserSearch.toLowerCase()
-      return this.managedUsers.filter(u =>
-        (u.email || '').toLowerCase().includes(q) || (u.role || '').includes(q)
-      )
+      let list = this.managedUsers
+      if (this.adminUserSearch.trim()) {
+        const q = this.adminUserSearch.toLowerCase()
+        list = list.filter(u =>
+          (u.email || '').toLowerCase().includes(q) || (u.role || '').includes(q)
+        )
+      }
+      return list.sort((a, b) => (a.email || '').localeCompare(b.email || ''))
     },
 
     get filteredAuditLogs() {

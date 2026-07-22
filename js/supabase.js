@@ -26,6 +26,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
  */
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(function() {})
 }

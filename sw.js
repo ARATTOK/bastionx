@@ -1,8 +1,9 @@
-const CACHE = 'bastionx-v1'
+const CACHE = 'bastionx-v3'
 const STATIC = [
   './',
   './login.html',
   './dashboard.html',
+  './admin.html',
   './server-detail.html',
   './add-server.html',
   './edit-server.html',
@@ -18,6 +19,7 @@ const STATIC = [
   './js/toast.js',
   './js/audit.js',
   './js/app.js',
+  './js/admin.js',
   './js/detail-server.js',
   './js/add-server.js',
   './js/edit-server.js',
@@ -30,7 +32,9 @@ const STATIC = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => {
+      return c.addAll(STATIC).catch(err => console.warn('Cache addAll skipped:', err))
+    }).then(() => self.skipWaiting())
   )
 })
 

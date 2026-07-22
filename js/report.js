@@ -1,6 +1,7 @@
 document.addEventListener('alpine:init', () => {
   Alpine.data('reportApp', () => ({
     loading: true,
+    canEdit: false,
     servers: [],
     serverTagsMap: {},
     allTagsMap: {},
@@ -12,6 +13,8 @@ document.addEventListener('alpine:init', () => {
         const { data: { session } } = await sb.auth.getSession()
         if (!session) { window.location.href = 'login.html'; return }
         this.reportDate = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        const { data: profile } = await sb.from('user_profiles').select('role').eq('id', session.user.id).single()
+        this.canEdit = profile?.role === 'superadmin' || profile?.role === 'admin'
         await this.loadData()
       } catch (e) {
         window.location.href = 'login.html'
@@ -152,6 +155,36 @@ document.addEventListener('alpine:init', () => {
 
     credField(s, field) {
       return this.credsMap[s.id]?.[field] || '—'
+    },
+
+    exportCSV() {
+      const headers = ['ID', 'Hostname', 'Ubicación', 'Estado', 'Marca/Modelo', 'Número de Serie', 'Procesador', 'RAM (GB)', 'Tags', 'IPMI', 'IP Servicio']
+      const rows = this.servers.map(s => [
+        s.id,
+        s.hostname || '',
+        s.ubicacion || '',
+        s.estado || '',
+        `${s.marca || ''} ${s.modelo || ''}`.trim(),
+        s.sn || '',
+        s.procesador || '',
+        s.ram_gb || 0,
+        this.serverTags(s),
+        this.credField(s, 'ipmi'),
+        this.credField(s, 'ip_servicio')
+      ])
+      const csvContent = [headers, ...rows]
+        .map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+        .join('\n')
+      
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `reporte_bastionx_${new Date().toISOString().slice(0, 10)}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      Alpine.store('toast').success('Reporte CSV descargado con éxito')
     },
 
     print() {

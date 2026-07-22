@@ -9,6 +9,8 @@ document.addEventListener('alpine:init', () => {
     serverCreds: null,
     allTags: [],
     selectedTagIds: [],
+    showTagDropdown: false,
+    tagSearch: '',
     errors: {},
     diskErrors: {},
 
@@ -104,8 +106,13 @@ document.addEventListener('alpine:init', () => {
       const { data: sts } = await sb.from('server_tags').select('tag_id').eq('server_id', id)
       if (sts) this.selectedTagIds = sts.map(s => s.tag_id)
       this._origTagIds = [...this.selectedTagIds]
+      this._formSnapshot = JSON.stringify(this.form) + JSON.stringify(this.selectedTagIds)
 
       this.loading = false
+    },
+
+    get formChanged() {
+      return JSON.stringify(this.form) + JSON.stringify(this.selectedTagIds) !== this._formSnapshot
     },
 
     validateField(name) {
@@ -130,14 +137,67 @@ document.addEventListener('alpine:init', () => {
       this.diskErrors[key] = Object.keys(errs).length > 0 ? errs : null
     },
 
+    isValidIP(ip) {
+      if (!ip || !ip.trim()) return true
+      const parts = ip.trim().split('.')
+      if (parts.length !== 4) return false
+      return parts.every(p => {
+        const n = Number(p)
+        return !isNaN(n) && n >= 0 && n <= 255 && p === String(n)
+      })
+    },
+
     validateAll() {
       this.validateField('hostname')
       this.validateField('sn')
       this.form.raids.forEach((raid, ri) => {
         raid.discos.forEach((_, di) => this.validateDisk(ri, di))
       })
+      this.errors.servicios = ''
+      for (let si = 0; si < this.form.servicios.length; si++) {
+        const svc = this.form.servicios[si]
+        if (Array.isArray(svc.ips)) {
+          for (let ii = 0; ii < svc.ips.length; ii++) {
+            if (!this.isValidIP(svc.ips[ii])) {
+              this.errors.servicios = 'IP inválida en ' + (svc.nombre || 'servicio ' + (si + 1))
+              break
+            }
+          }
+        }
+        if (this.errors.servicios) break
+      }
       const hasDiskErr = Object.values(this.diskErrors).some(Boolean)
       return !Object.values(this.errors).some(Boolean) && !hasDiskErr
+    },
+
+    get filteredTags() {
+      if (!this.tagSearch.trim()) return this.allTags
+      const q = this.tagSearch.toLowerCase()
+      return this.allTags.filter(t => t.name.toLowerCase().includes(q) && !this.selectedTagIds.includes(t.id))
+    },
+
+    selectTag(tag) {
+      if (!this.selectedTagIds.includes(tag.id)) {
+        this.selectedTagIds.push(tag.id)
+      }
+      this.tagSearch = ''
+      this.showTagDropdown = false
+    },
+
+    removeTag(tagId) {
+      const idx = this.selectedTagIds.indexOf(tagId)
+      if (idx >= 0) this.selectedTagIds.splice(idx, 1)
+    },
+
+    onTagInput() {
+      this.showTagDropdown = this.tagSearch.trim().length > 0 || this.allTags.some(t => !this.selectedTagIds.includes(t.id))
+    },
+
+    onTagKeydown(e) {
+      if (e.key === 'Escape') { this.showTagDropdown = false; this.tagSearch = '' }
+      if (e.key === 'Backspace' && !this.tagSearch && this.selectedTagIds.length > 0) {
+        this.selectedTagIds.pop()
+      }
     },
 
     toggleTag(tagId) {
@@ -163,7 +223,10 @@ document.addEventListener('alpine:init', () => {
       if (ips.length > 1) ips.splice(ipIdx, 1)
     },
 
-    goBack() { window.location.href = 'server-detail.html?id=' + this.server.id },
+    goBack() {
+      if (this.formChanged && !confirm('¿Descartar cambios?')) return
+      window.location.href = 'server-detail.html?id=' + this.server.id
+    },
 
     addRaid() {
       this.form.raids.push({ nombre: '', discos: [{ bay: '', tipo: '', tamano: '', tamano_unit: 'GB', velocidad: '' }] })

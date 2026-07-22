@@ -39,13 +39,17 @@
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <button class="btn" @click="goBack()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
             <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
-            Volver
+            Cancelar
           </button>
           <h1 style="font-size:1.1rem;font-weight:700;color:#fff;margin:0;">
             <iconify-icon icon="lucide:plus" style="width:18px;height:18px;color:#6c5ce7;margin-right:6px;"></iconify-icon>
             Agregar servidor
           </h1>
         </div>
+        <button class="btn" @click="save()" :disabled="saving" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.8rem;border:1px solid #6c5ce7;border-radius:8px;font-size:0.7rem;background:#6c5ce7;color:#fff;cursor:pointer;">
+          <iconify-icon icon="lucide:save" style="width:12px;height:12px;"></iconify-icon>
+          <span x-text="saving ? 'Guardando...' : 'Guardar'"></span>
+        </button>
       </div>
 
       <!-- CARD -->
@@ -228,6 +232,7 @@
               <iconify-icon icon="lucide:globe" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
               Servicios <span style="color:#555;font-size:0.6rem;font-weight:400;">(opcional)</span>
             </h2>
+            <div class="field-error" x-show="errors.servicios" x-text="errors.servicios" style="margin-bottom:0.5rem;"></div>
             <template x-for="(svc, i) in form.servicios" :key="i">
               <div class="svc-edit-block">
                 <div class="svc-edit-header">
@@ -263,14 +268,6 @@
           </div>
 
         </div><!-- /advanced-content -->
-
-        <!-- BOTTOM ACTIONS -->
-        <div style="margin-top:2rem;display:flex;gap:0.5rem;justify-content:flex-end;">
-          <button class="btn" @click="goBack()" style="padding:0.4rem 0.8rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.75rem;background:#12121a;color:#888;cursor:pointer;">Cancelar</button>
-          <button class="btn" @click="save()" :disabled="saving" style="padding:0.4rem 0.8rem;border:1px solid #6c5ce7;border-radius:8px;font-size:0.75rem;background:#6c5ce7;color:#fff;cursor:pointer;">
-            <span x-text="saving ? 'Guardando...' : 'Guardar servidor'"></span>
-          </button>
-        </div>
 
       </div><!-- /edit-form-card -->
     </div>

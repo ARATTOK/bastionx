@@ -38,11 +38,30 @@
           BASTIONX LAB
           <small>inventory control</small>
         </h1>
-        <div class="user-badge" @click="logout">
-          <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
-          <span x-text="user?.email"></span>
-          <span class="role-badge" :class="isSuperAdmin ? 'super' : ''" x-text="isSuperAdmin ? 'super admin' : userRole"></span>
-          <iconify-icon icon="lucide:log-out" style="width:12px;height:12px;color:#333;margin-left:4px;"></iconify-icon>
+
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <!-- EXPANDABLE SEARCH BAR (TOP BAR) -->
+          <div class="search-expandable" x-show="!loading">
+            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+            <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar servidor, IP, servicio..." @input.debounce="filterServers()">
+            <button class="sb-clear" x-show="searchQuery" @click="searchQuery='';filterServers()" title="Limpiar búsqueda">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+            </button>
+          </div>
+
+          <!-- SUPERADMIN CONTROL PANEL BUTTON -->
+          <a class="at-btn" href="admin.html" x-show="isSuperAdmin && !loading" @click.prevent="window.location.href='admin.html'" style="background:rgba(108,92,231,0.18);color:#8e7ff3;border:1px solid rgba(108,92,231,0.4);padding:0.35rem 0.75rem;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+            <iconify-icon icon="lucide:shield-check" style="width:15px;height:15px;color:#6c5ce7;pointer-events:none;"></iconify-icon>
+            Panel de Control
+          </a>
+
+          <!-- USER BADGE -->
+          <div class="user-badge" @click="logout" title="Cerrar sesión">
+            <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
+            <span x-text="user?.email"></span>
+            <span class="role-badge" :class="isSuperAdmin ? 'super' : ''" x-text="isSuperAdmin ? 'super admin' : userRole"></span>
+            <iconify-icon icon="lucide:log-out" style="width:12px;height:12px;color:#333;margin-left:4px;"></iconify-icon>
+          </div>
         </div>
       </div>
 
@@ -82,57 +101,32 @@
         </span>
       </div>
 
-      <!-- ADMIN TOOLBAR -->
-      <div class="admin-toolbar" x-show="isSuperAdmin && !loading">
-        <a class="at-btn" href="add-server.html">
-          <iconify-icon icon="lucide:plus"></iconify-icon>
-          Agregar
+      <!-- ACTION TOOLBAR -->
+      <div class="admin-toolbar" x-show="!loading" style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
+        <a class="at-btn" href="add-server.html" x-show="canEdit" @click.prevent="window.location.href='add-server.html'">
+          <iconify-icon icon="lucide:plus" style="pointer-events:none;"></iconify-icon>
+          Agregar Servidor
         </a>
-        <button class="at-btn" @click="showUserManager = true; fetchUsers()">
-          <iconify-icon icon="lucide:users"></iconify-icon>
-          Usuarios
-        </button>
-        <a class="at-btn" href="tags.html" @click.prevent="window.location.href='tags.html'">
-          <iconify-icon icon="lucide:tag"></iconify-icon>
+        <a class="at-btn" href="tags.html" x-show="isSuperAdmin" @click.prevent="window.location.href='tags.html'">
+          <iconify-icon icon="lucide:tag" style="pointer-events:none;"></iconify-icon>
           Tags
         </a>
         <button class="at-btn" @click="refreshServers()">
-          <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
+          <iconify-icon icon="lucide:refresh-cw" style="pointer-events:none;"></iconify-icon>
           Recargar
         </button>
         <button class="at-btn" @click="exportCSV()">
-          <iconify-icon icon="lucide:file-down"></iconify-icon>
-          Exportar
+          <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
+          Exportar CSV
         </button>
-        <a class="at-btn" href="report.html">
-          <iconify-icon icon="lucide:clipboard-list"></iconify-icon>
+        <a class="at-btn" href="report.html" @click.prevent="window.location.href='report.html'">
+          <iconify-icon icon="lucide:clipboard-list" style="pointer-events:none;"></iconify-icon>
           Reporte
         </a>
-        <a class="at-btn" href="labels.html">
-          <iconify-icon icon="lucide:printer"></iconify-icon>
+        <a class="at-btn" href="labels.html" @click.prevent="window.location.href='labels.html'">
+          <iconify-icon icon="lucide:printer" style="pointer-events:none;"></iconify-icon>
           Etiquetas
         </a>
-      </div>
-
-      <!-- UTILITY LINKS (all roles) -->
-      <div class="util-links" x-show="!loading">
-        <a href="report.html" @click.prevent="window.location.href='report.html'">
-          <iconify-icon icon="lucide:clipboard-list"></iconify-icon>
-          Reporte
-        </a>
-        <a href="labels.html" @click.prevent="window.location.href='labels.html'">
-          <iconify-icon icon="lucide:printer"></iconify-icon>
-          Etiquetas
-        </a>
-      </div>
-
-      <!-- SEARCH BAR -->
-      <div class="search-bar" x-show="!loading">
-        <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
-        <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar por hostname, SN, modelo, IP, servicio..." @input.debounce="filterServers()">
-        <button class="sb-clear" x-show="searchQuery" @click="searchQuery='';filterServers()">
-          <iconify-icon icon="lucide:x"></iconify-icon>
-        </button>
       </div>
 
       <!-- VIEW TABS -->
@@ -152,10 +146,6 @@
         <button class="view-tab" :class="activeView === 'all' ? 'active' : ''" @click="activeView='all'">
           <iconify-icon icon="lucide:layers"></iconify-icon>
           Infraestructura
-        </button>
-        <button class="view-tab" :class="activeView === 'admin' ? 'active' : ''" @click="activeView='admin'" x-show="isSuperAdmin">
-          <iconify-icon icon="lucide:shield"></iconify-icon>
-          Admin
         </button>
       </div>
 
@@ -206,151 +196,77 @@
           <!-- BENTO GRID -->
           <div class="bento-grid" x-show="filteredServers.length > 0">
             <template x-for="s in filteredServers" :key="s.id">
-              <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="gotoServer(s.id)">
-                <!-- Kebab -->
-                <div class="kebab-wrap" x-show="canEdit" @click.outside="openKebabId = null">
-                  <button class="kebab-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
-                    <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
-                  </button>
-                  <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
-                    <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click="openKebabId = null">
-                      <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
-                    </a>
-                    <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank"
-                       x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
-                      <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
-                    </a>
-                    <div class="kebab-divider"></div>
-                    <div class="kebab-section-header">Servicios</div>
-                    <template x-for="(svc, i) in (s.servicios || [])" :key="i">
-                      <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
-                         x-show="svcFirstIp(svc)" @click="openKebabId = null">
-                        <iconify-icon icon="lucide:globe"></iconify-icon>
-                        <span x-text="svc.nombre"></span>
-                      </a>
-                    </template>
-                  </div>
-                </div>
-
-                <!-- Card Identity -->
+              <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="openQuickServer(s)" tabindex="0" @keydown.enter.prevent="openQuickServer(s)">
+                
+                <!-- Card Identity Header -->
                 <div class="card-section card-section--identity">
                   <div class="card-top">
-                    <div class="card-icon-box">
-                      <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
+                    <div class="card-icon-box" :title="'Estado: ' + s.estado">
+                      <iconify-icon icon="lucide:server" :style="'color:' + (s.estado === 'activo' ? 'var(--c-online)' : (s.estado === 'mantenimiento' ? '#f39c12' : 'var(--c-offline)'))"></iconify-icon>
                     </div>
                     <div class="card-title-group">
                       <strong class="card-hostname" x-text="s.hostname"></strong>
                       <span class="card-model-tag" x-show="s.modelo" x-text="s.modelo"></span>
                     </div>
+                    <div class="card-actions" @click.stop>
+                      <button class="icon-btn" @click.stop="gotoServer(s.id)" title="Ver ficha completa">
+                        <iconify-icon icon="lucide:arrow-right"></iconify-icon>
+                      </button>
+                      <div class="kebab-wrap" x-show="canEdit" @click.stop.outside="openKebabId = null">
+                        <button class="icon-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
+                          <iconify-icon icon="lucide:more-vertical"></iconify-icon>
+                        </button>
+                        <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
+                          <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click.prevent="openKebabId = null; window.location.href = 'edit-server.html?id=' + s.id">
+                            <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
+                          </a>
+                          <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank" x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
+                            <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div class="card-meta-row">
-                    <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
-                    <span x-text="s.ubicacion"></span>
-                    <span x-show="s.sn">
+                    <span title="Ubicación">
+                      <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
+                      <span x-text="s.ubicacion"></span>
+                    </span>
+                    <span x-show="s.sn" title="Número de Serie">
                       <iconify-icon icon="lucide:hash" class="meta-icon"></iconify-icon>
                       <span x-text="s.sn"></span>
                     </span>
                   </div>
                 </div>
 
-                <!-- Card Info -->
-                <div class="card-section card-section--info">
-                  <div class="card-specs-row">
-                    <span class="card-spec-item" x-show="s.procesador && s.procesador !== ''">
-                      <iconify-icon icon="lucide:cpu" class="spec-icon"></iconify-icon>
-                      <span class="spec-value" x-text="shortCpu(s.procesador)"></span>
-                    </span>
-                    <span class="card-spec-item">
-                      <iconify-icon icon="lucide:memory-stick" class="spec-icon"></iconify-icon>
-                      <span class="spec-value" x-text="s.ram_gb > 0 ? s.ram_gb : '—'"></span>
-                    </span>
-                    <span class="card-spec-item" x-show="diskCount(s) > 0">
-                      <iconify-icon icon="lucide:hard-drive" class="spec-icon"></iconify-icon>
-                      <span class="spec-value" x-text="diskCount(s)"></span>
-                    </span>
-                    <span class="card-spec-item" x-show="s.servicios && s.servicios.length > 0">
-                      <iconify-icon icon="lucide:globe" class="spec-icon"></iconify-icon>
-                      <span class="spec-value" x-text="s.servicios.length"></span>
-                    </span>
-                  </div>
-
-                  <!-- Tags -->
-                  <div x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0" style="margin-top:0.35rem;">
-                    <div class="card-tags-header">Tags</div>
-                    <div class="card-tags-row">
-                      <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 4)" :key="ti">
-                        <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '30;'">
-                          <span class="card-tag-dot" :style="'background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '80;'"></span>
-                          <span x-text="t.name"></span>
-                        </span>
-                      </template>
-                      <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" x-text="'+' + (serverTagsMap[s.id].length - 4)"></span>
-                    </div>
-                  </div>
-
-                  <!-- Task Progress -->
-                  <div x-show="tasksProgressMap[s.id]" style="margin-top:0.35rem;">
-                    <div class="card-progress-label">
-                      <span>Task Progress</span>
-                      <span class="progress-count" x-text="tasksProgressMap[s.id] ? tasksProgressMap[s.id].completed + '/' + tasksProgressMap[s.id].total : ''"></span>
-                    </div>
-                    <div class="ram-bar">
-                      <div class="bar-fill" :style="'width:' + taskPercent(s) + '%;background:' + taskColor(s) + ';'"></div>
-                    </div>
+                <!-- Card Info / Tags -->
+                <div class="card-section card-section--info" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
+                  <div class="card-tags-row">
+                    <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 5)" :key="ti">
+                      <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '35;display:inline-flex;align-items:center;gap:0.25rem;'" :title="t.name">
+                        <iconify-icon icon="lucide:tag" style="width:11px;height:11px;flex-shrink:0;"></iconify-icon>
+                        <span x-text="t.name"></span>
+                      </span>
+                    </template>
+                    <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 5" x-text="'+' + (serverTagsMap[s.id].length - 5)" :title="(serverTagsMap[s.id].length - 5) + ' tags adicionales'"></span>
                   </div>
                 </div>
 
                 <!-- Card Footer -->
                 <div class="card-section card-section--footer">
-                  <a :href="'server-detail.html?id=' + s.id" @click.prevent="window.location.href='server-detail.html?id=' + s.id" class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0">
+                  <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')" :title="'Estado: ' + s.estado">
+                    <span class="sl-dot"></span>
+                    <span x-text="s.estado"></span>
+                  </div>
+                  
+                  <a :href="'server-detail.html?id=' + s.id" @click.prevent.stop="window.location.href='server-detail.html?id=' + s.id" class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0" title="Tareas pendientes">
                     <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
                     <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>
                     <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
                     <span x-text="pendingTasksMap[s.id].length"></span>
                   </a>
-                  <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')">
-                    <span class="sl-dot"></span>
-                    <span x-text="s.estado"></span>
-                  </div>
-                  <button class="card-expand" @click.stop="toggleExpand(s.id)">
-                    <iconify-icon icon="lucide:chevron-down" :style="expandedCard === s.id ? 'transform:rotate(180deg)' : ''"></iconify-icon>
-                  </button>
                 </div>
 
-                <!-- Expandable content -->
-                <div x-show="expandedCard === s.id" x-collapse class="card-expanded-content">
-                  <div class="ec-section" x-show="credsMap[s.id]?.ipmi">
-                    <strong style="color:#aaa;">IPMI:</strong>
-                    <a :href="'https://' + credsMap[s.id].ipmi" target="_blank" style="color:#6c5ce7;font-size:0.72rem;text-decoration:none;margin-left:0.3rem;" x-text="credsMap[s.id].ipmi">
-                    </a>
-                  </div>
-                  <div class="ec-section" x-show="credsMap[s.id]?.ip_servicio" style="margin-top:0.3rem;">
-                    <strong style="color:#aaa;">IP Servicio:</strong>
-                    <a :href="'https://' + credsMap[s.id].ip_servicio" target="_blank" style="color:#6c5ce7;font-size:0.72rem;text-decoration:none;margin-left:0.3rem;" x-text="credsMap[s.id].ip_servicio">
-                    </a>
-                  </div>
-                  <div class="ec-section" x-show="s.servicios && s.servicios.length > 0" style="margin-top:0.3rem;">
-                    <strong style="color:#aaa;">Servicios (<span x-text="s.servicios.length"></span>):</strong>
-                    <template x-for="svc in (s.servicios || [])" :key="svc.nombre">
-                      <div style="font-size:0.68rem;color:#888;margin-top:0.15rem;display:flex;align-items:center;gap:0.3rem;">
-                        <iconify-icon icon="lucide:globe" style="width:10px;height:10px;color:#555;flex-shrink:0;"></iconify-icon>
-                        <span x-text="svc.nombre" style="font-weight:500;"></span>
-                        <template x-for="ip in (svc.ips || []).slice(0, 2)" :key="ip">
-                          <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;" x-text="ip"></a>
-                        </template>
-                        <span x-show="(svc.ips || []).length > 2" style="color:#555;font-size:0.55rem;" x-text="'+' + ((svc.ips || []).length - 2)"></span>
-                      </div>
-                    </template>
-                  </div>
-                  <div class="ec-section" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 4" style="margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid var(--border-subtle);">
-                    <strong style="color:#aaa;">Tags adicionales:</strong>
-                    <div style="display:flex;gap:0.2rem;flex-wrap:wrap;margin-top:0.2rem;">
-                      <template x-for="t in (serverTagsMap[s.id] || []).slice(4)" :key="t.id">
-                        <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
-                      </template>
-                    </div>
-                  </div>
-                </div>
               </div>
             </template>
           </div>
@@ -450,7 +366,7 @@
           </div>
           <div class="network-table-wrap">
             <template x-for="group in groupedIPs" :key="group.subnet">
-              <div class="net-group" x-show="!netSubnetFilter || netSubnetFilter === group.subnet.replace('.0/24','').replace('/24','')">
+              <div class="net-group" x-show="!netSubnetFilter || netSubnetFilter === (group.subnet || '').replace('.0/24','').replace('/24','')">
                 <div class="net-group-title">
                   <iconify-icon icon="lucide:folder-tree" style="width:12px;height:12px;color:#6c5ce7;"></iconify-icon>
                   <span x-text="group.subnet"></span>
@@ -652,10 +568,10 @@
           <!-- User search + table -->
           <div style="margin-top:1rem;">
             <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
-              <div class="admin-search" style="display:flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);border-radius:8px;padding:0.2rem 0.5rem;flex:1;">
-                <iconify-icon icon="lucide:search" style="width:12px;height:12px;color:#666;flex-shrink:0;"></iconify-icon>
-                <input type="text" x-model="adminUserSearch" placeholder="Buscar usuario por email o rol..." style="flex:1;border:none;background:transparent;color:#e0e0e0;font-size:0.7rem;outline:none;padding:0.2rem 0;">
-                <button x-show="adminUserSearch" @click="adminUserSearch = ''" style="border:none;background:transparent;color:#666;cursor:pointer;">
+              <div class="search-compact" style="flex:1;">
+                <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+                <input type="text" class="sb-input" x-model="adminUserSearch" placeholder="Buscar usuario por email o rol...">
+                <button class="sb-clear" x-show="adminUserSearch" @click="adminUserSearch = ''" title="Limpiar búsqueda">
                   <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
                 </button>
               </div>
@@ -733,11 +649,11 @@
                   <template x-for="a in filteredAuditLogs" :key="a.id">
                     <tr>
                       <td style="font-size:0.6rem;white-space:nowrap;" x-text="formatDate(a.created_at)"></td>
-                      <td style="font-size:0.65rem;" x-text="a.user_email || a.user_id?.slice(0,8)"></td>
-                      <td><span class="log-accion" :class="logAccionClassAudit(a.accion)" x-text="a.accion.replace('server.', '')"></span></td>
+                      <td style="font-size:0.65rem;" x-text="a.user_email || a.user_id?.slice(0,8) || '—'"></td>
+                      <td><span class="log-accion" :class="logAccionClassAudit(a.accion)" x-text="a.accion ? a.accion.replace('server.', '') : ''"></span></td>
                       <td style="font-size:0.65rem;">
                         <template x-if="a.server_id">
-                          <a :href="'server-detail.html?id=' + a.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="a.descripcion?.replace('Servidor creado: ','').replace('Servidor eliminado: ','')?.split(':')[0] || '#' + a.server_id"></a>
+                          <a :href="'server-detail.html?id=' + a.server_id" @click.prevent="window.location.href='server-detail.html?id=' + a.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="(a.descripcion || '').replace('Servidor creado: ','').replace('Servidor eliminado: ','').split(':')[0] || '#' + a.server_id"></a>
                         </template>
                         <span x-show="!a.server_id" style="color:#444;">—</span>
                       </td>
@@ -788,70 +704,23 @@
     </div>
   </div>
 
-  <!-- MODAL: GESTIÓN DE USUARIOS -->
-  <div class="modal-overlay" x-show="showUserManager" @click.self="showUserManager = false">
-    <div class="modal" style="max-width:560px;">
-      <h3>Gestionar usuarios</h3>
-      <div style="font-size:0.7rem;color:#555;margin-bottom:1rem;line-height:1.6;">
-        Para crear un nuevo usuario, usa el panel de Supabase Auth.
-        Desde aqu&iacute; puedes cambiar el rol de cada usuario.
-      </div>
-      <div class="user-table" x-show="managedUsers.length > 0">
-        <div class="user-row user-header">
-          <span class="u-col u-email">Email</span>
-          <span class="u-col u-role">Rol</span>
-          <span class="u-col u-actions">Acciones</span>
-        </div>
-        <template x-for="u in managedUsers" :key="u.id">
-          <div class="user-row">
-            <span class="u-col u-email" x-text="u.email || u.id.slice(0,8) + '...'"></span>
-            <span class="u-col u-role">
-              <span :class="'role-tag ' + (u.role === 'superadmin' ? 'super' : u.role === 'admin' ? 'admin' : 'readonly')" x-text="u.role === 'superadmin' ? 'superadmin' : (u.role === 'admin' ? 'admin' : 'readonly')"></span>
-            </span>
-            <span class="u-col u-actions">
-              <template x-if="u.role === 'superadmin'">
-                <span style="color:#555;font-size:0.6rem;">Protegido</span>
-              </template>
-              <template x-if="u.email && u.role !== 'superadmin'">
-                <button class="btn role-toggle" @click="updateUserRole(u.id, u.role === 'admin' ? 'readonly' : 'admin')" x-text="u.role === 'admin' ? 'Revocar admin' : 'Hacer admin'"></button>
-              </template>
-              <template x-if="!u.email">
-                <span style="color:#333;font-size:0.55rem;">Sin email</span>
-              </template>
-            </span>
-          </div>
-        </template>
-      </div>
-      <div x-show="managedUsers.length === 0" style="color:#555;font-size:0.75rem;padding:1rem 0;text-align:center;">
-        No hay usuarios registrados.
-      </div>
-      <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-        <a class="btn" href="https://supabase.com/dashboard/project/unaadjavtrsogkzcbmev/auth/users" target="_blank" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;text-decoration:none;">
-          <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
-          Crear usuario (Dashboard)
-        </a>
-        <button class="btn" @click="showUserManager = false; managedUsers = []" style="margin-left:auto;">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL: DETALLE DE AUDITORÍA -->
-  <div class="modal-overlay" x-show="auditDetailItem" @click.self="auditDetailItem = null">
-    <div class="modal" style="max-width:600px;">
+  <div class="modal-overlay" x-show="Boolean(auditDetailItem)" x-cloak @click.self="auditDetailItem = null" @keydown.escape.window="auditDetailItem = null">
+    <div class="modal" style="max-width:600px;" x-show="Boolean(auditDetailItem)">
       <template x-if="auditDetailItem">
         <div>
           <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
             <h3 style="margin:0;font-size:0.9rem;">Detalle de auditoría</h3>
-            <span class="log-accion" :class="logAccionClassAudit(auditDetailItem.accion)" x-text="auditDetailItem.accion.replace('server.', '')" style="font-size:0.65rem;"></span>
+            <span class="log-accion" :class="logAccionClassAudit(auditDetailItem?.accion)" x-text="auditDetailItem?.accion ? auditDetailItem.accion.replace('server.', '') : ''" style="font-size:0.65rem;"></span>
           </div>
           <div class="det-meta" style="display:flex;gap:0.75rem;font-size:0.65rem;color:#666;margin-bottom:1rem;flex-wrap:wrap;">
-            <span><span style="color:#999;">Fecha:</span> <span x-text="formatDate(auditDetailItem.created_at)" style="color:#ccc;"></span></span>
-            <span><span style="color:#999;">Usuario:</span> <span x-text="auditDetailItem.user_email || auditDetailItem.user_id?.slice(0,8)" style="color:#ccc;"></span></span>
-            <span x-show="auditDetailItem.server_id"><span style="color:#999;">Servidor:</span>
-              <a :href="'server-detail.html?id=' + auditDetailItem.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="auditDetailItem.descripcion?.split(':')[0] || '#' + auditDetailItem.server_id"></a>
+            <span><span style="color:#999;">Fecha:</span> <span x-text="formatDate(auditDetailItem?.created_at)" style="color:#ccc;"></span></span>
+            <span><span style="color:#999;">Usuario:</span> <span x-text="auditDetailItem?.user_email || auditDetailItem?.user_id?.slice(0,8) || '—'" style="color:#ccc;"></span></span>
+            <span x-show="auditDetailItem?.server_id"><span style="color:#999;">Servidor:</span>
+              <a :href="'server-detail.html?id=' + auditDetailItem?.server_id" @click.prevent="window.location.href='server-detail.html?id=' + auditDetailItem?.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="auditDetailItem?.descripcion?.split(':')[0] || '#' + auditDetailItem?.server_id"></a>
             </span>
           </div>
-          <template x-if="auditDetailItem.cambios && typeof auditDetailItem.cambios === 'object' && Object.keys(auditDetailItem.cambios).length > 0">
+          <template x-if="auditDetailItem?.cambios && typeof auditDetailItem.cambios === 'object' && Object.keys(auditDetailItem.cambios).length > 0">
             <div>
               <div style="font-size:0.65rem;color:#999;margin-bottom:0.4rem;">Campos modificados:</div>
               <div class="audit-diff-table">
@@ -859,19 +728,167 @@
                   <div class="audit-diff-row">
                     <div class="ad-field" x-text="field"></div>
                     <div class="ad-values">
-                      <div class="ad-old" x-text="formatDiffVal(val.old)"></div>
+                      <div class="ad-old" x-text="formatDiffVal(val?.old)"></div>
                       <div class="ad-arrow"><iconify-icon icon="lucide:arrow-right" style="width:12px;height:12px;"></iconify-icon></div>
-                      <div class="ad-new" x-text="formatDiffVal(val.new)"></div>
+                      <div class="ad-new" x-text="formatDiffVal(val?.new)"></div>
                     </div>
                   </div>
                 </template>
               </div>
             </div>
           </template>
-          <div x-show="!auditDetailItem.cambios || Object.keys(auditDetailItem.cambios).length === 0" style="color:#555;font-size:0.7rem;padding:0.5rem 0;">
+          <div x-show="!auditDetailItem?.cambios || typeof auditDetailItem?.cambios !== 'object' || Object.keys(auditDetailItem.cambios).length === 0" style="color:#555;font-size:0.7rem;padding:0.5rem 0;">
             Sin detalle de cambios
           </div>
           <button class="btn" @click="auditDetailItem = null" style="margin-top:1rem;">Cerrar</button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- MODAL: VISTA RÁPIDA DE SERVIDOR (POPUP INDEPENDIENTE) -->
+  <div class="modal-overlay" x-show="Boolean(quickServerItem)" x-cloak @click.self="closeQuickServer()" @keydown.escape.window="closeQuickServer()">
+    <div class="modal" style="max-width:640px;width:92%;padding:1.5rem;" x-show="Boolean(quickServerItem)">
+      <template x-if="quickServerItem">
+        <div>
+          <!-- Header -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <div class="card-icon-box" style="width:40px;height:40px;border-radius:10px;background:rgba(108,92,231,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <iconify-icon icon="lucide:server" style="width:20px;height:20px;color:#6c5ce7;"></iconify-icon>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;" x-text="quickServerItem.hostname"></h3>
+                  <div class="card-status-label" :class="'sl-' + (quickServerItem.estado ? quickServerItem.estado.toLowerCase() : '')" style="padding:0.15rem 0.5rem;font-size:0.6rem;">
+                    <span class="sl-dot"></span>
+                    <span x-text="quickServerItem.estado"></span>
+                  </div>
+                </div>
+                <div style="font-size:0.68rem;color:#888;margin-top:0.15rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+                  <span><iconify-icon icon="lucide:map-pin" style="width:11px;height:11px;color:#6c5ce7;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.ubicacion"></span></span>
+                  <span x-show="quickServerItem.modelo"><iconify-icon icon="lucide:box" style="width:11px;height:11px;color:#888;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.modelo"></span></span>
+                  <span x-show="quickServerItem.sn"><iconify-icon icon="lucide:hash" style="width:11px;height:11px;color:#888;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.sn"></span></span>
+                </div>
+              </div>
+            </div>
+            <button class="icon-btn" @click="closeQuickServer()" title="Cerrar (Esc)" style="background:transparent;border:none;color:#888;cursor:pointer;">
+              <iconify-icon icon="lucide:x" style="width:18px;height:18px;"></iconify-icon>
+            </button>
+          </div>
+
+          <!-- Quick Actions Bar -->
+          <div style="display:flex;gap:0.4rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <button class="btn" @click="gotoServer(quickServerItem.id)" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:#6c5ce7;color:#fff;border-radius:6px;border:none;cursor:pointer;">
+              <iconify-icon icon="lucide:external-link" style="width:13px;height:13px;"></iconify-icon>
+              Ficha Técnica Completa
+            </button>
+            <a class="btn" :href="'edit-server.html?id=' + quickServerItem.id" x-show="canEdit" @click.prevent="closeQuickServer(); window.location.href = 'edit-server.html?id=' + quickServerItem.id" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:var(--bg-dark);color:#ccc;border-radius:6px;border:1px solid var(--border-subtle);text-decoration:none;">
+              <iconify-icon icon="lucide:pencil" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
+              Editar
+            </a>
+            <a class="btn" :href="'https://' + credsMap[quickServerItem.id]?.ipmi" target="_blank" x-show="credsMap[quickServerItem.id]?.ipmi" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:rgba(108,92,231,0.12);color:#8e7ff3;border-radius:6px;border:1px solid rgba(108,92,231,0.3);text-decoration:none;">
+              <iconify-icon icon="lucide:monitor" style="width:13px;height:13px;"></iconify-icon>
+              Acceso IPMI
+            </a>
+          </div>
+
+          <!-- Content Grid -->
+          <div style="display:flex;flex-direction:column;gap:0.85rem;max-height:60vh;overflow-y:auto;padding-right:0.25rem;">
+            
+            <!-- Hardware -->
+            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
+              <div style="font-size:0.65rem;color:#6c5ce7;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.3rem;">
+                <iconify-icon icon="lucide:cpu" style="width:13px;height:13px;"></iconify-icon>
+                Especificaciones de Hardware
+              </div>
+              <div style="font-size:0.75rem;display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:0.5rem;color:#ccc;">
+                <div>
+                  <span style="color:#777;display:block;font-size:0.62rem;">PROCESADOR</span>
+                  <strong style="font-weight:600;" x-text="quickServerItem.procesador || '—'"></strong>
+                </div>
+                <div>
+                  <span style="color:#777;display:block;font-size:0.62rem;">MEMORIA RAM</span>
+                  <strong style="font-weight:600;" x-text="quickServerItem.ram_gb ? quickServerItem.ram_gb + ' GB' : '—'"></strong>
+                </div>
+                <div>
+                  <span style="color:#777;display:block;font-size:0.62rem;">TIPO HARDWARE</span>
+                  <span x-text="quickServerItem.tipo_hardware || '—'"></span>
+                </div>
+                <div>
+                  <span style="color:#777;display:block;font-size:0.62rem;">MARCA / FABRICANTE</span>
+                  <span x-text="quickServerItem.marca || '—'"></span>
+                </div>
+              </div>
+
+              <!-- Storage -->
+              <div x-show="diskList(quickServerItem).length > 0" style="margin-top:0.6rem;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#777;display:block;font-size:0.62rem;margin-bottom:0.25rem;">UNIDADES DE ALMACENAMIENTO / RAID</span>
+                <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                  <template x-for="d in diskList(quickServerItem)" :key="d.bay + d.tipo">
+                    <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);border-radius:5px;padding:0.15rem 0.45rem;font-size:0.65rem;color:#aaa;display:inline-flex;align-items:center;gap:0.25rem;">
+                      <iconify-icon icon="lucide:hard-drive" style="width:11px;height:11px;color:#6c5ce7;"></iconify-icon>
+                      <span x-text="(d.bay ? d.bay + ': ' : '') + (d.tipo || '') + (d.tamano ? ' ' + d.tamano : '')"></span>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Network & Services -->
+            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
+              <div style="font-size:0.65rem;color:#2ecc71;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.3rem;">
+                <iconify-icon icon="lucide:globe" style="width:13px;height:13px;"></iconify-icon>
+                Servicios y Redes
+              </div>
+              <div x-show="quickServerItem.servicios && quickServerItem.servicios.length > 0" style="display:flex;flex-direction:column;gap:0.3rem;">
+                <template x-for="svc in (quickServerItem.servicios || [])" :key="svc.nombre">
+                  <div style="font-size:0.7rem;color:#ccc;background:rgba(255,255,255,0.03);border-radius:6px;padding:0.35rem 0.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.3rem;">
+                    <div style="display:flex;align-items:center;gap:0.35rem;">
+                      <iconify-icon icon="lucide:globe" style="width:12px;height:12px;color:#2ecc71;"></iconify-icon>
+                      <span style="font-weight:600;color:#fff;" x-text="svc.nombre"></span>
+                    </div>
+                    <div style="display:flex;gap:0.25rem;align-items:center;">
+                      <template x-for="ip in (svc.ips || [])" :key="ip">
+                        <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;background:rgba(108,92,231,0.15);padding:0.1rem 0.35rem;border-radius:4px;" x-text="ip"></a>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div x-show="!quickServerItem.servicios || quickServerItem.servicios.length === 0" style="font-size:0.7rem;color:#666;">
+                Sin servicios configurados
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div x-show="quickServerItem.notas" style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
+              <div style="font-size:0.65rem;color:#f39c12;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.3rem;">
+                <iconify-icon icon="lucide:file-text" style="width:13px;height:13px;"></iconify-icon>
+                Notas del Servidor
+              </div>
+              <p style="font-size:0.72rem;color:#bbb;margin:0;line-height:1.5;white-space:pre-wrap;" x-text="quickServerItem.notas"></p>
+            </div>
+
+            <!-- Tags -->
+            <div x-show="serverTagsMap[quickServerItem.id] && serverTagsMap[quickServerItem.id].length > 0">
+              <div style="font-size:0.62rem;color:#777;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:0.3rem;">Tags Asociados</div>
+              <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                <template x-for="t in (serverTagsMap[quickServerItem.id] || [])" :key="t.id">
+                  <span class="card-tag-pill" :style="'background:' + t.color + '22;color:' + t.color + ';border-color:' + t.color + '44;padding:0.15rem 0.45rem;font-size:0.65rem;'">
+                    <span class="card-tag-dot" :style="'background:' + t.color"></span>
+                    <span x-text="t.name"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div style="margin-top:1.25rem;padding-top:0.75rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;">
+            <button class="btn" @click="closeQuickServer()" style="font-size:0.75rem;padding:0.35rem 0.85rem;background:var(--bg-dark);border:1px solid var(--border-subtle);color:#888;border-radius:6px;cursor:pointer;">Cerrar</button>
+          </div>
         </div>
       </template>
     </div>

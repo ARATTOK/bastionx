@@ -36,7 +36,12 @@ document.addEventListener('alpine:init', () => {
       const { data: allTags } = await sb.from('tags').select('*').order('name')
       if (allTags) this.allTags = allTags
 
+      this._formSnapshot = JSON.stringify(this.form)
       this.loading = false
+    },
+
+    get formChanged() {
+      return JSON.stringify(this.form) !== this._formSnapshot
     },
 
     validateField(name) {
@@ -69,6 +74,16 @@ document.addEventListener('alpine:init', () => {
       this.diskErrors[key] = Object.keys(errs).length > 0 ? errs : null
     },
 
+    isValidIP(ip) {
+      if (!ip || !ip.trim()) return true
+      const parts = ip.trim().split('.')
+      if (parts.length !== 4) return false
+      return parts.every(p => {
+        const n = Number(p)
+        return !isNaN(n) && n >= 0 && n <= 255 && p === String(n)
+      })
+    },
+
     validateAll() {
       this.validateField('hostname')
       this.validateField('sn')
@@ -76,6 +91,19 @@ document.addEventListener('alpine:init', () => {
       this.form.raids.forEach((raid, ri) => {
         raid.discos.forEach((_, di) => this.validateDisk(ri, di))
       })
+      this.errors.servicios = ''
+      for (let si = 0; si < this.form.servicios.length; si++) {
+        const svc = this.form.servicios[si]
+        if (Array.isArray(svc.ips)) {
+          for (let ii = 0; ii < svc.ips.length; ii++) {
+            if (!this.isValidIP(svc.ips[ii])) {
+              this.errors.servicios = 'IP inválida en ' + (svc.nombre || 'servicio ' + (si + 1))
+              break
+            }
+          }
+        }
+        if (this.errors.servicios) break
+      }
       const hasDiskErr = Object.values(this.diskErrors).some(Boolean)
       return !Object.values(this.errors).some(Boolean) && !hasDiskErr
     },
@@ -118,7 +146,10 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    goBack() { window.location.href = 'dashboard.html' },
+    goBack() {
+      if (this.formChanged && !confirm('¿Descartar cambios?')) return
+      window.location.href = 'dashboard.html'
+    },
 
     addRaid() {
       this.form.raids.push({ nombre: '', discos: [{ bay: '', tipo: '', tamano: '', tamano_unit: 'GB', velocidad: '' }] })

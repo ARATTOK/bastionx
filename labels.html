@@ -76,10 +76,16 @@
       border: 1px solid #333;
       border-radius: 6px;
       padding: 0.7rem 0.8rem;
-      min-height: 70px;
+      min-height: 80px;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .label-card .lc-content {
+      flex: 1;
+      min-width: 0;
     }
     .label-card .lc-hostname {
       font-size: 0.85rem;
@@ -99,6 +105,14 @@
       color: #6c5ce7;
       margin-top: 0.15rem;
       font-family: monospace;
+    }
+    .label-card .lc-qr {
+      width: 54px;
+      height: 54px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      background: #fff;
+      padding: 2px;
     }
 
     @media print {
@@ -175,17 +189,25 @@
     </div>
 
     <!-- LABELS -->
-    <div class="labels-grid">
+    <div class="labels-grid" x-show="servers.length > 0">
       <template x-for="s in servers" :key="s.id">
         <div class="label-card">
-          <div class="lc-hostname" x-text="s.hostname"></div>
-          <div class="lc-meta">
-            <span x-text="s.modelo || s.sn ? (s.modelo || '') + (s.modelo && s.sn ? ' · ' : '') + (s.sn || '') : ''"></span>
-            <span x-show="s.ubicacion"> <br x-show="s.modelo || s.sn"><span x-text="s.ubicacion"></span></span>
+          <div class="lc-content">
+            <div class="lc-hostname" x-text="s.hostname"></div>
+            <div class="lc-meta">
+              <span x-text="s.modelo || s.sn ? (s.modelo || '') + (s.modelo && s.sn ? ' · ' : '') + (s.sn || '') : ''"></span>
+              <span x-show="s.ubicacion"> <br x-show="s.modelo || s.sn"><span x-text="s.ubicacion"></span></span>
+            </div>
+            <div class="lc-ipmi" x-show="credField(s, 'ipmi') && canEdit" x-text="'IPMI: ' + credField(s, 'ipmi')"></div>
           </div>
-          <div class="lc-ipmi" x-show="credField(s, 'ipmi')" x-text="credField(s, 'ipmi')"></div>
+          <img class="lc-qr" :src="serverQrUrl(s)" title="Escanear para ver en móvil" alt="QR Code">
         </div>
       </template>
+    </div>
+    <div class="empty-state" x-show="servers.length === 0 && !loading">
+      <iconify-icon icon="lucide:printer" style="width:28px;height:28px;color:#333;"></iconify-icon>
+      <h3>Sin servidores para etiquetar</h3>
+      <p>Agrega servidores primero para generar etiquetas</p>
     </div>
   </div>
 </div>

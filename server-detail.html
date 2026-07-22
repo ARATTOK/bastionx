@@ -24,6 +24,18 @@
     Cargando servidor...
   </div>
 
+  <template x-if="!loading && !server">
+    <div class="container" style="max-width:500px;padding:4rem 1rem;text-align:center;">
+      <iconify-icon icon="lucide:alert-circle" style="width:48px;height:48px;color:#e74c3c;margin-bottom:1rem;"></iconify-icon>
+      <h2 style="font-size:1.2rem;color:#fff;margin-bottom:0.5rem;">Servidor no encontrado</h2>
+      <p style="font-size:0.8rem;color:#888;margin-bottom:1.5rem;">El servidor solicitado no existe o fue eliminado.</p>
+      <button class="btn" @click="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;margin:0 auto;">
+        <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+        Volver al Dashboard
+      </button>
+    </div>
+  </template>
+
   <template x-if="server">
     <div class="container" style="max-width:800px;padding:2rem 1rem;">
       <!-- TOP BAR -->
@@ -45,33 +57,6 @@
               Editar
             </button>
           </template>
-          <a href="dashboard.html" class="btn" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;text-decoration:none;">
-            <iconify-icon icon="lucide:layout-grid" style="width:11px;height:11px;"></iconify-icon>
-            Dashboard
-          </a>
-          <div class="kebab-wrap" x-show="canEdit" @click.outside="showKebab = false">
-            <button class="kebab-btn" @click="showKebab = !showKebab" title="Opciones">
-              <iconify-icon icon="lucide:ellipsis-vertical"></iconify-icon>
-            </button>
-            <div class="kebab-dropdown" x-show="showKebab" x-transition>
-              <button class="kebab-item" @click="goEdit()" x-show="canEdit">
-                <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
-              </button>
-              <a class="kebab-item" :href="'https://' + serverCreds?.ipmi" target="_blank"
-                 x-show="serverCreds?.ipmi" @click="showKebab = false">
-                <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
-              </a>
-              <div class="kebab-divider"></div>
-              <div class="kebab-section-header">Servicios</div>
-              <template x-for="(svc, i) in (server.servicios || [])" :key="i">
-                <a class="kebab-item" :href="'https://' + svcFirstIp(svc)" target="_blank"
-                   x-show="svcFirstIp(svc)" @click="showKebab = false">
-                  <iconify-icon icon="lucide:globe"></iconify-icon>
-                  <span x-text="svc.nombre"></span>
-                </a>
-              </template>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -249,30 +234,41 @@
       </div>
 
       <!-- BITÁCORA -->
-      <div class="det-section" x-show="taskLogs.length > 0">
+      <div class="det-section">
         <h2 class="det-section-title">
           <iconify-icon icon="lucide:history" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
           Bitácora
+          <span class="det-count" x-show="taskLogs.length > 0" x-text="taskLogs.length"></span>
         </h2>
 
-        <!-- Log filters -->
-        <div class="log-filters" style="display:flex;gap:0.4rem;margin-bottom:0.6rem;">
-          <button :class="{ active: logFilter === 'all' }" @click="logFilter = 'all'">Todas</button>
-          <button :class="{ active: logFilter === 'completada' }" @click="logFilter = 'completada'">Completadas</button>
-          <button :class="{ active: logFilter === 'creada' }" @click="logFilter = 'creada'">Creadas</button>
-          <button :class="{ active: logFilter === 'eliminada' }" @click="logFilter = 'eliminada'">Eliminadas</button>
-          <button :class="{ active: logFilter === 'desmarcada' }" @click="logFilter = 'desmarcada'">Desmarcadas</button>
-        </div>
-
-        <div class="log-list">
-          <template x-for="log in filteredLogs" :key="log.id">
-            <div class="log-item">
-              <span class="log-accion" :class="logAccionClass(log.accion)" x-text="log.accion"></span>
-              <span class="log-desc" x-show="log.descripcion" x-text="log.descripcion"></span>
-              <span class="log-user" x-text="log.user_email || logUserEmail(log)" style="font-size:0.55rem;color:#888;"></span>
-              <span class="log-date" x-text="formatDate(log.created_at)"></span>
+        <template x-if="taskLogs.length > 0">
+          <div>
+            <!-- Log filters -->
+            <div class="log-filters" style="display:flex;gap:0.4rem;margin-bottom:0.6rem;">
+              <button :class="{ active: logFilter === 'all' }" @click="logFilter = 'all'">Todas</button>
+              <button :class="{ active: logFilter === 'completada' }" @click="logFilter = 'completada'">Completadas</button>
+              <button :class="{ active: logFilter === 'creada' }" @click="logFilter = 'creada'">Creadas</button>
+              <button :class="{ active: logFilter === 'eliminada' }" @click="logFilter = 'eliminada'">Eliminadas</button>
+              <button :class="{ active: logFilter === 'desmarcada' }" @click="logFilter = 'desmarcada'">Desmarcadas</button>
             </div>
-          </template>
+
+            <div class="log-list">
+              <template x-for="log in filteredLogs" :key="log.id">
+                <div class="log-item">
+                  <span class="log-accion" :class="logAccionClass(log.accion)" x-text="log.accion"></span>
+                  <span class="log-desc" x-show="log.descripcion" x-text="log.descripcion"></span>
+                  <span class="log-user" x-text="log.user_email || logUserEmail(log)" style="font-size:0.55rem;color:#888;"></span>
+                  <span class="log-date" x-text="formatDate(log.created_at)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <div class="empty-state" x-show="taskLogs.length === 0" style="padding:1rem 0;">
+          <iconify-icon icon="lucide:history" style="width:24px;height:24px;color:#333;"></iconify-icon>
+          <h3 style="font-size:0.8rem;color:#555;margin:0.3rem 0;">Sin actividad registrada</h3>
+          <p style="font-size:0.65rem;color:#444;">Los cambios en las tareas se registrarán aquí</p>
         </div>
       </div>
 
@@ -285,7 +281,7 @@
       </div>
 
       <!-- DELETE CONFIRM -->
-      <div class="modal-overlay" x-show="showDeleteConfirm" @click.self="showDeleteConfirm = false">
+      <div class="modal-overlay" x-show="showDeleteConfirm" x-cloak @click.self="showDeleteConfirm = false">
         <div class="modal" style="max-width:380px;text-align:center;">
           <h3 style="color:#e74c3c;">¿Eliminar servidor?</h3>
           <p style="font-size:0.75rem;color:#666;margin-bottom:1rem;">Esta acción no se puede deshacer. Se eliminarán también las credenciales y tags asociados.</p>
@@ -297,7 +293,7 @@
       </div>
 
       <!-- COMPLETE TASK MODAL -->
-      <div class="modal-overlay" x-show="showCompleteModal" @click.self="showCompleteModal = false">
+      <div class="modal-overlay" x-show="showCompleteModal" x-cloak @click.self="showCompleteModal = false">
         <div class="modal" style="max-width:480px;">
           <h3>
             <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;color:#2ecc71;margin-right:6px;"></iconify-icon>
@@ -322,7 +318,7 @@
         </div>
       </div>
       <!-- EVIDENCE MODAL -->
-      <div class="modal-overlay" x-show="showEvidenceModal" @click.self="showEvidenceModal = false">
+      <div class="modal-overlay" x-show="showEvidenceModal" x-cloak @click.self="showEvidenceModal = false">
         <div class="modal" style="max-width:480px;">
           <template x-if="evidenceTask">
             <div>
