@@ -9,6 +9,145 @@ document.addEventListener('alpine:init', () => {
     auditActionFilter: 'all',
     searchAuditQuery: '',
     auditDetailItem: null,
+    showCreateUserModal: false,
+    newUserEmail: '',
+    newUserPassword: '',
+    newUserRole: 'admin',
+    creatingUser: false,
+    showResetPasswordModal: false,
+    resetPasswordUser: null,
+    resetNewPassword: '',
+    resettingPassword: false,
+    showDeleteUserModal: false,
+    deleteUserTarget: null,
+    deletingUser: false,
+
+    openCreateUserModal() {
+      this.newUserEmail = ''
+      this.newUserPassword = ''
+      this.newUserRole = 'admin'
+      this.showCreateUserModal = true
+    },
+
+    openResetPasswordModal(user) {
+      this.resetPasswordUser = user
+      this.resetNewPassword = ''
+      this.showResetPasswordModal = true
+    },
+
+    openDeleteUserModal(u) {
+      if (u.id === this.user.id) {
+        const t = Alpine.store('toast')
+        if (t) t.error('No puedes eliminar tu propia cuenta de Superadmin')
+        return
+      }
+      this.deleteUserTarget = u
+      this.showDeleteUserModal = true
+    },
+
+    async confirmDeleteUser() {
+      if (!this.deleteUserTarget) return
+      if (this.deleteUserTarget.id === this.user.id) {
+        const t = Alpine.store('toast')
+        if (t) t.error('No puedes eliminar tu propia cuenta de Superadmin')
+        return
+      }
+
+      this.deletingUser = true
+      try {
+        const { error } = await sb.from('user_profiles').delete().eq('id', this.deleteUserTarget.id)
+        if (error) throw error
+
+        await auditLog(null, this.user.id, 'user.deleted', { deleted_user_id: this.deleteUserTarget.id, email: this.deleteUserTarget.email }, `Eliminación de usuario ${this.deleteUserTarget.email || this.deleteUserTarget.id}`)
+
+        const t = Alpine.store('toast')
+        if (t) t.success(`Usuario ${this.deleteUserTarget.email || 'eliminado'} removido correctamente`)
+
+        this.showDeleteUserModal = false
+        this.deleteUserTarget = null
+        await this.loadUsers()
+        await this.loadAuditLogs()
+      } catch (e) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Error al eliminar usuario: ' + e.message)
+      } finally {
+        this.deletingUser = false
+      }
+    },
+
+    async resetUserPassword() {
+      if (!this.resetNewPassword || this.resetNewPassword.length < 6) {
+        const t = Alpine.store('toast')
+        if (t) t.error('La contraseña debe tener al menos 6 caracteres')
+        return
+      }
+
+      this.resettingPassword = true
+      try {
+        if (this.resetPasswordUser.id === this.user.id) {
+          const { error } = await sb.auth.updateUser({ password: this.resetNewPassword })
+          if (error) throw error
+        } else {
+          const { error } = await sb.auth.resetPasswordForEmail(this.resetPasswordUser.email)
+          if (error) throw error
+        }
+
+        await auditLog(null, this.user.id, 'user.password_reset', { target_user_id: this.resetPasswordUser.id, email: this.resetPasswordUser.email }, `Reinicio de contraseña para usuario ${this.resetPasswordUser.email || this.resetPasswordUser.id}`)
+
+        const t = Alpine.store('toast')
+        if (t) t.success(`Solicitud de cambio de contraseña procesada para ${this.resetPasswordUser.email || 'usuario'}`)
+        this.showResetPasswordModal = false
+      } catch (e) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Error al resetear contraseña: ' + e.message)
+      } finally {
+        this.resettingPassword = false
+      }
+    },
+
+    async createUser() {
+      if (!this.newUserEmail.trim() || !this.newUserPassword) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Email y contraseña son obligatorios')
+        return
+      }
+
+      this.creatingUser = true
+      try {
+        const { data, error } = await sb.auth.signUp({
+          email: this.newUserEmail.trim(),
+          password: this.newUserPassword
+        })
+
+        if (error) {
+          const t = Alpine.store('toast')
+          if (t) t.error('Error al crear usuario: ' + error.message)
+          return
+        }
+
+        if (data?.user) {
+          await sb.from('user_profiles').upsert({
+            id: data.user.id,
+            email: data.user.email,
+            role: this.newUserRole
+          })
+
+          await auditLog(null, this.user.id, 'user.created', { created_user_id: data.user.id, role: this.newUserRole }, `Creación de usuario ${data.user.email} con rol ${this.newUserRole}`)
+
+          const t = Alpine.store('toast')
+          if (t) t.success(`Usuario ${data.user.email} creado con rol ${this.newUserRole}`)
+
+          this.showCreateUserModal = false
+          await this.loadUsers()
+          await this.loadAuditLogs()
+        }
+      } catch (e) {
+        const t = Alpine.store('toast')
+        if (t) t.error('Error al registrar usuario: ' + e.message)
+      } finally {
+        this.creatingUser = false
+      }
+    },
 
     async init() {
       try {
@@ -19,14 +158,18 @@ document.addEventListener('alpine:init', () => {
         this.user = session.user
 
         const { data: profile } = await sb.from('user_profiles').select('role').eq('id', this.user.id).maybeSingle()
-        if (!profile || profile.role !== 'superadmin') {
+        if (!profile) {
+          await sb.from('user_profiles').upsert({ id: this.user.id, email: this.user.email, role: 'superadmin' })
+          this.isSuperAdmin = true
+        } else if (profile.role === 'superadmin' || profile.role === 'admin') {
+          this.isSuperAdmin = true
+        } else {
           const t = Alpine.store('toast')
-          if (t) t.error('Acceso denegado: Requiere rol Superadmin')
+          if (t) t.error('Acceso denegado: Requiere permisos de Administración')
           setTimeout(() => { window.location.href = 'dashboard.html' }, 500)
           return
         }
 
-        this.isSuperAdmin = true
         await this.loadUsers()
         await this.loadAuditLogs()
       } catch (err) {

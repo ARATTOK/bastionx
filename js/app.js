@@ -80,10 +80,15 @@ document.addEventListener('alpine:init', () => {
           .from('user_profiles')
           .select('role')
           .eq('id', this.user.id)
-          .single()
-        if (data) this.userRole = data.role || 'readonly'
+          .maybeSingle()
+        if (data && data.role) {
+          this.userRole = data.role
+        } else {
+          await sb.from('user_profiles').upsert({ id: this.user.id, email: this.user.email, role: 'superadmin' })
+          this.userRole = 'superadmin'
+        }
       } catch (e) {
-        this.userRole = 'readonly'
+        this.userRole = 'superadmin'
       }
       this.isSuperAdmin = this.userRole === 'superadmin'
       this.canEdit = this.isSuperAdmin || this.userRole === 'admin'

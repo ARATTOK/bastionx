@@ -207,11 +207,17 @@
           <iconify-icon icon="lucide:user-cog" style="color:#6c5ce7;"></iconify-icon>
           Gestión de Usuarios y Asignación de Roles
         </div>
-        <div class="search-compact" style="width:280px;">
-          <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
-          <input type="text" class="sb-input" x-model="searchUserQuery" placeholder="Buscar por email o rol...">
-          <button class="sb-clear" x-show="searchUserQuery" @click="searchUserQuery=''" title="Limpiar">
-            <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+          <div class="search-compact" style="width:240px;">
+            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+            <input type="text" class="sb-input" x-model="searchUserQuery" placeholder="Buscar por email o rol...">
+            <button class="sb-clear" x-show="searchUserQuery" @click="searchUserQuery=''" title="Limpiar">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+            </button>
+          </div>
+          <button class="at-btn" @click="openCreateUserModal()" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.8rem;background:linear-gradient(135deg,#6c5ce7,#a855f7);color:#fff;border-radius:8px;font-size:0.72rem;font-weight:600;border:none;cursor:pointer;">
+            <iconify-icon icon="lucide:user-plus" style="width:13px;height:13px;"></iconify-icon>
+            Crear Usuario
           </button>
         </div>
       </div>
@@ -223,7 +229,7 @@
               <th style="padding:0.6rem;">Usuario / Email</th>
               <th style="padding:0.6rem;">Rol Actual</th>
               <th style="padding:0.6rem;">ID de Usuario</th>
-              <th style="padding:0.6rem;text-align:right;">Cambiar Rol</th>
+              <th style="padding:0.6rem;text-align:right;">Acciones / Rol</th>
             </tr>
           </thead>
           <tbody>
@@ -243,11 +249,17 @@
                 </td>
                 <td style="padding:0.65rem 0.6rem;color:#666;font-family:monospace;font-size:0.68rem;" x-text="u.id"></td>
                 <td style="padding:0.65rem 0.6rem;text-align:right;">
-                  <select class="role-select" :value="u.role || 'readonly'" @change="changeUserRole(u.id, $event.target.value, u.email)">
-                    <option value="superadmin">Superadmin</option>
-                    <option value="admin">Admin</option>
-                    <option value="readonly">Readonly</option>
-                  </select>
+                  <div style="display:inline-flex;align-items:center;gap:0.4rem;justify-content:flex-end;">
+                    <select class="role-select" :value="u.role || 'readonly'" @change="changeUserRole(u.id, $event.target.value, u.email)">
+                      <option value="superadmin">Superadmin</option>
+                      <option value="admin">Admin</option>
+                      <option value="readonly">Readonly</option>
+                    </select>
+                    <button class="at-btn" @click="openResetPasswordModal(u)" title="Resetear contraseña de este usuario" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:0.25rem 0.5rem;border-radius:6px;font-size:0.68rem;display:inline-flex;align-items:center;gap:0.25rem;cursor:pointer;">
+                      <iconify-icon icon="lucide:key-round" style="width:12px;height:12px;"></iconify-icon>
+                      Reset Clave
+                    </button>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -347,6 +359,116 @@
       </template>
     </div>
   </div>
+
+  <!-- MODAL: CREAR NUEVO USUARIO -->
+  <div class="modal-overlay" x-show="showCreateUserModal" x-cloak @click.self="showCreateUserModal = false" @keydown.escape.window="showCreateUserModal = false">
+    <div class="modal" style="max-width:480px;width:92%;padding:1.5rem;" x-show="showCreateUserModal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:user-plus" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
+          Crear Nuevo Usuario
+        </h3>
+        <button class="btn-icon" @click="showCreateUserModal = false" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <form @submit.prevent="createUser()">
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Correo Electrónico *</label>
+            <input type="email" x-model="newUserEmail" placeholder="usuario@bastionx.com" required style="width:100%;">
+          </div>
+
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Contraseña Inicial *</label>
+            <input type="password" x-model="newUserPassword" placeholder="••••••••" required style="width:100%;">
+          </div>
+
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Rol Asignado *</label>
+            <select x-model="newUserRole" style="width:100%;height:36px;font-size:0.75rem;padding:0.45rem 0.65rem;border-radius:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border-subtle);color:#fff;">
+              <option value="admin">Administrador (Gestión de Servidores)</option>
+              <option value="superadmin">Superadmin (Acceso Total + Panel Admin)</option>
+              <option value="readonly">Lectura (Solo Consulta)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button type="button" class="btn" @click="showCreateUserModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
+          <button type="submit" class="btn" :disabled="creatingUser" style="background:#6c5ce7;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">
+            <span x-text="creatingUser ? 'Creando...' : 'Crear Usuario'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RESETEAR CONTRASEÑA DE USUARIO -->
+  <div class="modal-overlay" x-show="showResetPasswordModal" x-cloak @click.self="showResetPasswordModal = false" @keydown.escape.window="showResetPasswordModal = false">
+    <div class="modal" style="max-width:480px;width:92%;padding:1.5rem;" x-show="showResetPasswordModal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:key-round" style="width:18px;height:18px;color:#e74c3c;"></iconify-icon>
+          Resetear Contraseña de Usuario
+        </h3>
+        <button class="btn-icon" @click="showResetPasswordModal = false" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <form @submit.prevent="resetUserPassword()">
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div style="font-size:0.75rem;color:#ccc;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);padding:0.6rem;border-radius:8px;">
+            Reseteando contraseña para: <strong style="color:#fff;" x-text="resetPasswordUser?.email || resetPasswordUser?.id"></strong>
+          </div>
+
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Nueva Contraseña Segura *</label>
+            <input type="password" x-model="resetNewPassword" placeholder="Nueva contraseña (mínimo 6 caracteres)" required style="width:100%;">
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button type="button" class="btn" @click="showResetPasswordModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
+          <button type="submit" class="btn" :disabled="resettingPassword" style="background:#e74c3c;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">
+            <span x-text="resettingPassword ? 'Actualizando...' : 'Confirmar Cambio'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ELIMINAR USUARIO -->
+  <div class="modal-overlay" x-show="showDeleteUserModal" x-cloak @click.self="showDeleteUserModal = false" @keydown.escape.window="showDeleteUserModal = false">
+    <div class="modal" style="max-width:440px;width:92%;padding:1.5rem;" x-show="showDeleteUserModal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#e74c3c;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:user-x" style="width:18px;height:18px;"></iconify-icon>
+          Eliminar Usuario
+        </h3>
+        <button class="btn-icon" @click="showDeleteUserModal = false" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <div style="font-size:0.8rem;color:#ccc;line-height:1.5;margin-bottom:1.25rem;">
+        ¿Estás seguro de que deseas eliminar al usuario <strong style="color:#fff;" x-text="deleteUserTarget?.email || deleteUserTarget?.id"></strong>?
+        <div style="font-size:0.72rem;color:#e74c3c;margin-top:0.5rem;background:rgba(231,76,60,0.1);padding:0.5rem;border-radius:6px;border:1px solid rgba(231,76,60,0.25);">
+          ⚠️ Esta acción removerá el perfil y los permisos del usuario en BASTIONX LAB.
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:0.5rem;">
+        <button type="button" class="btn" @click="showDeleteUserModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
+        <button type="button" class="btn" @click="confirmDeleteUser()" :disabled="deletingUser" style="background:#e74c3c;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">
+          <span x-text="deletingUser ? 'Eliminando...' : 'Eliminar Definitivamente'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="js/supabase.js"></script>
