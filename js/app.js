@@ -265,6 +265,46 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    get upcomingMaintenanceTasks() {
+      const list = []
+      Object.values(this.pendingTasksMap).forEach(tasks => {
+        tasks.forEach(t => {
+          if (t.fecha_limite && !t.completada) {
+            const server = this.servers.find(s => String(s.id) === String(t.server_id))
+            if (server) {
+              list.push({ ...t, hostname: server.hostname })
+            }
+          }
+        })
+      })
+      return list.sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))
+    },
+
+    getCountdownText(fechaLimite) {
+      if (!fechaLimite) return ''
+      const due = new Date(fechaLimite)
+      const today = new Date()
+      today.setHours(0,0,0,0)
+      due.setHours(0,0,0,0)
+      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+      if (diffDays < 0) return `Vencido (${Math.abs(diffDays)}d)`
+      if (diffDays === 0) return 'Mantenimiento HOY'
+      if (diffDays === 1) return 'Mañana'
+      return `En ${diffDays} días`
+    },
+
+    getCountdownClass(fechaLimite) {
+      if (!fechaLimite) return ''
+      const due = new Date(fechaLimite)
+      const today = new Date()
+      today.setHours(0,0,0,0)
+      due.setHours(0,0,0,0)
+      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+      if (diffDays < 0) return 'cd-overdue'
+      if (diffDays <= 3) return 'cd-urgent'
+      return 'cd-upcoming'
+    },
+
     async loadCreds() {
       const { data } = await sb.from('server_credentials').select('server_id,ipmi,ip_servicio')
       this.credsMap = {}
@@ -530,13 +570,40 @@ document.addEventListener('alpine:init', () => {
         for (const svc of (s.servicios || [])) {
           const key = svc.nombre || 'sin-nombre'
           if (!svcMap[key]) svcMap[key] = { nombre: key, servers: [], puerto: '' }
-          if (!svcMap[key].servers.some(ex => ex.id === s.id)) {
-            svcMap[key].servers.push({ ...s, _svcIp: (svc.ips || [])[0] || '', _svcPuerto: svc.puerto || '' })
+          const ip = (svc.ips || [])[0] || (this.credsMap[s.id]?.ip_servicio || '') || (this.credsMap[s.id]?.ipmi || '') || ''
+          const puerto = svc.puerto || ''
+          let directUrl = ''
+          if (ip) {
+            const hostWithPort = puerto ? `${ip}:${puerto}` : ip
+            directUrl = ip.startsWith('http') ? hostWithPort : `https://${hostWithPort}`
           }
-          if (svc.puerto && !svcMap[key].puerto) svcMap[key].puerto = svc.puerto
+          if (!svcMap[key].servers.some(ex => ex.id === s.id && ex._svcIp === ip)) {
+            svcMap[key].servers.push({
+              ...s,
+              _svcIp: ip,
+              _svcPuerto: puerto,
+              _directUrl: directUrl,
+              _svcUsuario: svc.usuario || '',
+              _svcPassword: svc.password || ''
+            })
+          }
+          if (puerto && !svcMap[key].puerto) svcMap[key].puerto = puerto
         }
       }
       return Object.values(svcMap)
+    },
+
+    netIpFilter: '',
+    netTypeFilter: '',
+    netHostFilter: '',
+    netStatusFilter: '',
+
+    copyToClipboard(text) {
+      if (!text) return
+      navigator.clipboard.writeText(text).then(() => {
+        const t = Alpine.store('toast')
+        if (t) t.success('Contraseña copiada al portapapeles')
+      }).catch(() => {})
     },
 
     get allIPs() {
@@ -564,9 +631,33 @@ document.addEventListener('alpine:init', () => {
       return ips
     },
 
+    get uniqueTypes() {
+      const types = new Set(this.allIPs.map(e => e.type).filter(Boolean))
+      return [...types].sort()
+    },
+
+    get filteredIPs() {
+      let list = this.allIPs
+      if (this.netIpFilter.trim()) {
+        const q = this.netIpFilter.trim().toLowerCase()
+        list = list.filter(e => e.ip.toLowerCase().includes(q))
+      }
+      if (this.netTypeFilter) {
+        list = list.filter(e => e.type === this.netTypeFilter)
+      }
+      if (this.netHostFilter.trim()) {
+        const q = this.netHostFilter.trim().toLowerCase()
+        list = list.filter(e => e.server?.hostname?.toLowerCase().includes(q))
+      }
+      if (this.netStatusFilter) {
+        list = list.filter(e => e.server?.estado === this.netStatusFilter)
+      }
+      return list
+    },
+
     get uniqueSubnets() {
       const subnets = new Set()
-      for (const entry of this.allIPs) {
+      for (const entry of this.filteredIPs) {
         const parts = entry.ip.split('.')
         if (parts.length === 4) {
           subnets.add(parts.slice(0, 3).join('.'))
@@ -577,7 +668,7 @@ document.addEventListener('alpine:init', () => {
 
     get groupedIPs() {
       const groups = {}
-      for (const entry of this.allIPs) {
+      for (const entry of this.filteredIPs) {
         const parts = entry.ip.split('.')
         const subnet = parts.length === 4 ? parts.slice(0, 3).join('.') + '.0/24' : 'Otros'
         if (!groups[subnet]) groups[subnet] = { subnet, ips: [] }

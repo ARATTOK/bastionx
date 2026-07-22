@@ -37,7 +37,7 @@
   </template>
 
   <template x-if="server">
-    <div class="container" style="max-width:800px;padding:2rem 1rem;">
+    <div class="container" style="max-width:1080px;padding:2rem 1rem;">
       <!-- TOP BAR -->
       <div class="topbar" style="margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -139,25 +139,52 @@
           Servicios <span class="det-count" x-text="server.servicios.length"></span>
         </h2>
         <template x-for="(svc, i) in server.servicios" :key="i">
-          <div class="svc-card">
-            <div class="svc-header">
-              <strong x-text="svc.nombre"></strong>
+          <div class="svc-card" style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.025);border:1px solid var(--border-subtle);border-radius:10px;">
+            <div class="svc-header" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.4rem;">
+              <strong x-text="svc.nombre" style="color:#fff;font-size:0.85rem;"></strong>
               <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto: ' + svc.puerto"></span>
             </div>
-            <div class="svc-ips" x-show="svc.ips && svc.ips.length > 0">
-              <iconify-icon icon="lucide:server" style="width:11px;height:11px;color:#555;flex-shrink:0;"></iconify-icon>
-              <a class="svc-ip" :href="'https://' + ip" target="_blank" x-text="ip" style="text-decoration:none;"></a>
+
+            <!-- IPs Section (ONLY visible to Superadmin & Admin) -->
+            <div class="svc-ips" x-show="canEdit && svc.ips && svc.ips.length > 0" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem;">
+              <iconify-icon icon="lucide:network" style="width:12px;height:12px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+              <template x-for="ip in svc.ips" :key="ip">
+                <div style="display:inline-flex;align-items:center;gap:0.25rem;background:rgba(108,92,231,0.12);padding:0.15rem 0.45rem;border-radius:6px;border:1px solid rgba(108,92,231,0.25);">
+                  <a class="svc-ip" :href="'https://' + ip + (svc.puerto ? ':' + svc.puerto : '')" target="_blank" x-text="ip + (svc.puerto ? ':' + svc.puerto : '')" style="text-decoration:none;color:#8e7ff3;font-size:0.7rem;font-weight:600;"></a>
+                  <button type="button" @click="copyToClipboard(ip)" title="Copiar IP" style="background:transparent;border:none;color:#888;cursor:pointer;padding:0;display:inline-flex;">
+                    <iconify-icon icon="lucide:copy" style="width:11px;height:11px;"></iconify-icon>
+                  </button>
+                </div>
+              </template>
             </div>
-            <div class="svc-desc" x-show="svc.descripcion" x-text="svc.descripcion" style="font-size:0.65rem;color:#555;margin-top:0.2rem;"></div>
+
+            <!-- Credenciales de Servicio (ONLY visible to Superadmin & Admin) -->
+            <div class="svc-creds" x-show="canEdit && (svc.usuario || svc.password)" style="margin-top:0.4rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.25);border-radius:6px;border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;font-size:0.7rem;">
+              <span style="color:#e74c3c;font-weight:700;display:inline-flex;align-items:center;gap:0.25rem;">
+                <iconify-icon icon="lucide:key" style="width:12px;height:12px;"></iconify-icon>
+                Credenciales:
+              </span>
+              <span x-show="svc.usuario" style="color:#ccc;">
+                Usuario: <strong style="color:#fff;" x-text="svc.usuario"></strong>
+              </span>
+              <span x-show="svc.password" @click="copyToClipboard(svc.password)" title="Clic para copiar contraseña al portapapeles" style="display:inline-flex;align-items:center;gap:0.3rem;color:#888;cursor:pointer;background:rgba(108,92,231,0.12);padding:0.15rem 0.45rem;border-radius:5px;border:1px solid rgba(108,92,231,0.25);transition:all 0.15s;">
+                Clave: <code style="color:#888;letter-spacing:2px;font-size:0.75rem;">••••••••</code>
+                <iconify-icon icon="lucide:copy" style="width:11px;height:11px;color:#8e7ff3;"></iconify-icon>
+              </span>
+            </div>
+
+            <div class="svc-desc" x-show="svc.descripcion" x-text="svc.descripcion" style="font-size:0.65rem;color:#555;margin-top:0.25rem;"></div>
           </div>
         </template>
       </div>
 
-      <!-- CREDENCIALES -->
+      <!-- CREDENCIALES (Bóveda Segura) -->
       <div class="det-section" x-show="serverCreds">
-        <h2 class="det-section-title">
-          <iconify-icon icon="lucide:lock" style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
-          Credenciales
+        <h2 class="det-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="display:flex;align-items:center;gap:0.4rem;">
+            <iconify-icon icon="lucide:shield-check" style="width:15px;height:15px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
+            B&oacute;veda de Credenciales Segura
+          </span>
         </h2>
         <div class="det-grid-2col">
           <div class="det-field"><span class="det-label">IPMI</span><span class="det-value credential" x-text="serverCreds?.ipmi || '—'"></span></div>
@@ -166,15 +193,21 @@
             <span class="det-value credential" x-text="serverCreds?.ip_servicio || '—'"></span>
           </div>
           <div class="det-field"><span class="det-label">Usuario</span><span class="det-value credential" x-text="serverCreds?.usuario || '—'"></span></div>
-          <div class="det-field"><span class="det-label">Password</span><span class="det-value credential" x-text="serverCreds?.password || '—'"></span></div>
+          <div class="det-field">
+            <span class="det-label">Password</span>
+            <span class="det-value credential" @click="copyToClipboard(serverCreds?.password)" title="Clic para copiar contraseña al portapapeles" style="color:#888;letter-spacing:2px;cursor:pointer;display:inline-flex;align-items:center;gap:0.35rem;">
+              ••••••••
+              <iconify-icon icon="lucide:copy" style="width:12px;height:12px;color:#6c5ce7;letter-spacing:normal;"></iconify-icon>
+            </span>
+          </div>
         </div>
-        <div class="detail-actions" style="margin-top:0.5rem;" x-show="serverCreds">
-          <a class="btn" :href="'https://' + serverCreds?.ipmi" target="_blank" x-show="serverCreds?.ipmi" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;text-decoration:none;cursor:pointer;">
-            <iconify-icon icon="lucide:shield" style="width:11px;height:11px;"></iconify-icon>
+        <div class="detail-actions" style="margin-top:0.6rem;display:flex;gap:0.5rem;flex-wrap:wrap;" x-show="serverCreds">
+          <a class="at-btn" :href="'https://' + serverCreds?.ipmi" target="_blank" x-show="serverCreds?.ipmi" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#8e7ff3;text-decoration:none;cursor:pointer;">
+            <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;"></iconify-icon>
             Abrir IPMI
           </a>
-          <a class="btn" :href="'https://' + serverCreds?.ip_servicio" target="_blank" x-show="serverCreds?.ip_servicio" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;text-decoration:none;cursor:pointer;">
-            <iconify-icon icon="lucide:globe" style="width:11px;height:11px;"></iconify-icon>
+          <a class="at-btn" :href="'https://' + serverCreds?.ip_servicio" target="_blank" x-show="serverCreds?.ip_servicio" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#8e7ff3;text-decoration:none;cursor:pointer;">
+            <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;"></iconify-icon>
             Abrir IP Servicio
           </a>
         </div>
@@ -199,6 +232,7 @@
                 <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
                   <strong style="font-size:0.78rem;color:#ccc;" x-text="t.titulo"></strong>
                   <span class="tsk-badge" :class="taskSeverityClass(t.criticidad)" x-text="taskSeverityLabel(t.criticidad)"></span>
+                  <span class="countdown-pill" :class="getCountdownClass(t.fecha_limite)" x-show="t.fecha_limite && !t.completada" x-text="getCountdownText(t.fecha_limite)"></span>
                 </div>
                 <div style="font-size:0.65rem;color:#555;margin-top:0.15rem;" x-show="t.descripcion" x-text="t.descripcion"></div>
                 <div style="font-size:0.55rem;color:#444;margin-top:0.15rem;" x-show="t.completada && t.completed_at">
@@ -219,18 +253,12 @@
           </div>
         </template>
 
-        <template x-if="canEdit">
-          <div class="task-add-form">
-            <input type="text" x-model="newTaskTitulo" placeholder="Título de la tarea" @keyup.enter="addTask()" style="flex:1;min-width:0;">
-            <input type="text" x-model="newTaskDesc" placeholder="Descripción (opcional)" style="flex:1;min-width:0;">
-            <select x-model="newTaskCriticidad">
-              <option value="normal">Normal</option>
-              <option value="configuracion">Configuración</option>
-              <option value="critica">Crítica</option>
-            </select>
-            <button class="btn" @click="addTask()" style="white-space:nowrap;">Agregar</button>
-          </div>
-        </template>
+        <div style="margin-top:0.75rem;" x-show="canEdit">
+          <button class="at-btn" @click="openAddTaskModal()" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.85rem;background:linear-gradient(135deg,#6c5ce7,#a855f7);color:#fff;border-radius:8px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(108,92,231,0.25);">
+            <iconify-icon icon="lucide:plus" style="width:14px;height:14px;"></iconify-icon>
+            Agendar Tarea / Mantenimiento
+          </button>
+        </div>
       </div>
 
       <!-- BITÁCORA -->
@@ -358,9 +386,58 @@
           </template>
         </div>
       </div>
-
     </div>
   </template>
+
+  <!-- MODAL: AGENDAR TAREA / MANTENIMIENTO PREVENTIVO -->
+  <div class="modal-overlay" x-show="showAddTaskModal" x-cloak @click.self="showAddTaskModal = false" @keydown.escape.window="showAddTaskModal = false">
+    <div class="modal" style="max-width:520px;width:92%;padding:1.5rem;" x-show="showAddTaskModal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:calendar-plus" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
+          Agendar Tarea / Mantenimiento
+        </h3>
+        <button class="btn-icon" @click="showAddTaskModal = false" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <form @submit.prevent="addTask()">
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Título de la Tarea / Evento *</label>
+            <input type="text" x-model="newTaskTitulo" placeholder="Ej: Mantenimiento preventivo de discos y fuente" required style="width:100%;">
+          </div>
+
+          <div class="field-group">
+            <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Descripción o Instrucciones (opcional)</label>
+            <textarea x-model="newTaskDesc" placeholder="Detalles o notas sobre la tarea..." rows="3" style="width:100%;font-size:0.75rem;padding:0.5rem;border-radius:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border-subtle);color:#fff;outline:none;"></textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div class="field-group">
+              <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Fecha Límite / Mantenimiento</label>
+              <input type="date" x-model="newTaskFechaLimite" title="Fecha límite de ejecución" style="width:100%;">
+            </div>
+
+            <div class="field-group">
+              <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Prioridad / Criticidad</label>
+              <select x-model="newTaskCriticidad" style="width:100%;height:36px;font-size:0.75rem;padding:0.45rem 0.65rem;border-radius:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border-subtle);color:#fff;">
+                <option value="normal">Normal</option>
+                <option value="configuracion">Configuración</option>
+                <option value="critica">Crítica</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button type="button" class="btn" @click="showAddTaskModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
+          <button type="submit" class="btn" style="background:#6c5ce7;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">Agendar / Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 <script src="js/supabase.js"></script>
 <script src="js/toast.js"></script>

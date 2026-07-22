@@ -19,6 +19,26 @@ document.addEventListener('alpine:init', () => {
     pendingCompleteTask: null,
     showEvidenceModal: false,
     evidenceTask: null,
+    showAddTaskModal: false,
+    showPassword: false,
+    ipmiPing: 'checking',
+    svcPing: 'checking',
+
+    openAddTaskModal() {
+      this.newTaskTitulo = ''
+      this.newTaskDesc = ''
+      this.newTaskFechaLimite = ''
+      this.newTaskCriticidad = 'normal'
+      this.showAddTaskModal = true
+    },
+
+    async togglePasswordReveal() {
+      this.showPassword = !this.showPassword
+      if (this.showPassword && this.server && this.user) {
+        await auditLog(this.server.id, this.user.id, 'credential.revealed', { hostname: this.server.hostname }, 'Visualización de contraseña para ' + this.server.hostname)
+        Alpine.store('toast').success('Consulta de contraseña registrada en bitácora')
+      }
+    },
 
     async init() {
       try {
@@ -98,27 +118,71 @@ document.addEventListener('alpine:init', () => {
     goBack() { window.location.href = 'dashboard.html' },
     goEdit() { window.location.href = 'edit-server.html?id=' + this.server.id },
 
+    copyToClipboard(text) {
+      if (!text) return
+      navigator.clipboard.writeText(text).then(() => {
+        const t = Alpine.store('toast')
+        if (t) t.success('Contraseña copiada al portapapeles')
+      }).catch(() => {})
+    },
+
+    newTaskFechaLimite: '',
+
+    getCountdownText(fechaLimite) {
+      if (!fechaLimite) return ''
+      const due = new Date(fechaLimite)
+      const today = new Date()
+      today.setHours(0,0,0,0)
+      due.setHours(0,0,0,0)
+      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+      if (diffDays < 0) return `Vencido (${Math.abs(diffDays)}d)`
+      if (diffDays === 0) return 'Mantenimiento HOY'
+      if (diffDays === 1) return 'Mañana'
+      return `En ${diffDays} días`
+    },
+
+    getCountdownClass(fechaLimite) {
+      if (!fechaLimite) return ''
+      const due = new Date(fechaLimite)
+      const today = new Date()
+      today.setHours(0,0,0,0)
+      due.setHours(0,0,0,0)
+      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+      if (diffDays < 0) return 'cd-overdue'
+      if (diffDays <= 3) return 'cd-urgent'
+      return 'cd-upcoming'
+    },
+
     async addTask() {
       if (!this.newTaskTitulo.trim()) return
-      const { data, error } = await sb.from('server_tasks').insert({
+      const payload = {
         server_id: this.server.id,
         titulo: this.newTaskTitulo.trim(),
         descripcion: this.newTaskDesc.trim(),
         criticidad: this.newTaskCriticidad,
         created_by: this.user.id
-      }).select().single()
+      }
+      if (this.newTaskFechaLimite) {
+        payload.fecha_limite = this.newTaskFechaLimite
+      }
+
+      const { data, error } = await sb.from('server_tasks').insert(payload).select().single()
       if (error) {
         const t = Alpine.store('toast')
         if (t) t.error('Error: ' + error.message)
         return
       }
       if (data) {
-        this.tasks.push(data)
+        this.tasks.unshift(data)
         await this.insertLog(data.id, 'creada', null)
+        const t = Alpine.store('toast')
+        if (t) t.success('Tarea / Mantenimiento agendado correctamente')
       }
       this.newTaskTitulo = ''
       this.newTaskDesc = ''
+      this.newTaskFechaLimite = ''
       this.newTaskCriticidad = 'normal'
+      this.showAddTaskModal = false
     },
 
     openCompleteModal(task) {

@@ -132,24 +132,31 @@
   </div>
 
   <div x-show="!loading && isSuperAdmin" class="admin-page" x-cloak>
-    <!-- HEADER -->
-    <div class="admin-header">
+    <!-- HEADER (Unified Top Navigation Bar) -->
+    <div class="topbar" style="margin-bottom:1.5rem;">
       <div>
         <h1>
-          <iconify-icon icon="lucide:shield-check" style="width:26px;height:26px;color:#6c5ce7;"></iconify-icon>
-          BASTIONX LAB — Panel de Control
+          <iconify-icon icon="lucide:shield-check" class="logo-icon"></iconify-icon>
+          BASTIONX LAB
+          <small>panel de control</small>
         </h1>
-        <div style="font-size:0.75rem;color:#888;margin-top:0.25rem;">Gestión centralizada de permisos, usuarios y bitácoras globales</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:0.25rem;">Gestión centralizada de permisos, usuarios y auditoría global</div>
       </div>
-      <div class="admin-nav-actions">
-        <a class="btn" href="tags.html" @click.prevent="window.location.href='tags.html'" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;padding:0.4rem 0.85rem;background:rgba(108,92,231,0.12);color:#8e7ff3;border:1px solid rgba(108,92,231,0.3);border-radius:8px;text-decoration:none;">
-          <iconify-icon icon="lucide:tag"></iconify-icon>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <a class="at-btn" href="tags.html" @click.prevent="window.location.href='tags.html'" title="Gestión global de tags" style="background:rgba(108,92,231,0.15);color:#8e7ff3;border:1px solid rgba(108,92,231,0.3);padding:0.35rem 0.75rem;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+          <iconify-icon icon="lucide:tag" style="pointer-events:none;"></iconify-icon>
           Gestión de Tags
         </a>
-        <a class="btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;padding:0.4rem 0.85rem;background:#181824;color:#ccc;border:1px solid var(--border-subtle);border-radius:8px;text-decoration:none;">
-          <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+        <a class="at-btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'" title="Volver al Dashboard" style="background:var(--glass-bg);color:#ccc;border:1px solid var(--border-subtle);padding:0.35rem 0.75rem;border-radius:8px;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+          <iconify-icon icon="lucide:arrow-left" style="pointer-events:none;"></iconify-icon>
           Volver al Dashboard
         </a>
+        <!-- USER BADGE -->
+        <div class="user-badge" title="Superadmin">
+          <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
+          <span x-text="user?.email"></span>
+          <span class="role-badge super">super admin</span>
+        </div>
       </div>
     </div>
 

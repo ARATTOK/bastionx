@@ -101,6 +101,20 @@
         </span>
       </div>
 
+      <!-- PREVENTIVE MAINTENANCE COUNTDOWN ALERTS -->
+      <div class="maint-alert-bar" x-show="!loading && upcomingMaintenanceTasks.length > 0">
+        <span style="font-size:0.68rem;color:#f39c12;font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;white-space:nowrap;">
+          <iconify-icon icon="lucide:calendar-clock" style="width:14px;height:14px;"></iconify-icon>
+          Mantenimientos Preventivos:
+        </span>
+        <template x-for="t in upcomingMaintenanceTasks.slice(0, 4)" :key="t.id">
+          <a :href="'server-detail.html?id=' + t.server_id" @click.prevent="gotoServer(t.server_id)" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;">
+            <span style="font-size:0.68rem;color:#ddd;" x-text="t.hostname + ': ' + t.titulo"></span>
+            <span class="countdown-pill" :class="getCountdownClass(t.fecha_limite)" x-text="getCountdownText(t.fecha_limite)"></span>
+          </a>
+        </template>
+      </div>
+
       <!-- ACTION TOOLBAR -->
       <div class="admin-toolbar" x-show="!loading" style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
         <a class="at-btn" href="add-server.html" x-show="canEdit" @click.prevent="window.location.href='add-server.html'">
@@ -129,23 +143,27 @@
         </a>
       </div>
 
-      <!-- VIEW TABS -->
+      <!-- VIEW TABS (Segmented Control with Live Count Badges) -->
       <div class="view-tabs" x-show="!loading">
         <button class="view-tab" :class="activeView === 'servers' ? 'active' : ''" @click="activeView='servers'">
           <iconify-icon icon="lucide:server"></iconify-icon>
           Servidores
+          <span class="view-tab-count" x-text="servers.length"></span>
         </button>
         <button class="view-tab" :class="activeView === 'services' ? 'active' : ''" @click="activeView='services'">
-          <iconify-icon icon="lucide:layout-grid"></iconify-icon>
+          <iconify-icon icon="lucide:boxes"></iconify-icon>
           Servicios
+          <span class="view-tab-count" x-text="allServices.length"></span>
         </button>
         <button class="view-tab" :class="activeView === 'network' ? 'active' : ''" @click="activeView='network'">
-          <iconify-icon icon="lucide:globe"></iconify-icon>
+          <iconify-icon icon="lucide:network"></iconify-icon>
           Redes
+          <span class="view-tab-count" x-text="allIPs.length + ' IPs'"></span>
         </button>
         <button class="view-tab" :class="activeView === 'all' ? 'active' : ''" @click="activeView='all'">
-          <iconify-icon icon="lucide:layers"></iconify-icon>
+          <iconify-icon icon="lucide:layout-grid"></iconify-icon>
           Infraestructura
+          <span class="view-tab-count" x-text="servers.length"></span>
         </button>
       </div>
 
@@ -287,54 +305,72 @@
       <!-- ===== VIEW: SERVICIOS ===== -->
       <template x-if="activeView === 'services'">
         <div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
-            <button class="view-export" @click="exportServicesCSV()" title="Exportar servicios">
-              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
-              Exportar
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <div style="font-size:0.72rem;color:#888;">
+              Servicios registrados en la infraestructura y accesos directos por IP:Puerto
+            </div>
+            <button class="at-btn" @click="exportServicesCSV()" title="Exportar servicios en CSV">
+              <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
+              Exportar CSV
             </button>
           </div>
+          
           <div class="services-grid">
             <template x-for="svc in allServices" :key="svc.nombre">
               <div class="svc-card">
-                <div class="svc-header">
-                  <iconify-icon icon="lucide:box"></iconify-icon>
-                  <span x-text="svc.nombre"></span>
-                  <span class="svc-count" x-text="svc.servers.length + ' servidores'"></span>
-                  <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto: ' + svc.puerto"></span>
+                <div class="svc-header" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:0.6rem;">
+                  <div style="display:flex;align-items:center;gap:0.4rem;">
+                    <iconify-icon icon="lucide:box" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+                    <strong x-text="svc.nombre" style="font-size:0.85rem;color:#fff;"></strong>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.35rem;">
+                    <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto ' + svc.puerto" style="background:rgba(108,92,231,0.15);color:#8e7ff3;padding:0.15rem 0.45rem;border-radius:6px;font-weight:600;font-size:0.64rem;border:1px solid rgba(108,92,231,0.3);"></span>
+                    <span class="svc-count" x-text="svc.servers.length + ' servidores'" style="font-size:0.62rem;color:#888;"></span>
+                  </div>
                 </div>
-                <div class="svc-servers">
-                  <template x-for="s in svc.servers" :key="s.id">
-                    <a :href="s._svcIp ? 'https://' + s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '') : 'server-detail.html?id=' + s.id"
-                       target="_blank" class="svc-server-link" @click.prevent="s._svcIp ? null : gotoServer(s.id)">
-                      <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')"></span>
-                      <span class="hover-trigger">
+
+                <div class="svc-servers" style="display:flex;flex-direction:column;gap:0.45rem;">
+                  <template x-for="s in svc.servers" :key="s.id + (s._svcIp || '')">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.04);border-radius:8px;">
+                      <!-- SERVER LINK -->
+                      <a :href="'server-detail.html?id=' + s.id" @click.prevent="gotoServer(s.id)" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;color:#ccc;font-size:0.75rem;font-weight:600;" title="Ver detalle del servidor">
+                        <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')"></span>
                         <span x-text="s.hostname"></span>
-                        <div class="hover-card">
-                          <strong x-text="s.hostname" style="color:#e0e0e0;font-size:0.8rem;"></strong>
-                          <div style="color:#888;font-size:0.65rem;margin-top:0.2rem;">
-                            <div x-text="s.modelo || '—'"></div>
-                            <div x-show="serverTagsMap[s.id]">
-                              <template x-for="t in (serverTagsMap[s.id] || []).slice(0, 4)" :key="t.id">
-                                <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;margin-right:0.15rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
-                              </template>
-                            </div>
-                          </div>
+                      </a>
+
+                      <!-- DIRECT IP:PORT REDIRECTION BUTTON -->
+                      <template x-if="s._directUrl">
+                        <a :href="s._directUrl" target="_blank" title="Abrir servicio en nueva pestaña" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.55rem;background:rgba(108,92,231,0.18);color:#8e7ff3;border:1px solid rgba(108,92,231,0.4);border-radius:6px;font-size:0.68rem;font-weight:600;text-decoration:none;transition:all 0.15s;">
+                          <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;pointer-events:none;"></iconify-icon>
+                          <span x-text="s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')"></span>
+                        </a>
+                      </template>
+                      <template x-if="!s._directUrl">
+                        <span style="font-size:0.62rem;color:#555;">Sin IP asignada</span>
+                      </template>
+
+                      <!-- SERVICE CREDENTIALS (Superadmin & Admin only) -->
+                      <template x-if="canEdit && (s._svcUsuario || s._svcPassword)">
+                        <div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.65rem;color:#aaa;background:rgba(0,0,0,0.3);padding:0.2rem 0.45rem;border-radius:5px;border:1px solid rgba(255,255,255,0.05);">
+                          <iconify-icon icon="lucide:key" style="width:11px;height:11px;color:#e74c3c;"></iconify-icon>
+                          <span x-show="s._svcUsuario" style="color:#ccc;">User: <strong style="color:#fff;" x-text="s._svcUsuario"></strong></span>
+                          <span x-show="s._svcPassword" @click="copyToClipboard(s._svcPassword)" title="Clic para copiar contraseña al portapapeles" style="display:inline-flex;align-items:center;gap:0.25rem;cursor:pointer;">
+                            <code style="color:#888;letter-spacing:2px;">••••••••</code>
+                            <iconify-icon icon="lucide:copy" style="width:11px;height:11px;color:#8e7ff3;"></iconify-icon>
+                          </span>
                         </div>
-                      </span>
-                      <span class="svc-ip" x-show="s._svcIp">
-                        <a :href="'https://' + s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')" target="_blank" style="color:#6c5ce7;text-decoration:none;" x-text="s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')"></a>
-                      </span>
-                      <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;color:#6c5ce7;margin-left:auto;flex-shrink:0;" x-show="s._svcIp"></iconify-icon>
-                    </a>
+                      </template>
+                    </div>
                   </template>
                 </div>
               </div>
             </template>
           </div>
+
           <div class="empty-state" x-show="allServices.length === 0">
             <iconify-icon icon="lucide:box"></iconify-icon>
             <h3>Sin servicios registrados</h3>
-            <p>Los servicios aparecer&aacute;n aqu&iacute; cuando los agregues a un servidor</p>
+            <p>Los servicios aparecerán aquí cuando los agregues a un servidor</p>
           </div>
         </div>
       </template>
@@ -342,28 +378,63 @@
       <!-- ===== VIEW: REDES ===== -->
       <template x-if="activeView === 'network'">
         <div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
-            <button class="view-export" @click="exportNetworkCSV()" title="Exportar redes">
-              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
-              Exportar
+          <!-- HEADER CONTROLS & COLUMN FILTERS BAR -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+            <div style="font-size:0.72rem;color:#888;">
+              Mapa dinámico de Direcciones IP y Subredes de la Infraestructura
+            </div>
+            <button class="at-btn" @click="exportNetworkCSV()" title="Exportar redes en CSV">
+              <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
+              Exportar CSV
             </button>
           </div>
+
+          <!-- NETWORK STATS -->
           <div class="network-stats">
             <div class="net-stat">
-              <span class="net-stat-value" x-text="allIPs.length"></span>
-              IPs totales
+              <span class="net-stat-value" x-text="filteredIPs.length"></span>
+              IPs filtradas
             </div>
             <div class="net-stat">
               <span class="net-stat-value" x-text="uniqueSubnets.length"></span>
               Subredes
             </div>
           </div>
+
+          <!-- COLUMN FILTERS BAR -->
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:10px;padding:0.6rem 0.85rem;margin-bottom:0.85rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:0.68rem;color:#8e7ff3;font-weight:700;display:flex;align-items:center;gap:0.3rem;">
+              <iconify-icon icon="lucide:filter" style="width:13px;height:13px;"></iconify-icon>
+              Filtros de Columna:
+            </span>
+            <input type="text" x-model="netIpFilter" placeholder="Buscar IP..." style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:140px;">
+            <select x-model="netTypeFilter" style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:130px;">
+              <option value="">Tipo (Todos)</option>
+              <option value="IPMI">IPMI</option>
+              <option value="Servicio">Servicio</option>
+              <template x-for="t in uniqueTypes.filter(tp => tp !== 'IPMI' && tp !== 'Servicio')" :key="t">
+                <option :value="t" x-text="t"></option>
+              </template>
+            </select>
+            <input type="text" x-model="netHostFilter" placeholder="Buscar Hostname..." style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:140px;">
+            <select x-model="netStatusFilter" style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:130px;">
+              <option value="">Estado (Todos)</option>
+              <option value="Activo">Activo</option>
+              <option value="Mantenimiento">Mantenimiento</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+            <button class="btn" x-show="netIpFilter || netTypeFilter || netHostFilter || netStatusFilter" @click="netIpFilter='';netTypeFilter='';netHostFilter='';netStatusFilter=''" style="font-size:0.65rem;padding:0.25rem 0.5rem;background:transparent;border:none;color:#e74c3c;cursor:pointer;">
+              Limpiar filtros
+            </button>
+          </div>
+
           <div class="network-subnet-filter" x-show="uniqueSubnets.length > 1">
-            <button :class="{ active: netSubnetFilter === '' }" @click="netSubnetFilter = ''">Todas</button>
+            <button :class="{ active: netSubnetFilter === '' }" @click="netSubnetFilter = ''">Todas las subredes</button>
             <template x-for="sub in uniqueSubnets" :key="sub">
               <button :class="{ active: netSubnetFilter === sub }" @click="netSubnetFilter = sub" x-text="sub"></button>
             </template>
           </div>
+
           <div class="network-table-wrap">
             <template x-for="group in groupedIPs" :key="group.subnet">
               <div class="net-group" x-show="!netSubnetFilter || netSubnetFilter === (group.subnet || '').replace('.0/24','').replace('/24','')">
@@ -375,19 +446,41 @@
                 <table class="network-table">
                   <thead>
                     <tr>
-                      <th>Direcci&oacute;n IP</th>
+                      <th>Dirección IP</th>
                       <th>Tipo</th>
-                      <th>Hostname</th>
-                      <th>Acci&oacute;n</th>
+                      <th>Servidor / Hostname</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
                     <template x-for="entry in group.ips" :key="entry.ip + entry.type + entry.server.id">
                       <tr>
-                        <td><code x-text="entry.ip"></code></td>
+                        <td>
+                          <code x-text="entry.ip" style="color:#8e7ff3;font-weight:700;"></code>
+                          <button class="btn-icon" @click="copyToClipboard(entry.ip)" title="Copiar IP al portapapeles" style="width:20px;height:20px;border:none;background:transparent;color:#666;cursor:pointer;margin-left:0.2rem;vertical-align:middle;">
+                            <iconify-icon icon="lucide:copy" style="width:11px;height:11px;"></iconify-icon>
+                          </button>
+                        </td>
                         <td><span class="ip-badge" x-text="entry.type"></span></td>
-                        <td><span class="hover-trigger"><span class="status-dot" :class="'dot-' + (entry.server.estado ? entry.server.estado.toLowerCase() : 'libre')" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:0.3rem;vertical-align:middle;"></span><span x-text="entry.server.hostname"></span><div class="hover-card" style="bottom:auto;top:100%;left:0;transform:none;min-width:180px;"><strong x-text="entry.server.hostname" style="color:#e0e0e0;font-size:0.75rem;"></strong><div style="color:#888;font-size:0.6rem;margin-top:0.2rem;"><div x-text="entry.server.modelo || '—'"></div><div x-text="'RAM: ' + (entry.server.ram_gb || '0') + ' GB'"></div></div></div></span></td>
-                        <td><a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#6c5ce7;text-decoration:none;font-size:0.65rem;">Ver detalle</a></td>
+                        <td>
+                          <a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#eee;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem;" title="Ver detalle del servidor">
+                            <span class="status-dot" :class="'dot-' + (entry.server.estado ? entry.server.estado.toLowerCase() : 'libre')"></span>
+                            <span x-text="entry.server.hostname"></span>
+                          </a>
+                        </td>
+                        <td>
+                          <span class="card-status-label" :class="'sl-' + (entry.server.estado ? entry.server.estado.toLowerCase() : '')" style="font-size:0.62rem;">
+                            <span class="sl-dot"></span>
+                            <span x-text="entry.server.estado"></span>
+                          </span>
+                        </td>
+                        <td>
+                          <a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#6c5ce7;text-decoration:none;font-size:0.68rem;display:inline-flex;align-items:center;gap:0.2rem;">
+                            <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
+                            Detalle
+                          </a>
+                        </td>
                       </tr>
                     </template>
                   </tbody>
@@ -395,10 +488,12 @@
               </div>
             </template>
           </div>
-          <div class="empty-state" x-show="allIPs.length === 0">
+
+          <div class="empty-state" x-show="filteredIPs.length === 0">
             <iconify-icon icon="lucide:globe"></iconify-icon>
             <h3>Sin direcciones IP registradas</h3>
-            <p>Las IPs aparecer&aacute;n aqu&iacute; cuando agregues credenciales o servicios a un servidor</p>
+            <p x-show="allIPs.length > 0">Ninguna IP coincide con los filtros aplicados</p>
+            <p x-show="allIPs.length === 0">Las IPs aparecerán aquí cuando agregues credenciales o servicios a un servidor</p>
           </div>
         </div>
       </template>
@@ -848,9 +943,25 @@
                       <iconify-icon icon="lucide:globe" style="width:12px;height:12px;color:#2ecc71;"></iconify-icon>
                       <span style="font-weight:600;color:#fff;" x-text="svc.nombre"></span>
                     </div>
-                    <div style="display:flex;gap:0.25rem;align-items:center;">
-                      <template x-for="ip in (svc.ips || [])" :key="ip">
-                        <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;background:rgba(108,92,231,0.15);padding:0.1rem 0.35rem;border-radius:4px;" x-text="ip"></a>
+                    <div style="display:flex;gap:0.25rem;align-items:center;flex-wrap:wrap;">
+                      <!-- IPs (Superadmin & Admin only) -->
+                      <template x-if="canEdit">
+                        <div style="display:flex;gap:0.25rem;align-items:center;">
+                          <template x-for="ip in (svc.ips || [])" :key="ip">
+                            <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;background:rgba(108,92,231,0.15);padding:0.1rem 0.35rem;border-radius:4px;" x-text="ip"></a>
+                          </template>
+                        </div>
+                      </template>
+                      <!-- Service Credentials (Superadmin & Admin only) -->
+                      <template x-if="canEdit && (svc.usuario || svc.password)">
+                        <div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.62rem;color:#aaa;background:rgba(0,0,0,0.3);padding:0.1rem 0.35rem;border-radius:4px;border:1px solid rgba(255,255,255,0.05);">
+                          <iconify-icon icon="lucide:key" style="width:10px;height:10px;color:#e74c3c;"></iconify-icon>
+                          <span x-show="svc.usuario" style="color:#ccc;" x-text="svc.usuario"></span>
+                          <span x-show="svc.password" @click="copyToClipboard(svc.password)" title="Clic para copiar contraseña al portapapeles" style="display:inline-flex;align-items:center;gap:0.2rem;cursor:pointer;">
+                            <code style="color:#888;letter-spacing:2px;">••••••••</code>
+                            <iconify-icon icon="lucide:copy" style="width:10px;height:10px;color:#8e7ff3;"></iconify-icon>
+                          </span>
+                        </div>
                       </template>
                     </div>
                   </div>

@@ -24,49 +24,49 @@
 <div x-data="app()" x-init="init()">
   <div class="login-screen">
     <template x-if="loading">
-      <div class="login-card" style="text-align:center;">
-        <div style="padding:3rem 0;">
-          <span class="spinner" style="display:inline-block;width:24px;height:24px;border:2px solid rgba(255,255,255,0.15);border-top-color:#6c5ce7;border-radius:50%;animation:spin .6s linear infinite;margin-bottom:1rem;"></span>
-          <div style="font-size:0.8rem;color:#555;">Verificando sesión...</div>
-        </div>
+      <div class="login-card" style="text-align:center;padding:3rem 2rem;">
+        <span class="spinner" style="display:inline-block;width:28px;height:28px;border:3px solid rgba(255,255,255,0.15);border-top-color:#6c5ce7;border-radius:50%;animation:spin .6s linear infinite;margin-bottom:1rem;"></span>
+        <div style="font-size:0.85rem;color:#aaa;font-weight:500;">Verificando sesión...</div>
       </div>
     </template>
+
     <template x-if="!loading">
       <div class="login-card">
         <div class="login-header">
-          <iconify-icon icon="lucide:server" class="login-logo"></iconify-icon>
+          <iconify-icon icon="lucide:server" class="login-logo" style="color:#6c5ce7;filter:drop-shadow(0 0 8px rgba(108,92,231,0.4));"></iconify-icon>
           <h1>BASTIONX LAB</h1>
           <p class="l-sub">
-            Acceso restringido &mdash;
-            solo <span class="l-domain">@bastionx.com</span>
+            Sistema de Control de Inventario e Infraestructura
           </p>
         </div>
 
         <form @submit.prevent="login()">
           <div class="field">
             <iconify-icon icon="lucide:mail" class="field-icon"></iconify-icon>
-            <input type="email" x-model="loginEmail" placeholder="tu@correo.com" required autocomplete="email">
-          </div>
-          <div class="field">
-            <iconify-icon icon="lucide:lock" class="field-icon"></iconify-icon>
-            <input type="password" x-model="loginPassword" placeholder="Contrase&ntilde;a" required autocomplete="current-password">
+            <input type="email" x-model="loginEmail" @input="loginError=''" placeholder="tu.correo@bastionx.com" required autocomplete="email">
           </div>
 
-          <button type="submit" class="login-btn" :disabled="loading">
-            <template x-if="loading">
-              <span class="spinner"></span>
-            </template>
-            <span x-text="loading ? 'Ingresando...' : 'Ingresar al panel'"></span>
+          <div class="field" style="position:relative;">
+            <iconify-icon icon="lucide:lock" class="field-icon"></iconify-icon>
+            <input :type="showPassword ? 'text' : 'password'" x-model="loginPassword" @input="loginError=''" placeholder="Contraseña" required autocomplete="current-password" style="padding-right:2.4rem !important;">
+            <button type="button" @click="showPassword = !showPassword" title="Mostrar/ocultar contraseña" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#888;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;">
+              <iconify-icon :icon="showPassword ? 'lucide:eye-off' : 'lucide:eye'" style="width:16px;height:16px;"></iconify-icon>
+            </button>
+          </div>
+
+          <button type="submit" class="login-btn" :disabled="authenticating">
+            <span class="spinner" x-show="authenticating"></span>
+            <span x-text="authenticating ? 'Autenticando...' : 'Ingresar al sistema'"></span>
           </button>
 
           <div class="msg error" x-show="loginError">
-            <iconify-icon icon="lucide:x-circle" class="msg-icon"></iconify-icon>
+            <iconify-icon icon="lucide:triangle-alert" class="msg-icon"></iconify-icon>
             <span x-text="loginError"></span>
           </div>
         </form>
 
         <div class="login-footer">
-          Bastion Lab &mdash; Inventory Control
+          BASTIONX LAB &mdash; Inventory & Infrastructure Management
         </div>
       </div>
     </template>

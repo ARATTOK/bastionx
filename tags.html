@@ -19,28 +19,26 @@
 </head>
 <body>
 <div x-data="tagsApp()" x-init="init()">
-  <div class="container" style="max-width:700px;padding:2rem 1rem;">
-    <nav class="breadcrumbs" style="margin-bottom:0.5rem;">
-      <a href="dashboard.html">Dashboard</a>
-      <span class="sep">/</span>
-      <span class="current">Tags</span>
-    </nav>
+  <div class="container" style="max-width:960px;padding:2rem 1rem;">
+    <!-- HEADER (Unified Top Navigation Bar) -->
     <div class="topbar" style="margin-bottom:1.5rem;">
-      <h1 style="font-size:1.15rem;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:0.6rem;">
-        <iconify-icon icon="lucide:tag" style="width:22px;height:22px;color:#6c5ce7;"></iconify-icon>
-        Gestionar Tags
-      </h1>
-      <a href="dashboard.html" class="btn" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.75rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;text-decoration:none;">
-        <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
-        Volver
-      </a>
-    </div>
-
-    <div style="margin-bottom:1rem;">
-      <button class="btn" @click="openAdd()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.8rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.75rem;background:#12121a;color:#6c5ce7;cursor:pointer;">
-        <iconify-icon icon="lucide:plus" style="width:12px;height:12px;"></iconify-icon>
-        Nuevo tag
-      </button>
+      <div>
+        <h1>
+          <iconify-icon icon="lucide:tag" class="logo-icon"></iconify-icon>
+          BASTIONX LAB
+          <small>gestión de tags</small>
+        </h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="at-btn" @click="openAdd()" title="Crear nuevo tag" style="background:rgba(108,92,231,0.15);color:#8e7ff3;border:1px solid rgba(108,92,231,0.3);padding:0.35rem 0.75rem;border-radius:8px;font-weight:600;">
+          <iconify-icon icon="lucide:plus" style="pointer-events:none;"></iconify-icon>
+          Nuevo tag
+        </button>
+        <a class="at-btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'" title="Volver al Dashboard">
+          <iconify-icon icon="lucide:arrow-left" style="pointer-events:none;"></iconify-icon>
+          Volver al Dashboard
+        </a>
+      </div>
     </div>
 
     <div class="tag-grid" x-show="tags.length > 0">

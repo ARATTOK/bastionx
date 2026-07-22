@@ -207,7 +207,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     addService() {
-      this.form.servicios.push({ nombre: '', ips: [''], puerto: '', descripcion: '' })
+      this.form.servicios.push({ nombre: '', ips: [''], puerto: '', descripcion: '', usuario: '', password: '' })
     },
 
     removeService(idx) {
@@ -277,7 +277,9 @@ document.addEventListener('alpine:init', () => {
             nombre: s.nombre.trim(),
             ips: s.ips.map(ip => ip.trim()).filter(ip => ip),
             puerto: s.puerto?.trim() || '',
-            descripcion: s.descripcion?.trim() || ''
+            descripcion: s.descripcion?.trim() || '',
+            usuario: s.usuario?.trim() || '',
+            password: s.password || ''
           }))
 
         const updates = {

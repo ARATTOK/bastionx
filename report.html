@@ -332,27 +332,28 @@
   </div>
 
   <div x-show="!loading" class="report-page">
-    <!-- HEADER -->
-    <div class="report-header">
+    <!-- HEADER (Unified Top Navigation Bar) -->
+    <div class="topbar">
       <div>
         <h1>
-          <iconify-icon icon="lucide:clipboard-list" style="width:22px;height:22px;color:#6c5ce7;"></iconify-icon>
-          BASTIONX LAB — Reporte de Inventario
+          <iconify-icon icon="lucide:clipboard-list" class="logo-icon"></iconify-icon>
+          BASTIONX LAB
+          <small>reporte de inventario</small>
         </h1>
-        <div class="report-date" x-text="'Generado: ' + reportDate"></div>
+        <div class="report-date" x-text="'Generado: ' + reportDate" style="font-size:0.68rem;color:#888;margin-top:0.2rem;"></div>
       </div>
-      <div class="report-actions">
-        <button @click="exportCSV()" title="Descargar inventario en CSV">
-          <iconify-icon icon="lucide:file-down" style="width:13px;height:13px;"></iconify-icon>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <button class="at-btn" @click="exportCSV()" title="Descargar inventario en CSV">
+          <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
           Exportar CSV
         </button>
-        <button @click="print()" title="Imprimir o guardar como PDF">
-          <iconify-icon icon="lucide:printer" style="width:13px;height:13px;"></iconify-icon>
+        <button class="at-btn" @click="print()" title="Imprimir o guardar como PDF">
+          <iconify-icon icon="lucide:printer" style="pointer-events:none;"></iconify-icon>
           Imprimir / PDF
         </button>
-        <a href="dashboard.html" @click.prevent="window.location.href='dashboard.html'">
-          <iconify-icon icon="lucide:arrow-left" style="width:13px;height:13px;"></iconify-icon>
-          Volver
+        <a class="at-btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'">
+          <iconify-icon icon="lucide:arrow-left" style="pointer-events:none;"></iconify-icon>
+          Volver al Dashboard
         </a>
       </div>
     </div>

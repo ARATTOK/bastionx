@@ -170,20 +170,21 @@
   </div>
 
   <div x-show="!loading" class="labels-page">
-    <!-- HEADER -->
-    <div class="labels-header">
+    <!-- HEADER (Unified Top Navigation Bar) -->
+    <div class="topbar">
       <h1>
-        <iconify-icon icon="lucide:tag" style="width:20px;height:20px;color:#6c5ce7;"></iconify-icon>
-        Etiquetas para Servidores
+        <iconify-icon icon="lucide:printer" class="logo-icon"></iconify-icon>
+        BASTIONX LAB
+        <small>etiquetas de rack qr</small>
       </h1>
-      <div class="labels-actions">
-        <button @click="print()">
-          <iconify-icon icon="lucide:printer" style="width:13px;height:13px;"></iconify-icon>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="at-btn" @click="print()" title="Imprimir etiquetas de rack">
+          <iconify-icon icon="lucide:printer" style="pointer-events:none;"></iconify-icon>
           Imprimir
         </button>
-        <a href="dashboard.html">
-          <iconify-icon icon="lucide:arrow-left" style="width:13px;height:13px;"></iconify-icon>
-          Volver
+        <a class="at-btn" href="dashboard.html" @click.prevent="window.location.href='dashboard.html'" title="Volver al Dashboard">
+          <iconify-icon icon="lucide:arrow-left" style="pointer-events:none;"></iconify-icon>
+          Volver al Dashboard
         </a>
       </div>
     </div>

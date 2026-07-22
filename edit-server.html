@@ -25,7 +25,7 @@
   </div>
 
   <template x-if="server">
-    <div class="container" style="max-width:800px;padding:2rem 1rem;">
+    <div class="container" style="max-width:960px;padding:2rem 1rem;">
       <!-- BREADCRUMBS -->
       <nav aria-label="Breadcrumb" class="breadcrumbs">
         <a href="dashboard.html">Dashboard</a>
@@ -99,14 +99,17 @@
           RAIDs y discos
         </h2>
 
-        <!-- RAID Preview -->
-        <div class="raid-preview" x-show="form.raids.some(r => r.discos.some(d => d.bay))">
+        <!-- RAID Preview Badge -->
+        <div class="raid-preview" x-show="form.raids.some(r => r.discos.some(d => d.bay))" style="margin-bottom:1rem;background:rgba(26,188,156,0.06);border:1px solid rgba(26,188,156,0.2);border-radius:10px;padding:0.6rem 0.85rem;">
+          <div style="font-size:0.62rem;color:#1abc9c;text-transform:uppercase;letter-spacing:0.04em;font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.3rem;">
+            <iconify-icon icon="lucide:layers" style="width:13px;height:13px;"></iconify-icon>
+            Resumen de Almacenamiento Configurado
+          </div>
           <template x-for="(raid, ri) in form.raids" :key="ri">
-            <div class="raid-preview-item" x-show="raid.discos.some(d => d.bay)">
-              <iconify-icon icon="lucide:layers" style="width:12px;height:12px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
-              <span x-text="raid.nombre || 'RAID ' + (ri + 1)"></span>
-              <span class="rp-count" x-text="raid.discos.filter(d => d.bay).length + ' discos'"></span>
-              <span class="rp-detail" x-text="raid.discos.filter(d => d.bay).map(d => (d.tamano || '?') + (d.tamano_unit || '') + ' ' + (d.tipo || '?')).join(' + ')"></span>
+            <div x-show="raid.discos.some(d => d.bay)" style="font-size:0.72rem;color:#ccc;display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+              <span style="font-weight:600;color:#fff;" x-text="raid.nombre || 'RAID ' + (ri + 1)"></span>
+              <span class="raid-badge-count" x-text="raid.discos.filter(d => d.bay).length + ' discos'"></span>
+              <span style="color:#aaa;font-size:0.68rem;" x-text="raid.discos.filter(d => d.bay).map(d => (d.bay ? 'Bay ' + d.bay + ': ' : '') + (d.tamano || '?') + (d.tamano_unit || '') + ' ' + (d.tipo || '?')).join(' | ')"></span>
             </div>
           </template>
         </div>
@@ -114,69 +117,67 @@
         <template x-for="(raid, ri) in form.raids" :key="ri">
           <div class="raid-block">
             <div class="raid-header">
-              <iconify-icon icon="lucide:layers" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
-              <input type="text" x-model="raid.nombre" placeholder="Nombre del RAID (ej: RAID 1, Virtual Disk 0)">
-              <button class="btn-icon" @click="removeRaid(ri)" title="Eliminar RAID">
-                <iconify-icon icon="lucide:trash-2"></iconify-icon>
+              <iconify-icon icon="lucide:layers" style="width:16px;height:16px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
+              <input type="text" x-model="raid.nombre" placeholder="Nombre del Grupo RAID (ej: RAID 1, Virtual Disk 0, Data Store)">
+              <span class="raid-badge-count" x-text="raid.discos.filter(d => d.bay).length + ' unidades'"></span>
+              <button class="btn-icon" @click="removeRaid(ri)" title="Eliminar este grupo RAID" style="color:#e74c3c;background:rgba(231,76,60,0.1);border-radius:6px;width:28px;height:28px;border:none;cursor:pointer;">
+                <iconify-icon icon="lucide:trash-2" style="width:14px;height:14px;"></iconify-icon>
               </button>
             </div>
+
             <div class="raid-disks">
-              <div class="disk-row header">
-                <span>Bay</span>
-                <span>Tipo</span>
-                <span>Tama&ntilde;o</span>
+              <div class="disk-row-grid header">
+                <span>Bahía #</span>
+                <span>Tipo Disco</span>
+                <span>Capacidad / Tamaño</span>
                 <span>Velocidad</span>
                 <span></span>
               </div>
               <template x-for="(disk, di) in raid.discos" :key="di">
-                <div>
-                  <div class="disk-row" :class="diskErrors[ri + '-' + di] ? 'has-error' : ''">
-                    <div class="disk-field-wrap">
-                      <input type="text" x-model="disk.bay" placeholder="0" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.bay ? 'is-invalid' : ''">
-                      <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.bay" x-text="diskErrors[ri + '-' + di]?.bay"></div>
-                    </div>
-                    <div class="disk-field-wrap">
-                      <select x-model="disk.tipo" @change="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.tipo ? 'is-invalid' : ''">
-                        <option value="">—</option>
-                        <option value="SSD">SSD</option>
-                        <option value="HDD">HDD</option>
-                        <option value="NVMe">NVMe</option>
-                        <option value="SAS">SAS</option>
-                      </select>
-                      <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.tipo" x-text="diskErrors[ri + '-' + di]?.tipo"></div>
-                    </div>
-                    <div class="disk-field-wrap">
-                      <div class="disk-size-field">
-                        <input type="text" x-model="disk.tamano" placeholder="480" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.tamano ? 'is-invalid' : ''">
-                        <select x-model="disk.tamano_unit">
-                          <option value="GB">GB</option>
-                          <option value="TB">TB</option>
-                        </select>
-                      </div>
-                      <div class="disk-field-err" x-show="diskErrors[ri + '-' + di]?.tamano" x-text="diskErrors[ri + '-' + di]?.tamano"></div>
-                    </div>
-                    <div class="disk-field-wrap">
-                      <select x-model="disk.velocidad">
-                        <option value="">—</option>
-                        <option value="6Gbps">6 Gbps</option>
-                        <option value="12Gbps">12 Gbps</option>
-                        <option value="3Gbps">3 Gbps</option>
-                      </select>
-                    </div>
-                    <button class="btn-icon" @click="removeDiskFromRaid(ri, di)" title="Eliminar disco">
-                      <iconify-icon icon="lucide:x"></iconify-icon>
-                    </button>
+                <div class="disk-row-grid" :class="diskErrors[ri + '-' + di] ? 'has-error' : ''">
+                  <div class="disk-input-cell">
+                    <input type="text" x-model="disk.bay" placeholder="0" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.bay ? 'is-invalid' : ''">
                   </div>
+                  <div class="disk-input-cell">
+                    <select x-model="disk.tipo" @change="validateDisk(ri, di)" :class="diskErrors[ri + '-' + di]?.tipo ? 'is-invalid' : ''">
+                      <option value="">Seleccionar</option>
+                      <option value="SSD">SSD</option>
+                      <option value="NVMe">NVMe</option>
+                      <option value="HDD">HDD</option>
+                      <option value="SAS">SAS</option>
+                    </select>
+                  </div>
+                  <div class="disk-input-cell">
+                    <div style="display:flex;gap:0.25rem;">
+                      <input type="text" x-model="disk.tamano" placeholder="480" @blur="validateDisk(ri, di)" @input="validateDisk(ri, di)" style="flex:1;min-width:0;" :class="diskErrors[ri + '-' + di]?.tamano ? 'is-invalid' : ''">
+                      <select x-model="disk.tamano_unit" style="width:65px !important;flex-shrink:0;">
+                        <option value="GB">GB</option>
+                        <option value="TB">TB</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="disk-input-cell">
+                    <select x-model="disk.velocidad">
+                      <option value="">Auto</option>
+                      <option value="12Gbps">12 Gbps</option>
+                      <option value="6Gbps">6 Gbps</option>
+                      <option value="3Gbps">3 Gbps</option>
+                    </select>
+                  </div>
+                  <button class="btn-icon" @click="removeDiskFromRaid(ri, di)" title="Quitar disco" style="color:#888;background:transparent;border:none;cursor:pointer;">
+                    <iconify-icon icon="lucide:x" style="width:14px;height:14px;"></iconify-icon>
+                  </button>
                 </div>
               </template>
               <button class="btn-add-disk" @click="addDiskToRaid(ri)" type="button">
-                <iconify-icon icon="lucide:plus"></iconify-icon> A&ntilde;adir disco
+                <iconify-icon icon="lucide:plus" style="width:12px;height:12px;"></iconify-icon> Añadir unidad a este grupo
               </button>
             </div>
           </div>
         </template>
+
         <button class="btn-add-raid" @click="addRaid()" type="button">
-          <iconify-icon icon="lucide:hard-drive"></iconify-icon> A&ntilde;adir RAID / Grupo
+          <iconify-icon icon="lucide:hard-drive" style="width:16px;height:16px;"></iconify-icon> Añadir nuevo grupo RAID / Arreglo
         </button>
       </div>
 
@@ -195,7 +196,7 @@
                 <button class="token-remove" @click="removeTag(tid)" type="button">&times;</button>
               </span>
             </template>
-            <input class="token-input" type="text" x-model="tagSearch" @input="onTagInput" @keydown="onTagKeydown" @focus="onTagInput" placeholder="Buscar tags..." style="border:none;background:transparent;outline:none;flex:1;min-width:100px;font-size:0.75rem;color:var(--text-main);padding:2px 0;">
+            <input class="token-input" type="text" x-model="tagSearch" @input="onTagInput" @keydown="onTagKeydown" @focus="onTagInput" placeholder="Buscar tags...">
           </div>
           <div class="token-dropdown" x-show="showTagDropdown && filteredTags.length > 0">
             <template x-for="tag in filteredTags" :key="tag.id">
@@ -229,6 +230,10 @@
             <div class="edit-grid">
               <div class="field-group"><label>Nombre del servicio *</label><input type="text" x-model="svc.nombre" placeholder="Ej: PostgreSQL"></div>
               <div class="field-group"><label>Puerto</label><input type="text" x-model="svc.puerto" placeholder="Ej: 5432"></div>
+            </div>
+            <div class="edit-grid" style="margin-top:0.4rem;">
+              <div class="field-group"><label>Usuario (opcional)</label><input type="text" x-model="svc.usuario" placeholder="Ej: admin_db"></div>
+              <div class="field-group"><label>Contraseña (opcional)</label><input type="password" x-model="svc.password" placeholder="••••••••"></div>
             </div>
             <div class="field-group"><label>Descripci&oacute;n</label><input type="text" x-model="svc.descripcion" placeholder="Ej: Base de datos principal"></div>
             <div class="field-group">
