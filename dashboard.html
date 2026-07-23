@@ -293,7 +293,7 @@
       <!-- ===== VIEW: SERVICIOS ===== -->
       <template x-if="activeView === 'services'">
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
             <div style="font-size:0.72rem;color:#888;">
               Servicios registrados en la infraestructura y accesos directos por IP:Puerto
             </div>
@@ -302,9 +302,29 @@
               Exportar CSV
             </button>
           </div>
+
+          <!-- SERVICES FILTER BAR -->
+          <div class="tab-filter-bar">
+            <span class="filter-label">
+              <iconify-icon icon="lucide:filter" style="width:13px;height:13px;"></iconify-icon>
+              Filtros de Servicio:
+            </span>
+            <input type="text" class="filter-control" x-model="svcNameFilter" placeholder="Buscar por Nombre de Servicio..." style="flex:1;min-width:160px;max-width:260px;">
+            <select class="filter-control" x-model="svcPortFilter" style="width:140px;">
+              <option value="">Puerto (Todos)</option>
+              <template x-for="p in uniqueServicePorts" :key="p">
+                <option :value="p" x-text="'Puerto ' + p"></option>
+              </template>
+            </select>
+            <input type="text" class="filter-control" x-model="svcHostFilter" placeholder="Buscar por Servidor/Host..." style="flex:1;min-width:160px;max-width:240px;">
+            <button type="button" class="btn-clear-filters" x-show="svcNameFilter || svcPortFilter || svcHostFilter" @click="svcNameFilter='';svcPortFilter='';svcHostFilter=''">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+              Limpiar filtros
+            </button>
+          </div>
           
           <div class="services-grid">
-            <template x-for="svc in allServices" :key="svc.nombre">
+            <template x-for="svc in filteredServices" :key="svc.nombre">
               <div class="svc-card">
                 <div class="svc-header" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:0.6rem;">
                   <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -355,10 +375,10 @@
             </template>
           </div>
 
-          <div class="empty-state" x-show="allServices.length === 0">
+          <div class="empty-state" x-show="filteredServices.length === 0">
             <iconify-icon icon="lucide:box"></iconify-icon>
-            <h3>Sin servicios registrados</h3>
-            <p>Los servicios aparecerán aquí cuando los agregues a un servidor</p>
+            <h3>Sin servicios coincidentes</h3>
+            <p>Prueba ajustando o limpiando los filtros de búsqueda de servicios</p>
           </div>
         </div>
       </template>
@@ -390,13 +410,13 @@
           </div>
 
           <!-- COLUMN FILTERS BAR -->
-          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:10px;padding:0.6rem 0.85rem;margin-bottom:0.85rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
-            <span style="font-size:0.68rem;color:#8e7ff3;font-weight:700;display:flex;align-items:center;gap:0.3rem;">
+          <div class="tab-filter-bar">
+            <span class="filter-label">
               <iconify-icon icon="lucide:filter" style="width:13px;height:13px;"></iconify-icon>
               Filtros de Columna:
             </span>
-            <input type="text" x-model="netIpFilter" placeholder="Buscar IP..." style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:140px;">
-            <select x-model="netTypeFilter" style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:130px;">
+            <input type="text" class="filter-control" x-model="netIpFilter" placeholder="Buscar IP..." style="flex:1;min-width:130px;max-width:180px;">
+            <select class="filter-control" x-model="netTypeFilter" style="width:140px;">
               <option value="">Tipo (Todos)</option>
               <option value="IPMI">IPMI</option>
               <option value="Servicio">Servicio</option>
@@ -404,14 +424,15 @@
                 <option :value="t" x-text="t"></option>
               </template>
             </select>
-            <input type="text" x-model="netHostFilter" placeholder="Buscar Hostname..." style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:140px;">
-            <select x-model="netStatusFilter" style="font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-dark);color:var(--text-main);width:130px;">
+            <input type="text" class="filter-control" x-model="netHostFilter" placeholder="Buscar Hostname..." style="flex:1;min-width:140px;max-width:200px;">
+            <select class="filter-control" x-model="netStatusFilter" style="width:140px;">
               <option value="">Estado (Todos)</option>
               <option value="Activo">Activo</option>
               <option value="Mantenimiento">Mantenimiento</option>
               <option value="Inactivo">Inactivo</option>
             </select>
-            <button class="btn" x-show="netIpFilter || netTypeFilter || netHostFilter || netStatusFilter" @click="netIpFilter='';netTypeFilter='';netHostFilter='';netStatusFilter=''" style="font-size:0.65rem;padding:0.25rem 0.5rem;background:transparent;border:none;color:#e74c3c;cursor:pointer;">
+            <button type="button" class="btn-clear-filters" x-show="netIpFilter || netTypeFilter || netHostFilter || netStatusFilter" @click="netIpFilter='';netTypeFilter='';netHostFilter='';netStatusFilter=''">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
               Limpiar filtros
             </button>
           </div>

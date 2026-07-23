@@ -252,6 +252,86 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* === TAB FILTER BAR & UNIFIED CONTROLS RESET === */
+.tab-filter-bar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  padding: 0.65rem 0.85rem !important;
+  margin-bottom: 0.85rem !important;
+  display: flex !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+
+.tab-filter-bar .filter-label {
+  font-size: 0.72rem !important;
+  color: #8e7ff3 !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+
+.tab-filter-bar input[type="text"],
+.tab-filter-bar select,
+.filter-control {
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 0.65rem !important;
+  font-size: 0.72rem !important;
+  font-family: inherit !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  color: var(--text-bright) !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+  line-height: normal !important;
+}
+
+.tab-filter-bar input[type="text"]:focus,
+.tab-filter-bar select:focus,
+.filter-control:focus {
+  border-color: #6c5ce7 !important;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.18) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.tab-filter-bar select option {
+  background: #12121a !important;
+  color: #fff !important;
+}
+
+.tab-filter-bar .btn-clear-filters {
+  font-size: 0.7rem !important;
+  padding: 0.3rem 0.6rem !important;
+  height: 34px !important;
+  background: rgba(231, 76, 60, 0.1) !important;
+  border: 1px solid rgba(231, 76, 60, 0.25) !important;
+  color: #e74c3c !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  transition: all 0.2s !important;
+}
+
+.tab-filter-bar .btn-clear-filters:hover {
+  background: rgba(231, 76, 60, 0.2) !important;
+  border-color: rgba(231, 76, 60, 0.4) !important;
+}
+
 .login-card .field input {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.4rem;

@@ -598,6 +598,34 @@ document.addEventListener('alpine:init', () => {
       return Object.values(svcMap)
     },
 
+    svcNameFilter: '',
+    svcPortFilter: '',
+    svcHostFilter: '',
+
+    get filteredServices() {
+      let list = this.allServices
+      if (this.svcNameFilter.trim()) {
+        const q = this.svcNameFilter.trim().toLowerCase()
+        list = list.filter(svc => svc.nombre.toLowerCase().includes(q))
+      }
+      if (this.svcPortFilter) {
+        const q = this.svcPortFilter.trim().toLowerCase()
+        list = list.filter(svc => (svc.puerto || '').toString().toLowerCase().includes(q))
+      }
+      if (this.svcHostFilter.trim()) {
+        const q = this.svcHostFilter.trim().toLowerCase()
+        list = list.filter(svc =>
+          svc.servers.some(s => s.hostname.toLowerCase().includes(q))
+        )
+      }
+      return list
+    },
+
+    get uniqueServicePorts() {
+      const ports = new Set(this.allServices.map(s => s.puerto).filter(Boolean))
+      return [...ports].sort((a, b) => a - b)
+    },
+
     netIpFilter: '',
     netTypeFilter: '',
     netHostFilter: '',
