@@ -59,7 +59,7 @@ BastionLAB is an agile, zero-build infrastructure inventory, credentials, networ
 
 ---
 
-### Requirement 5: Modular Code Architecture & Shared Utilities
+### Requirement 5: Modular Code Architecture, Asset Management & Security
 
 #### 5.1 Shared Utility Module (`BastionUtils`)
 - **WHEN** performing data formatting, clipboard actions, Toast dispatching, or IPv4/Port validation across Alpine components, the system **SHALL** delegate operations to the unified `window.BastionUtils` module in `js/core/utils.js`.
@@ -70,6 +70,9 @@ BastionLAB is an agile, zero-build infrastructure inventory, credentials, networ
 #### 5.3 Asset Management & Offline PWA Service Worker
 - **WHEN** loading brand assets and icons, the system **SHALL** fetch images from `images/` (`favicon.svg`, `icon-180.png`, `icon-192.png`, `icon-512.png`).
 - **WHEN** operating offline, the system **SHALL** serve cached application assets via the Service Worker (`sw.js` version `bastionx-v4`).
+
+#### 5.4 Sensitive Data Protection & Git Exclusion
+- **WHEN** committing or deploying project files to public hosts (such as GitHub Pages), the system **SHALL** exclude sensitive access tokens (`.mcp.json`), environment variables (`.env`), private keys, scratch scripts, and editor settings via `.gitignore` while maintaining standalone browser execution.
 
 ---
 
