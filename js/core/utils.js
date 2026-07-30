@@ -134,6 +134,28 @@ window.BastionUtils = (function () {
     return 'cd-upcoming'
   }
 
+  /**
+   * Gets the active simulated role set by Superadmin (if any).
+   * @returns {string}
+   */
+  function getSimulatedRole() {
+    return localStorage.getItem('bastion_simulated_role') || ''
+  }
+
+  /**
+   * Sets active simulated role.
+   * @param {string} role 
+   */
+  function setSimulatedRole(role) {
+    if (!role) {
+      localStorage.removeItem('bastion_simulated_role')
+      showToast('info', 'Restablecido a vista Superadmin real')
+    } else {
+      localStorage.setItem('bastion_simulated_role', role)
+      showToast('info', 'Simulando vista como rol: ' + role.toUpperCase())
+    }
+  }
+
   return {
     copyToClipboard,
     showToast,
@@ -142,6 +164,8 @@ window.BastionUtils = (function () {
     formatDate,
     taskSeverityClass,
     getCountdownText,
-    getCountdownClass
+    getCountdownClass,
+    getSimulatedRole,
+    setSimulatedRole
   }
 })()

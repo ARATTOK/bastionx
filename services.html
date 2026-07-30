@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BastionLAB — Catálogo de Servicios</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#151515">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body>
+<div x-data="servicesApp()" x-init="init()">
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="app-layout" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
+    <main class="main-content">
+      <div class="kanban-board">
+        <!-- TOPBAR -->
+        <div class="topbar" style="margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="btn" @click="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+              <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+              Dashboard
+            </button>
+            <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+              <iconify-icon icon="lucide:boxes" style="width:18px;height:18px;color:#2ecc71;margin-right:6px;"></iconify-icon>
+              Catálogo de Servicios Mapeados
+            </h1>
+          </div>
+          <div class="search-compact" style="width:280px;">
+            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+            <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar por servicio, puerto, IP...">
+            <button class="sb-clear" x-show="searchQuery" @click="searchQuery=''" title="Limpiar">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- CATEGORY FILTERS BAR -->
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem;overflow-x:auto;padding-bottom:0.25rem;">
+          <button class="filter-tab" :class="selectedCategory === 'todos' ? 'active' : ''" @click="selectedCategory = 'todos'">
+            <iconify-icon icon="lucide:layers" style="width:13px;height:13px;"></iconify-icon> Todos (<span x-text="services.length"></span>)
+          </button>
+          <button class="filter-tab" :class="selectedCategory === 'database' ? 'active' : ''" @click="selectedCategory = 'database'">
+            <iconify-icon icon="lucide:database" style="width:13px;height:13px;color:#9b59b6;"></iconify-icon> Base de Datos
+          </button>
+          <button class="filter-tab" :class="selectedCategory === 'web' ? 'active' : ''" @click="selectedCategory = 'web'">
+            <iconify-icon icon="lucide:globe" style="width:13px;height:13px;color:#2ecc71;"></iconify-icon> Web / HTTP
+          </button>
+          <button class="filter-tab" :class="selectedCategory === 'cache' ? 'active' : ''" @click="selectedCategory = 'cache'">
+            <iconify-icon icon="lucide:zap" style="width:13px;height:13px;color:#f1c40f;"></iconify-icon> Caché & Queues
+          </button>
+          <button class="filter-tab" :class="selectedCategory === 'infra' ? 'active' : ''" @click="selectedCategory = 'infra'">
+            <iconify-icon icon="lucide:terminal" style="width:13px;height:13px;color:#3498db;"></iconify-icon> SSH & Infra
+          </button>
+        </div>
+
+        <!-- SERVICES GRID -->
+        <div class="bento-grid" x-show="!loading && filteredServices.length > 0">
+          <template x-for="(svc, idx) in filteredServices" :key="idx">
+            <div class="kanban-card">
+              <div class="card-section card-section--identity">
+                <div class="card-top">
+                  <div class="card-icon-box" style="background:rgba(46,204,113,0.15);color:#2ecc71;">
+                    <iconify-icon :icon="svc.category === 'database' ? 'lucide:database' : (svc.category === 'cache' ? 'lucide:zap' : 'lucide:globe')"></iconify-icon>
+                  </div>
+                  <div class="card-title-group">
+                    <strong class="card-hostname" x-text="svc.nombre"></strong>
+                    <span class="card-model-tag" x-text="svc.hostname"></span>
+                  </div>
+                  <div class="card-actions">
+                    <!-- DIRECT SERVICE LAUNCH BUTTON (TARGET="_BLANK") -->
+                    <button class="icon-btn" @click="openService(svc)" title="Abrir servicio en nueva pestaña (target='_blank')" style="color:#2ecc71;">
+                      <iconify-icon icon="lucide:external-link"></iconify-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:0.85rem 1rem;font-size:0.75rem;color:#ccc;border-top:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:0.4rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span>Puerto: <strong style="color:#2ecc71;" x-text="svc.puerto || 'N/A'"></strong></span>
+                  <button class="at-btn" @click="openService(svc)" style="padding:0.15rem 0.5rem;font-size:0.65rem;color:#2ecc71;border-color:rgba(46,204,113,0.3);">
+                    <iconify-icon icon="lucide:external-link"></iconify-icon> Lanzar
+                  </button>
+                </div>
+                <div>IP Host: <span style="font-family:monospace;color:#aaa;" x-text="svc.ips ? svc.ips.join(', ') : (svc.server_ip || 'N/A')"></span></div>
+                <div x-show="svc.password" style="display:flex;align-items:center;justify-content:space-between;margin-top:0.3rem;">
+                  <span style="color:#777;">Clave:</span>
+                  <button class="at-btn" x-show="canEdit" @click="copyPass(svc.password)" style="padding:0.2rem 0.5rem;font-size:0.65rem;">
+                    <iconify-icon icon="lucide:copy"></iconify-icon> Copiar Clave
+                  </button>
+                  <span x-show="!canEdit" style="color:#555;font-family:monospace;">••••••••</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="!loading && filteredServices.length === 0" style="text-align:center;padding:3rem;color:#666;">
+          No se encontraron servicios mapeados para este filtro.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/services.js"></script>
+</body>
+</html>

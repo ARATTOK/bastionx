@@ -251,11 +251,50 @@
           </div>
 
           <!-- SERVICIOS -->
-          <div class="edit-section">
+          <div class="edit-section" id="sec-services">
             <h2 class="det-section-title">
               <iconify-icon icon="lucide:globe" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
               Servicios <span style="color:#555;font-size:0.6rem;font-weight:400;">(opcional)</span>
             </h2>
+
+            <!-- 1-CLICK SERVICE PRESETS -->
+            <div style="margin-bottom:0.85rem;">
+              <div style="font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.3rem;">
+                <iconify-icon icon="lucide:zap" style="width:12px;height:12px;color:#f39c12;"></iconify-icon>
+                Presets rápidos
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                <button type="button" @click="addServicePreset('PostgreSQL','5432')" class="preset-btn">
+                  <iconify-icon icon="simple-icons:postgresql" style="width:13px;height:13px;"></iconify-icon>
+                  PostgreSQL · 5432
+                </button>
+                <button type="button" @click="addServicePreset('MySQL','3306')" class="preset-btn">
+                  <iconify-icon icon="simple-icons:mysql" style="width:13px;height:13px;"></iconify-icon>
+                  MySQL · 3306
+                </button>
+                <button type="button" @click="addServicePreset('Redis','6379')" class="preset-btn">
+                  <iconify-icon icon="simple-icons:redis" style="width:13px;height:13px;"></iconify-icon>
+                  Redis · 6379
+                </button>
+                <button type="button" @click="addServicePreset('Nginx','80')" class="preset-btn">
+                  <iconify-icon icon="simple-icons:nginx" style="width:13px;height:13px;"></iconify-icon>
+                  Nginx · 80
+                </button>
+                <button type="button" @click="addServicePreset('HTTPS','443')" class="preset-btn">
+                  <iconify-icon icon="lucide:lock" style="width:13px;height:13px;"></iconify-icon>
+                  HTTPS · 443
+                </button>
+                <button type="button" @click="addServicePreset('SSH','22')" class="preset-btn">
+                  <iconify-icon icon="lucide:terminal" style="width:13px;height:13px;"></iconify-icon>
+                  SSH · 22
+                </button>
+                <button type="button" @click="addServicePreset('RabbitMQ','5672')" class="preset-btn">
+                  <iconify-icon icon="simple-icons:rabbitmq" style="width:13px;height:13px;"></iconify-icon>
+                  RabbitMQ · 5672
+                </button>
+              </div>
+            </div>
+
             <div class="field-error" x-show="errors.servicios" x-text="errors.servicios" style="margin-bottom:0.5rem;"></div>
             <template x-for="(svc, i) in form.servicios" :key="i">
               <div class="svc-edit-block">

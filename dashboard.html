@@ -3,1015 +3,680 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BASTIONX LAB — Inventory Control</title>
+  <title>BastionLAB — Control Hub</title>
+  <meta name="description" content="Panel de control centralizado de BastionX LAB para gestión de infraestructura de servidores.">
   <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
   <link rel="apple-touch-icon" href="images/icon-180.png">
-  <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#151515">
+  <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
+  <meta name="theme-color" content="#0e0e16">
   <link rel="manifest" href="manifest.json">
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-
-  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3/dist/cdn.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
-
   <link rel="stylesheet" href="css/style.css">
-  <style>[x-cloak] { display: none !important; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+
+    /* ─── Simulation Banner ─────────────────────────── */
+    .sim-banner {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      background: rgba(243,156,18,0.15);
+      border-bottom: 1px solid rgba(243,156,18,0.3);
+      font-size: 0.7rem;
+      color: #f39c12;
+      font-weight: 600;
+    }
+    .sim-banner iconify-icon[icon="lucide:eye"] {
+      animation: pulse-eye 1s ease-in-out infinite;
+    }
+    @keyframes pulse-eye {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+    .sim-banner-reset {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.62rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .sim-banner-reset:hover { background: rgba(255,255,255,0.18); }
+
+    /* ─── Role Simulator Dropdown ──────────────────── */
+    .role-sim-wrap {
+      position: relative;
+    }
+    .role-sim-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 1px solid rgba(108,92,231,0.3);
+      background: rgba(108,92,231,0.12);
+      color: #c3b9ff;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    .role-sim-trigger:hover {
+      background: rgba(108,92,231,0.22);
+      border-color: rgba(108,92,231,0.5);
+    }
+    .role-sim-trigger .rs-chevron {
+      transition: transform 0.2s;
+      color: #888;
+    }
+    .role-sim-trigger.open .rs-chevron { transform: rotate(180deg); }
+
+    .role-sim-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 230px;
+      background: #13131f;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 0.35rem;
+      z-index: 300;
+    }
+    .rs-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .rs-option:hover { background: rgba(255,255,255,0.04); }
+    .rs-option.active { background: rgba(108,92,231,0.1); }
+    .rs-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .rs-info { flex: 1; min-width: 0; }
+    .rs-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #e0e0e0;
+      line-height: 1.2;
+    }
+    .rs-desc {
+      font-size: 0.62rem;
+      color: #666;
+      margin-top: 0.1rem;
+      line-height: 1.3;
+    }
+    .rs-check { color: #6c5ce7; flex-shrink: 0; }
+
+    /* ─── KPI Cards (compact summary row) ─────────── */
+    .hub-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0;
+    }
+    .hub-kpi-card {
+      position: relative;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.75rem 0.75rem 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.18s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+      overflow: hidden;
+    }
+    .hub-kpi-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .hub-kpi-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.15rem;
+    }
+    .hub-kpi-num {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -0.01em;
+    }
+    .hub-kpi-label {
+      font-size: 0.58rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    .hub-kpi-arrow {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      color: rgba(255,255,255,0.1);
+      transition: color 0.15s;
+    }
+    .hub-kpi-card:hover .hub-kpi-arrow { color: rgba(255,255,255,0.35); }
+    .hub-kpi-bar {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 1px;
+      margin-top: 0.35rem;
+      overflow: hidden;
+    }
+    .hub-kpi-bar-fill {
+      height: 100%;
+      border-radius: 1px;
+      transition: width 0.6s ease;
+    }
+
+    /* ─── Section divider ──────────────────────────── */
+    .hub-section-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1.4rem 0 0.75rem;
+      font-size: 0.6rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+    }
+    .hub-section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* ─── Module Cards (protagonist row) ──────────── */
+    .hub-module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .hub-module-card {
+      position: relative;
+      display: block;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 1.6rem 1.4rem 1.1rem;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.18s, box-shadow 0.18s;
+      overflow: hidden;
+    }
+    .hub-module-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+      text-decoration: none;
+    }
+    .hub-module-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .hub-module-card h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 0.25rem 0;
+    }
+    .hub-module-desc {
+      font-size: 0.72rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .hub-module-footer {
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .hub-module-arrow-badge {
+      position: absolute;
+      top: 1.1rem;
+      right: 1.1rem;
+      color: rgba(255,255,255,0.1);
+      transition: color 0.2s, transform 0.2s;
+    }
+    .hub-module-card:hover .hub-module-arrow-badge {
+      color: rgba(255,255,255,0.4);
+      transform: translate(2px, -2px);
+    }
+
+    /* ─── Hero section ─────────────────────────────── */
+    .hub-hero {
+      background: linear-gradient(135deg, rgba(108,92,231,0.06) 0%, transparent 60%);
+      border: 1px solid rgba(108,92,231,0.12);
+      border-radius: 18px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .hub-hero-eyebrow {
+      font-size: 0.62rem;
+      color: #8e7ff3;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .hub-hero-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 0.25rem 0;
+    }
+    .hub-hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: #aaa;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 0.3rem 0.7rem;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
+<div x-data="app()" x-init="init()" x-cloak>
 
-<div x-data="app()" x-init="init()">
-  <div class="loading-state" x-show="loading && !user">
-    <iconify-icon icon="lucide:loader" style="width:18px;height:18px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
-    Verificando sesión...
+  <!-- SIMULATION MODE BANNER -->
+  <div class="sim-banner"
+       x-show="realUserRole === 'superadmin' && simulatedRole"
+       role="status"
+       aria-live="polite">
+    <iconify-icon icon="lucide:eye" style="width:15px;height:15px;"></iconify-icon>
+    SIMULANDO VISTA:
+    <strong x-text="(simulatedRole || '').toUpperCase()" style="color:#fff;"></strong>
+    <button class="sim-banner-reset" @click="resetSimulation()" aria-label="Volver a vista de Superadmin">
+      <iconify-icon icon="lucide:x" style="width:10px;height:10px;margin-right:2px;"></iconify-icon>
+      Restablecer
+    </button>
   </div>
 
-  <div class="container" x-show="user" x-cloak>
-      <!-- TOP BAR -->
-      <div class="topbar">
+  <div style="max-width:1300px;margin:0 auto;padding:1.5rem;">
+
+    <!-- TOPBAR -->
+    <div class="topbar" style="margin-bottom:2rem;">
+      <div>
         <h1>
-          <iconify-icon icon="lucide:server" class="logo-icon"></iconify-icon>
+          <iconify-icon icon="lucide:shield-check" class="logo-icon"></iconify-icon>
           BASTIONX LAB
-          <small>inventory control</small>
+          <small>control hub</small>
         </h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;">
 
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-          <!-- EXPANDABLE SEARCH BAR (TOP BAR) -->
-          <div class="search-expandable" x-show="!loading">
-            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
-            <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar servidor, IP, servicio..." @input.debounce="filterServers()">
-            <button class="sb-clear" x-show="searchQuery" @click="searchQuery='';filterServers()" title="Limpiar búsqueda">
-              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
-            </button>
+        <!-- ROLE SIMULATOR DROPDOWN (Superadmin only) -->
+        <div class="role-sim-wrap"
+             x-show="realUserRole === 'superadmin'"
+             x-data="{ open: false }"
+             @keydown.escape.window="open = false"
+             @click.outside="open = false">
+
+          <button class="role-sim-trigger"
+                  :class="{ open }"
+                  @click="open = !open"
+                  aria-haspopup="listbox"
+                  :aria-expanded="open"
+                  aria-label="Simular vista de rol">
+            <iconify-icon icon="lucide:eye" style="color:#00cec9;width:14px;height:14px;"></iconify-icon>
+            <span x-text="simulatedRole ? (simulatedRole.charAt(0).toUpperCase() + simulatedRole.slice(1)) : 'Superadmin'"></span>
+            <iconify-icon icon="lucide:chevron-down" class="rs-chevron" style="width:13px;height:13px;"></iconify-icon>
+          </button>
+
+          <div class="role-sim-panel" x-show="open" x-cloak role="listbox" aria-label="Seleccionar rol a simular">
+            <!-- Option: Superadmin (Real) -->
+            <div class="rs-option" :class="{ active: !simulatedRole }"
+                 role="option" :aria-selected="!simulatedRole"
+                 @click="simulateRole(''); open = false" tabindex="0"
+                 @keydown.enter="simulateRole(''); open = false">
+              <span class="rs-dot" style="background:#6c5ce7;"></span>
+              <div class="rs-info">
+                <div class="rs-name">Superadmin</div>
+                <div class="rs-desc">Acceso total sin restricciones</div>
+              </div>
+              <iconify-icon icon="lucide:check" class="rs-check" style="width:14px;height:14px;" x-show="!simulatedRole"></iconify-icon>
+            </div>
+            <!-- Option: Admin -->
+            <div class="rs-option" :class="{ active: simulatedRole === 'admin' }"
+                 role="option" :aria-selected="simulatedRole === 'admin'"
+                 @click="simulateRole('admin'); open = false" tabindex="0"
+                 @keydown.enter="simulateRole('admin'); open = false">
+              <span class="rs-dot" style="background:#2ecc71;"></span>
+              <div class="rs-info">
+                <div class="rs-name">Admin</div>
+                <div class="rs-desc">Gestión de servidores y tareas</div>
+              </div>
+              <iconify-icon icon="lucide:check" class="rs-check" style="width:14px;height:14px;" x-show="simulatedRole === 'admin'"></iconify-icon>
+            </div>
+            <!-- Option: Readonly -->
+            <div class="rs-option" :class="{ active: simulatedRole === 'readonly' }"
+                 role="option" :aria-selected="simulatedRole === 'readonly'"
+                 @click="simulateRole('readonly'); open = false" tabindex="0"
+                 @keydown.enter="simulateRole('readonly'); open = false">
+              <span class="rs-dot" style="background:#aaa;"></span>
+              <div class="rs-info">
+                <div class="rs-name">Readonly</div>
+                <div class="rs-desc">Solo consulta, sin edición</div>
+              </div>
+              <iconify-icon icon="lucide:check" class="rs-check" style="width:14px;height:14px;" x-show="simulatedRole === 'readonly'"></iconify-icon>
+            </div>
           </div>
-
-          <!-- SUPERADMIN CONTROL PANEL BUTTON -->
-          <a class="at-btn" href="admin.html" x-show="isSuperAdmin && !loading" @click.prevent="window.location.href='admin.html'" style="background:rgba(108,92,231,0.18);color:#8e7ff3;border:1px solid rgba(108,92,231,0.4);padding:0.35rem 0.75rem;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
-            <iconify-icon icon="lucide:shield-check" style="width:15px;height:15px;color:#6c5ce7;pointer-events:none;"></iconify-icon>
-            Panel de Control
-          </a>
-
-          <!-- USER BADGE -->
-          <div class="user-badge" @click="logout" title="Cerrar sesión">
-            <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
-            <span x-text="user?.email"></span>
-            <span class="role-badge" :class="isSuperAdmin ? 'super' : ''" x-text="isSuperAdmin ? 'super admin' : userRole"></span>
-            <iconify-icon icon="lucide:log-out" style="width:12px;height:12px;color:#333;margin-left:4px;"></iconify-icon>
-          </div>
         </div>
-      </div>
 
-      <!-- STATS ROW -->
-      <div class="stats-row">
-        <div class="stat-pill" style="color:#6c5ce7;">
-          <iconify-icon icon="lucide:server" class="s-icon"></iconify-icon>
-          Servidores <span class="s-count" x-text="servers.length"></span>
-        </div>
-        <div class="stat-pill" style="color:#3498db;">
-          <iconify-icon icon="lucide:memory-stick" class="s-icon"></iconify-icon>
-          RAM <span class="s-count" x-text="totalRam + ' GB'"></span>
-        </div>
-        <div class="stat-pill" style="color:#1abc9c;">
-          <iconify-icon icon="lucide:hard-drive" class="s-icon"></iconify-icon>
-          Discos <span class="s-count" x-text="totalStorageTB + ' TB'"></span>
-        </div>
-        <div class="stat-pill" style="color:#f39c12;">
-          <iconify-icon icon="lucide:cpu" class="s-icon"></iconify-icon>
-          CPU <span class="s-count" x-text="totalCpuGHz + ' GHz'"></span>
-        </div>
-      </div>
-
-      <!-- TASK SUMMARY -->
-      <div class="task-summary" x-show="!loading && pendingTasksSummary.total > 0">
-        <span class="task-summary-item critical" x-show="pendingTasksSummary.critica > 0">
-          <iconify-icon icon="lucide:triangle-alert" style="width:12px;height:12px;"></iconify-icon>
-          Cr&iacute;ticas: <strong x-text="pendingTasksSummary.critica"></strong>
-        </span>
-        <span class="task-summary-item config" x-show="pendingTasksSummary.configuracion > 0">
-          <iconify-icon icon="lucide:settings" style="width:12px;height:12px;"></iconify-icon>
-          Config: <strong x-text="pendingTasksSummary.configuracion"></strong>
-        </span>
-        <span class="task-summary-item normal" x-show="pendingTasksSummary.normal > 0">
-          <iconify-icon icon="lucide:info" style="width:12px;height:12px;"></iconify-icon>
-          Normales: <strong x-text="pendingTasksSummary.normal"></strong>
-        </span>
-      </div>
-
-      <!-- PREVENTIVE MAINTENANCE COUNTDOWN ALERTS -->
-      <div class="maint-alert-bar" x-show="!loading && upcomingMaintenanceTasks.length > 0">
-        <span style="font-size:0.68rem;color:#f39c12;font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;white-space:nowrap;">
-          <iconify-icon icon="lucide:calendar-clock" style="width:14px;height:14px;"></iconify-icon>
-          Mantenimientos Preventivos:
-        </span>
-        <template x-for="t in upcomingMaintenanceTasks.slice(0, 4)" :key="t.id">
-          <a :href="'server-detail.html?id=' + t.server_id" @click.prevent="gotoServer(t.server_id)" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;">
-            <span style="font-size:0.68rem;color:#ddd;" x-text="t.hostname + ': ' + t.titulo"></span>
-            <span class="countdown-pill" :class="getCountdownClass(t.fecha_limite)" x-text="getCountdownText(t.fecha_limite)"></span>
-          </a>
-        </template>
-      </div>
-
-      <!-- ACTION TOOLBAR -->
-      <div class="admin-toolbar" x-show="!loading" style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
-        <a class="at-btn" href="add-server.html" x-show="canEdit" @click.prevent="window.location.href='add-server.html'">
-          <iconify-icon icon="lucide:plus" style="pointer-events:none;"></iconify-icon>
-          Agregar Servidor
+        <!-- ADMIN PANEL LINK -->
+        <a class="admin-link-btn" href="admin.html"
+           x-show="isSuperAdmin"
+           @click.prevent="window.location.href='admin.html'"
+           title="Panel de control Superadmin"
+           aria-label="Ir al panel de administración">
+          <iconify-icon icon="lucide:shield-cog" style="width:14px;height:14px;"></iconify-icon>
+          Admin
         </a>
-        <button class="at-btn" @click="refreshServers()">
-          <iconify-icon icon="lucide:refresh-cw" style="pointer-events:none;"></iconify-icon>
-          Recargar
-        </button>
-        <button class="at-btn" @click="exportCSV()">
-          <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
-          Exportar CSV
-        </button>
+
+        <!-- USER BADGE -->
+        <div class="user-badge" @click="logout()" title="Cerrar sesión" role="button" aria-label="Cerrar sesión" tabindex="0">
+          <iconify-icon icon="lucide:user" class="u-icon"></iconify-icon>
+          <span x-text="user?.email"></span>
+          <span class="role-badge" :class="isSuperAdmin ? 'super' : ''" x-text="isSuperAdmin ? 'superadmin' : userRole"></span>
+          <iconify-icon icon="lucide:log-out" style="width:12px;height:12px;color:#333;margin-left:4px;"></iconify-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <div class="hub-hero" x-show="!loading">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <div class="hub-hero-eyebrow">
+            <iconify-icon icon="lucide:cpu" style="width:14px;height:14px;color:#00cec9;"></iconify-icon>
+            Resumen Global de Hardware e Infraestructura
+          </div>
+          <h2 class="hub-hero-title">Capacidad Total del Laboratorio</h2>
+        </div>
+        <div class="hub-hero-status">
+          <iconify-icon icon="lucide:activity" style="color:#2ecc71;width:14px;height:14px;"></iconify-icon>
+          Estado: <strong style="color:#2ecc71;">Operativo</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI COUNTERS GRID -->
+    <div class="hub-kpi-grid" x-show="!loading">
+
+      <!-- Nodos / Servidores -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='servers.html'"
+           :style="'border-color: ' + (servers.length > 0 ? 'rgba(142,127,243,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ir al inventario de servidores" tabindex="0"
+           @keydown.enter="window.location.href='servers.html'">
+        <div class="hub-kpi-icon" style="background:rgba(108,92,231,0.12);color:#8e7ff3;">
+          <iconify-icon icon="lucide:server" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="servers.length"></div>
+        <div class="hub-kpi-label">Nodos</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#6c5ce7;"
+               :style="'width:' + Math.min(servers.length * 10, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
       </div>
 
-      <!-- VIEW TABS (Segmented Control with Live Count Badges) -->
-      <div class="view-tabs" x-show="!loading">
-        <button class="view-tab" :class="activeView === 'servers' ? 'active' : ''" @click="activeView='servers'">
+      <!-- RAM Total -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='infrastructure.html'"
+           :style="'border-color: ' + (totalRam > 0 ? 'rgba(52,152,219,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ver analítica de infraestructura" tabindex="0"
+           @keydown.enter="window.location.href='infrastructure.html'">
+        <div class="hub-kpi-icon" style="background:rgba(52,152,219,0.12);color:#3498db;">
+          <iconify-icon icon="lucide:memory-stick" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="totalRam + ' GB'"></div>
+        <div class="hub-kpi-label">RAM Total</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#3498db;"
+               :style="'width:' + Math.min(totalRam / 10, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
+      </div>
+
+      <!-- CPU GHz -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='infrastructure.html'"
+           :style="'border-color: ' + (totalCpuGHz > 0 ? 'rgba(243,156,18,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ver analítica de CPU" tabindex="0"
+           @keydown.enter="window.location.href='infrastructure.html'">
+        <div class="hub-kpi-icon" style="background:rgba(243,156,18,0.12);color:#f39c12;">
+          <iconify-icon icon="lucide:cpu" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="totalCpuGHz + ' GHz'"></div>
+        <div class="hub-kpi-label">CPU Total</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#f39c12;"
+               :style="'width:' + Math.min(parseFloat(totalCpuGHz) * 2, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
+      </div>
+
+      <!-- Almacenamiento -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='infrastructure.html'"
+           :style="'border-color: ' + (totalStorageTB > 0 ? 'rgba(46,204,113,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ver almacenamiento total" tabindex="0"
+           @keydown.enter="window.location.href='infrastructure.html'">
+        <div class="hub-kpi-icon" style="background:rgba(46,204,113,0.12);color:#2ecc71;">
+          <iconify-icon icon="lucide:hard-drive" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="totalStorageTB + ' TB'"></div>
+        <div class="hub-kpi-label">Almacenamiento</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#2ecc71;"
+               :style="'width:' + Math.min(parseFloat(totalStorageTB) * 5, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
+      </div>
+
+      <!-- Servicios -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='services.html'"
+           :style="'border-color: ' + (allServicesCount > 0 ? 'rgba(0,206,201,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ir al catálogo de servicios" tabindex="0"
+           @keydown.enter="window.location.href='services.html'">
+        <div class="hub-kpi-icon" style="background:rgba(0,206,201,0.12);color:#00cec9;">
+          <iconify-icon icon="lucide:boxes" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="allServicesCount"></div>
+        <div class="hub-kpi-label">Servicios</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#00cec9;"
+               :style="'width:' + Math.min(allServicesCount * 8, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
+      </div>
+
+      <!-- Subredes -->
+      <div class="hub-kpi-card"
+           @click="window.location.href='networks.html'"
+           :style="'border-color: ' + (subnetsCount > 0 ? 'rgba(168,85,247,0.3)' : 'var(--glass-border)')"
+           role="link" aria-label="Ir al mapa de redes" tabindex="0"
+           @keydown.enter="window.location.href='networks.html'">
+        <div class="hub-kpi-icon" style="background:rgba(168,85,247,0.12);color:#a855f7;">
+          <iconify-icon icon="lucide:network" style="font-size:1.25rem;"></iconify-icon>
+        </div>
+        <div class="hub-kpi-num" x-text="subnetsCount"></div>
+        <div class="hub-kpi-label">Subredes /24</div>
+        <div class="hub-kpi-bar">
+          <div class="hub-kpi-bar-fill" style="background:#a855f7;"
+               :style="'width:' + Math.min(subnetsCount * 15, 100) + '%'"></div>
+        </div>
+        <div class="hub-kpi-arrow">
+          <iconify-icon icon="lucide:arrow-right" style="width:16px;height:16px;"></iconify-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION LABEL DIVIDER -->
+    <div class="hub-section-divider" x-show="!loading">
+      <iconify-icon icon="lucide:layout-grid" style="width:11px;height:11px;"></iconify-icon>
+      Módulos
+    </div>
+
+    <!-- MODULE NAVIGATION GRID -->
+    <div class="hub-module-grid" x-show="!loading">
+
+      <!-- Servidores -->
+      <a href="servers.html" class="hub-module-card"
+         @click.prevent="window.location.href='servers.html'"
+         style="--hover-border: rgba(108,92,231,0.4);"
+         onmouseenter="this.style.borderColor='rgba(108,92,231,0.35)'"
+         onmouseleave="this.style.borderColor=''">
+        <div class="hub-module-arrow-badge">
+          <iconify-icon icon="lucide:arrow-up-right" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div class="hub-module-icon" style="background:rgba(108,92,231,0.12);color:#8e7ff3;">
           <iconify-icon icon="lucide:server"></iconify-icon>
-          Servidores
-          <span class="view-tab-count" x-text="servers.length"></span>
-        </button>
-        <button class="view-tab" :class="activeView === 'services' ? 'active' : ''" @click="activeView='services'">
+        </div>
+        <h3>Servidores</h3>
+        <div class="hub-module-desc">
+          <iconify-icon icon="lucide:cpu" style="width:12px;height:12px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
+          Inventario de hardware y fichas técnicas
+        </div>
+        <div class="hub-module-footer" style="color:#8e7ff3;">
+          <iconify-icon icon="lucide:arrow-right" style="width:13px;height:13px;"></iconify-icon>
+          Explorar módulo
+        </div>
+      </a>
+
+      <!-- Servicios -->
+      <a href="services.html" class="hub-module-card"
+         @click.prevent="window.location.href='services.html'"
+         onmouseenter="this.style.borderColor='rgba(46,204,113,0.35)'"
+         onmouseleave="this.style.borderColor=''">
+        <div class="hub-module-arrow-badge">
+          <iconify-icon icon="lucide:arrow-up-right" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div class="hub-module-icon" style="background:rgba(46,204,113,0.12);color:#2ecc71;">
           <iconify-icon icon="lucide:boxes"></iconify-icon>
-          Servicios
-          <span class="view-tab-count" x-text="allServices.length"></span>
-        </button>
-        <button class="view-tab" :class="activeView === 'network' ? 'active' : ''" @click="activeView='network'">
+        </div>
+        <h3>Servicios</h3>
+        <div class="hub-module-desc">
+          <iconify-icon icon="lucide:globe" style="width:12px;height:12px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
+          Catálogo IP:Puerto y credenciales
+        </div>
+        <div class="hub-module-footer" style="color:#2ecc71;">
+          <iconify-icon icon="lucide:arrow-right" style="width:13px;height:13px;"></iconify-icon>
+          Explorar módulo
+        </div>
+      </a>
+
+      <!-- Redes -->
+      <a href="networks.html" class="hub-module-card"
+         @click.prevent="window.location.href='networks.html'"
+         onmouseenter="this.style.borderColor='rgba(52,152,219,0.35)'"
+         onmouseleave="this.style.borderColor=''">
+        <div class="hub-module-arrow-badge">
+          <iconify-icon icon="lucide:arrow-up-right" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div class="hub-module-icon" style="background:rgba(52,152,219,0.12);color:#3498db;">
           <iconify-icon icon="lucide:network"></iconify-icon>
-          Redes
-          <span class="view-tab-count" x-text="allIPs.length + ' IPs'"></span>
-        </button>
-        <button class="view-tab" :class="activeView === 'all' ? 'active' : ''" @click="activeView='all'">
-          <iconify-icon icon="lucide:layout-grid"></iconify-icon>
-          Infraestructura
-          <span class="view-tab-count" x-text="servers.length"></span>
-        </button>
-      </div>
-
-      <!-- SKELETON LOADING -->
-      <div class="bento-grid" x-show="loading">
-        <template x-for="i in 8" :key="i">
-          <div class="kanban-card" style="padding:1rem;">
-            <div class="skeleton skeleton-card"></div>
-            <div class="skeleton skeleton-text" style="margin-top:0.75rem;"></div>
-            <div class="skeleton skeleton-text w60"></div>
-            <div class="skeleton skeleton-text w40"></div>
-          </div>
-        </template>
-      </div>
-
-      <!-- ===== VIEW: SERVIDORES ===== -->
-      <template x-if="activeView === 'servers'">
-        <div>
-          <!-- FILTER TABS -->
-          <div class="filter-tabs" x-show="!loading">
-            <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
-              <iconify-icon icon="lucide:layout-grid" class="filter-icon"></iconify-icon>
-              Todos
-              <span class="filter-count" x-text="servers.length"></span>
-            </button>
-            <button class="filter-tab" :class="activeFilter === 'Activo' ? 'active' : ''" @click="activeFilter = 'Activo'">
-              <span class="filter-dot dot-activo"></span>
-              Activo
-              <span class="filter-count" x-text="countByStatus('Activo')"></span>
-            </button>
-            <button class="filter-tab" :class="activeFilter === 'Inactivo' ? 'active' : ''" @click="activeFilter = 'Inactivo'">
-              <span class="filter-dot dot-inactivo"></span>
-              Inactivo
-              <span class="filter-count" x-text="countByStatus('Inactivo')"></span>
-            </button>
-            <button class="filter-tab" :class="activeFilter === 'Pendiente' ? 'active' : ''" @click="activeFilter = 'Pendiente'">
-              <span class="filter-dot dot-pendiente"></span>
-              Pendiente
-              <span class="filter-count" x-text="countByStatus('Pendiente')"></span>
-            </button>
-            <button class="filter-tab" :class="activeFilter === 'Libre' ? 'active' : ''" @click="activeFilter = 'Libre'">
-              <span class="filter-dot dot-libre"></span>
-              Libre
-              <span class="filter-count" x-text="countByStatus('Libre')"></span>
-            </button>
-          </div>
-
-          <!-- BENTO GRID -->
-          <div class="bento-grid" x-show="filteredServers.length > 0">
-            <template x-for="s in filteredServers" :key="s.id">
-              <div class="kanban-card" :class="'severity-' + (serverCardSeverity(s.id) || 'none')" @click="openQuickServer(s)" tabindex="0" @keydown.enter.prevent="openQuickServer(s)">
-                
-                <!-- Card Identity Header -->
-                <div class="card-section card-section--identity">
-                  <div class="card-top">
-                    <div class="card-icon-box" :title="'Estado: ' + s.estado">
-                      <iconify-icon icon="lucide:server" :style="'color:' + (s.estado === 'activo' ? 'var(--c-online)' : (s.estado === 'mantenimiento' ? '#f39c12' : 'var(--c-offline)'))"></iconify-icon>
-                    </div>
-                    <div class="card-title-group">
-                      <strong class="card-hostname" x-text="s.hostname"></strong>
-                      <span class="card-model-tag" x-show="s.modelo" x-text="s.modelo"></span>
-                    </div>
-                    <div class="card-actions" @click.stop>
-                      <button class="icon-btn" @click.stop="gotoServer(s.id)" title="Ver ficha completa">
-                        <iconify-icon icon="lucide:arrow-right"></iconify-icon>
-                      </button>
-                      <div class="kebab-wrap" x-show="canEdit" @click.stop.outside="openKebabId = null">
-                        <button class="icon-btn" @click.stop="openKebabId = openKebabId === s.id ? null : s.id" title="Opciones">
-                          <iconify-icon icon="lucide:more-vertical"></iconify-icon>
-                        </button>
-                        <div class="kebab-dropdown" x-show="openKebabId === s.id" x-transition>
-                          <a class="kebab-item" :href="'edit-server.html?id=' + s.id" x-show="canEdit" @click.prevent="openKebabId = null; window.location.href = 'edit-server.html?id=' + s.id">
-                            <iconify-icon icon="lucide:pencil"></iconify-icon> Editar
-                          </a>
-                          <a class="kebab-item" :href="'https://' + credsMap[s.id]?.ipmi" target="_blank" x-show="credsMap[s.id]?.ipmi" @click="openKebabId = null">
-                            <iconify-icon icon="lucide:monitor"></iconify-icon> IPMI
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-meta-row">
-                    <span title="Ubicación">
-                      <iconify-icon icon="lucide:map-pin" class="meta-icon"></iconify-icon>
-                      <span x-text="s.ubicacion"></span>
-                    </span>
-                    <span x-show="s.sn" title="Número de Serie">
-                      <iconify-icon icon="lucide:hash" class="meta-icon"></iconify-icon>
-                      <span x-text="s.sn"></span>
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Card Info / Tags -->
-                <div class="card-section card-section--info" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 0">
-                  <div class="card-tags-row">
-                    <template x-for="(t, ti) in serverTagsMap[s.id].slice(0, 5)" :key="ti">
-                      <span class="card-tag-pill" :style="'background:' + t.color + '18;color:' + t.color + ';border-color:' + t.color + '35;display:inline-flex;align-items:center;gap:0.25rem;'" :title="t.name">
-                        <iconify-icon icon="lucide:tag" style="width:11px;height:11px;flex-shrink:0;"></iconify-icon>
-                        <span x-text="t.name"></span>
-                      </span>
-                    </template>
-                    <span class="card-tag-extra" x-show="serverTagsMap[s.id] && serverTagsMap[s.id].length > 5" x-text="'+' + (serverTagsMap[s.id].length - 5)" :title="(serverTagsMap[s.id].length - 5) + ' tags adicionales'"></span>
-                  </div>
-                </div>
-
-                <!-- Card Footer -->
-                <div class="card-section card-section--footer">
-                  <div class="card-status-label" :class="'sl-' + (s.estado ? s.estado.toLowerCase() : '')" :title="'Estado: ' + s.estado">
-                    <span class="sl-dot"></span>
-                    <span x-text="s.estado"></span>
-                  </div>
-                  
-                  <a :href="'server-detail.html?id=' + s.id" @click.prevent.stop="window.location.href='server-detail.html?id=' + s.id" class="card-task-badge" x-show="pendingTasksMap[s.id] && pendingTasksMap[s.id].length > 0" title="Tareas pendientes">
-                    <iconify-icon x-show="serverCardSeverity(s.id) === 'critical'" icon="lucide:triangle-alert" style="color:#e74c3c;"></iconify-icon>
-                    <iconify-icon x-show="serverCardSeverity(s.id) === 'config'" icon="lucide:settings" style="color:#f39c12;"></iconify-icon>
-                    <iconify-icon x-show="serverCardSeverity(s.id) === 'other'" icon="lucide:info" style="color:#2ecc71;"></iconify-icon>
-                    <span x-text="pendingTasksMap[s.id].length"></span>
-                  </a>
-                </div>
-
-              </div>
-            </template>
-          </div>
-
-          <!-- Empty state -->
-          <div class="empty-state" x-show="!loading && filteredServers.length === 0">
-            <iconify-icon icon="lucide:server"></iconify-icon>
-            <h3 x-show="activeFilter !== 'todos' || searchQuery">Sin resultados</h3>
-            <h3 x-show="activeFilter === 'todos' && !searchQuery">No hay servidores registrados</h3>
-            <p x-show="activeFilter === 'todos' && !searchQuery">Agrega tu primer servidor para comenzar</p>
-            <p x-show="activeFilter !== 'todos'">Ning&uacute;n servidor con estado <strong x-text="activeFilter"></strong></p>
-            <p x-show="searchQuery">Ning&uacute;n servidor coincide con "<strong x-text="searchQuery"></strong>"</p>
-            <a class="btn" href="add-server.html" x-show="canEdit && activeFilter === 'todos' && !searchQuery" @click.prevent="window.location.href='add-server.html'">Agregar servidor</a>
-          </div>
         </div>
-      </template>
-
-      <!-- ===== VIEW: SERVICIOS ===== -->
-      <template x-if="activeView === 'services'">
-        <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
-            <div style="font-size:0.72rem;color:#888;">
-              Servicios registrados en la infraestructura y accesos directos por IP:Puerto
-            </div>
-            <button class="at-btn" @click="exportServicesCSV()" title="Exportar servicios en CSV">
-              <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
-              Exportar CSV
-            </button>
-          </div>
-
-          <!-- SERVICES FILTER BAR -->
-          <div class="tab-filter-bar">
-            <span class="filter-label">
-              <iconify-icon icon="lucide:filter" style="width:13px;height:13px;"></iconify-icon>
-              Filtros de Servicio:
-            </span>
-            <input type="text" class="filter-control" x-model="svcNameFilter" placeholder="Buscar por Nombre de Servicio..." style="flex:1;min-width:160px;max-width:260px;">
-            <select class="filter-control" x-model="svcPortFilter" style="width:140px;">
-              <option value="">Puerto (Todos)</option>
-              <template x-for="p in uniqueServicePorts" :key="p">
-                <option :value="p" x-text="'Puerto ' + p"></option>
-              </template>
-            </select>
-            <input type="text" class="filter-control" x-model="svcHostFilter" placeholder="Buscar por Servidor/Host..." style="flex:1;min-width:160px;max-width:240px;">
-            <button type="button" class="btn-clear-filters" x-show="svcNameFilter || svcPortFilter || svcHostFilter" @click="svcNameFilter='';svcPortFilter='';svcHostFilter=''">
-              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
-              Limpiar filtros
-            </button>
-          </div>
-          
-          <div class="services-grid">
-            <template x-for="svc in filteredServices" :key="svc.nombre">
-              <div class="svc-card">
-                <div class="svc-header" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:0.6rem;">
-                  <div style="display:flex;align-items:center;gap:0.4rem;">
-                    <iconify-icon icon="lucide:box" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
-                    <strong x-text="svc.nombre" style="font-size:0.85rem;color:#fff;"></strong>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:0.35rem;">
-                    <span class="svc-puerto" x-show="svc.puerto" x-text="'Puerto ' + svc.puerto" style="background:rgba(108,92,231,0.15);color:#8e7ff3;padding:0.15rem 0.45rem;border-radius:6px;font-weight:600;font-size:0.64rem;border:1px solid rgba(108,92,231,0.3);"></span>
-                    <span class="svc-count" x-text="svc.servers.length + ' servidores'" style="font-size:0.62rem;color:#888;"></span>
-                  </div>
-                </div>
-
-                <div class="svc-servers" style="display:flex;flex-direction:column;gap:0.45rem;">
-                  <template x-for="s in svc.servers" :key="s.id + (s._svcIp || '')">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.04);border-radius:8px;">
-                      <!-- SERVER LINK -->
-                      <a :href="'server-detail.html?id=' + s.id" @click.prevent="gotoServer(s.id)" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;color:#ccc;font-size:0.75rem;font-weight:600;" title="Ver detalle del servidor">
-                        <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')"></span>
-                        <span x-text="s.hostname"></span>
-                      </a>
-
-                      <!-- DIRECT IP:PORT REDIRECTION BUTTON -->
-                      <template x-if="s._directUrl">
-                        <a :href="s._directUrl" target="_blank" title="Abrir servicio en nueva pestaña" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.55rem;background:rgba(108,92,231,0.18);color:#8e7ff3;border:1px solid rgba(108,92,231,0.4);border-radius:6px;font-size:0.68rem;font-weight:600;text-decoration:none;transition:all 0.15s;">
-                          <iconify-icon icon="lucide:external-link" style="width:12px;height:12px;pointer-events:none;"></iconify-icon>
-                          <span x-text="s._svcIp + (s._svcPuerto ? ':' + s._svcPuerto : '')"></span>
-                        </a>
-                      </template>
-                      <template x-if="!s._directUrl">
-                        <span style="font-size:0.62rem;color:#555;">Sin IP asignada</span>
-                      </template>
-
-                      <!-- SERVICE CREDENTIALS (Superadmin & Admin only) -->
-                      <template x-if="canEdit && (s._svcUsuario || s._svcPassword)">
-                        <div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.65rem;color:#aaa;background:rgba(0,0,0,0.3);padding:0.2rem 0.45rem;border-radius:5px;border:1px solid rgba(255,255,255,0.05);">
-                          <iconify-icon icon="lucide:key" style="width:11px;height:11px;color:#e74c3c;"></iconify-icon>
-                          <span x-show="s._svcUsuario" style="color:#ccc;">User: <strong style="color:#fff;" x-text="s._svcUsuario"></strong></span>
-                          <span x-show="s._svcPassword" @click="copyToClipboard(s._svcPassword)" title="Clic para copiar contraseña al portapapeles" style="display:inline-flex;align-items:center;gap:0.25rem;cursor:pointer;">
-                            <code style="color:#888;letter-spacing:2px;">••••••••</code>
-                            <iconify-icon icon="lucide:copy" style="width:11px;height:11px;color:#8e7ff3;"></iconify-icon>
-                          </span>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <div class="empty-state" x-show="filteredServices.length === 0">
-            <iconify-icon icon="lucide:box"></iconify-icon>
-            <h3>Sin servicios coincidentes</h3>
-            <p>Prueba ajustando o limpiando los filtros de búsqueda de servicios</p>
-          </div>
+        <h3>Redes IP</h3>
+        <div class="hub-module-desc">
+          <iconify-icon icon="lucide:share-2" style="width:12px;height:12px;color:#3498db;flex-shrink:0;"></iconify-icon>
+          Subredes /24 e interfaces IPMI
         </div>
-      </template>
-
-      <!-- ===== VIEW: REDES ===== -->
-      <template x-if="activeView === 'network'">
-        <div>
-          <!-- HEADER CONTROLS & COLUMN FILTERS BAR -->
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
-            <div style="font-size:0.72rem;color:#888;">
-              Mapa dinámico de Direcciones IP y Subredes de la Infraestructura
-            </div>
-            <button class="at-btn" @click="exportNetworkCSV()" title="Exportar redes en CSV">
-              <iconify-icon icon="lucide:file-down" style="pointer-events:none;"></iconify-icon>
-              Exportar CSV
-            </button>
-          </div>
-
-          <!-- NETWORK STATS -->
-          <div class="network-stats">
-            <div class="net-stat">
-              <span class="net-stat-value" x-text="filteredIPs.length"></span>
-              IPs filtradas
-            </div>
-            <div class="net-stat">
-              <span class="net-stat-value" x-text="uniqueSubnets.length"></span>
-              Subredes
-            </div>
-          </div>
-
-          <!-- COLUMN FILTERS BAR -->
-          <div class="tab-filter-bar">
-            <span class="filter-label">
-              <iconify-icon icon="lucide:filter" style="width:13px;height:13px;"></iconify-icon>
-              Filtros de Columna:
-            </span>
-            <input type="text" class="filter-control" x-model="netIpFilter" placeholder="Buscar IP..." style="flex:1;min-width:130px;max-width:180px;">
-            <select class="filter-control" x-model="netTypeFilter" style="width:140px;">
-              <option value="">Tipo (Todos)</option>
-              <option value="IPMI">IPMI</option>
-              <option value="Servicio">Servicio</option>
-              <template x-for="t in uniqueTypes.filter(tp => tp !== 'IPMI' && tp !== 'Servicio')" :key="t">
-                <option :value="t" x-text="t"></option>
-              </template>
-            </select>
-            <input type="text" class="filter-control" x-model="netHostFilter" placeholder="Buscar Hostname..." style="flex:1;min-width:140px;max-width:200px;">
-            <select class="filter-control" x-model="netStatusFilter" style="width:140px;">
-              <option value="">Estado (Todos)</option>
-              <option value="Activo">Activo</option>
-              <option value="Mantenimiento">Mantenimiento</option>
-              <option value="Inactivo">Inactivo</option>
-            </select>
-            <button type="button" class="btn-clear-filters" x-show="netIpFilter || netTypeFilter || netHostFilter || netStatusFilter" @click="netIpFilter='';netTypeFilter='';netHostFilter='';netStatusFilter=''">
-              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
-              Limpiar filtros
-            </button>
-          </div>
-
-          <div class="network-subnet-filter" x-show="uniqueSubnets.length > 1">
-            <button :class="{ active: netSubnetFilter === '' }" @click="netSubnetFilter = ''">Todas las subredes</button>
-            <template x-for="sub in uniqueSubnets" :key="sub">
-              <button :class="{ active: netSubnetFilter === sub }" @click="netSubnetFilter = sub" x-text="sub"></button>
-            </template>
-          </div>
-
-          <div class="network-table-wrap">
-            <template x-for="group in groupedIPs" :key="group.subnet">
-              <div class="net-group" x-show="!netSubnetFilter || netSubnetFilter === (group.subnet || '').replace('.0/24','').replace('/24','')">
-                <div class="net-group-title">
-                  <iconify-icon icon="lucide:folder-tree" style="width:12px;height:12px;color:#6c5ce7;"></iconify-icon>
-                  <span x-text="group.subnet"></span>
-                  <span class="net-group-count" x-text="group.ips.length + ' IPs'"></span>
-                </div>
-                <table class="network-table">
-                  <thead>
-                    <tr>
-                      <th>Dirección IP</th>
-                      <th>Tipo</th>
-                      <th>Servidor / Hostname</th>
-                      <th>Estado</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template x-for="entry in group.ips" :key="entry.ip + entry.type + entry.server.id">
-                      <tr>
-                        <td>
-                          <code x-text="entry.ip" style="color:#8e7ff3;font-weight:700;"></code>
-                          <button class="btn-icon" @click="copyToClipboard(entry.ip)" title="Copiar IP al portapapeles" style="width:20px;height:20px;border:none;background:transparent;color:#666;cursor:pointer;margin-left:0.2rem;vertical-align:middle;">
-                            <iconify-icon icon="lucide:copy" style="width:11px;height:11px;"></iconify-icon>
-                          </button>
-                        </td>
-                        <td><span class="ip-badge" x-text="entry.type"></span></td>
-                        <td>
-                          <a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#eee;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem;" title="Ver detalle del servidor">
-                            <span class="status-dot" :class="'dot-' + (entry.server.estado ? entry.server.estado.toLowerCase() : 'libre')"></span>
-                            <span x-text="entry.server.hostname"></span>
-                          </a>
-                        </td>
-                        <td>
-                          <span class="card-status-label" :class="'sl-' + (entry.server.estado ? entry.server.estado.toLowerCase() : '')" style="font-size:0.62rem;">
-                            <span class="sl-dot"></span>
-                            <span x-text="entry.server.estado"></span>
-                          </span>
-                        </td>
-                        <td>
-                          <a :href="'server-detail.html?id=' + entry.server.id" @click.prevent="gotoServer(entry.server.id)" style="color:#6c5ce7;text-decoration:none;font-size:0.68rem;display:inline-flex;align-items:center;gap:0.2rem;">
-                            <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
-                            Detalle
-                          </a>
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </template>
-          </div>
-
-          <div class="empty-state" x-show="filteredIPs.length === 0">
-            <iconify-icon icon="lucide:globe"></iconify-icon>
-            <h3>Sin direcciones IP registradas</h3>
-            <p x-show="allIPs.length > 0">Ninguna IP coincide con los filtros aplicados</p>
-            <p x-show="allIPs.length === 0">Las IPs aparecerán aquí cuando agregues credenciales o servicios a un servidor</p>
-          </div>
+        <div class="hub-module-footer" style="color:#3498db;">
+          <iconify-icon icon="lucide:arrow-right" style="width:13px;height:13px;"></iconify-icon>
+          Explorar módulo
         </div>
-      </template>
+      </a>
 
-      <!-- ===== VIEW: INFRAESTRUCTURA ===== -->
-      <template x-if="activeView === 'all'">
-        <div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:0.4rem;">
-            <button class="view-export" @click="exportInfraCSV()" title="Exportar infraestructura">
-              <iconify-icon icon="lucide:file-down" style="width:12px;height:12px;"></iconify-icon>
-              Exportar
-            </button>
-          </div>
-          <div class="infra-summary">
-            <div class="infra-stat">Servidores: <strong x-text="servers.length"></strong></div>
-            <div class="infra-stat">RAM: <strong x-text="totalRam + ' GB'"></strong></div>
-            <div class="infra-stat">Discos: <strong x-text="totalStorageTB + ' TB'"></strong></div>
-            <div class="infra-stat">CPU: <strong x-text="totalCpuGHz + ' GHz'"></strong></div>
-            <div class="infra-stat">Servicios: <strong x-text="allServices.length"></strong></div>
-            <div class="infra-stat">IPs: <strong x-text="allIPs.length"></strong></div>
-          </div>
-          <div class="infra-list">
-            <template x-for="s in servers" :key="s.id">
-              <div class="infra-row hover-trigger" @click="gotoServer(s.id)">
-                <span class="status-dot" :class="'dot-' + (s.estado ? s.estado.toLowerCase() : 'libre')" style="flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block;"></span>
-                <strong x-text="s.hostname" style="flex:0 0 130px;color:#e0e0e0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></strong>
-                <div class="hover-card" style="bottom:auto;top:-10px;left:0;transform:none;min-width:220px;">
-                  <strong x-text="s.hostname" style="color:#e0e0e0;font-size:0.8rem;"></strong>
-                  <div style="color:#888;font-size:0.65rem;margin-top:0.2rem;">
-                    <div x-text="s.modelo || '—'"></div>
-                    <div x-text="'SN: ' + (s.sn || '—')" style="color:#555;"></div>
-                    <div x-show="serverTagsMap[s.id]">
-                      <template x-for="t in (serverTagsMap[s.id] || []).slice(0, 6)" :key="t.id">
-                        <span style="display:inline-block;padding:0.05rem 0.3rem;border-radius:3px;font-size:0.55rem;margin-right:0.15rem;" :style="'background:'+t.color+'22;color:'+t.color+';border:1px solid '+t.color+'44'"><span x-text="t.name"></span></span>
-                      </template>
-                    </div>
-                    <div x-show="s.procesador" style="margin-top:0.15rem;" x-text="s.procesador"></div>
-                    <div x-text="'RAM: ' + (s.ram_gb || '0') + ' GB'"></div>
-                  </div>
-                </div>
-                <span x-text="s.modelo || '—'" style="flex:0 0 110px;color:#888;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-                <span x-text="s.ubicacion || '—'" style="flex:0 0 80px;color:#888;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-                <div class="infra-ram-cell" style="flex:0 0 100px;">
-                  <div class="infra-ram-bar" style="display:flex;align-items:center;gap:0.3rem;">
-                    <div class="infra-ram-track" style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
-                      <div class="infra-ram-fill" :style="'width:' + Math.min(100, (s.ram_gb || 0) / (totalRam || 1) * 100) + '%'" style="height:100%;background:linear-gradient(90deg,#6c5ce7,#a29bfe);border-radius:3px;"></div>
-                    </div>
-                    <span style="font-size:0.6rem;color:#999;white-space:nowrap;" x-text="(s.ram_gb || '—') + ' GB'"></span>
-                  </div>
-                </div>
-                <span x-text="diskCount(s) + ' discos'" style="flex:0 0 60px;color:#888;font-size:0.62rem;text-align:center;"></span>
-                <div class="infra-tags" style="flex:1;min-width:0;">
-                  <template x-for="t in (serverTagsMap[s.id] || [])" :key="t.id">
-                    <span class="infra-tag" :style="'background:'+t.color+'22;color:'+t.color+';border-color:'+t.color+'44'" x-text="t.name"></span>
-                  </template>
-                </div>
-                <span class="infra-svc-count" x-text="(s.servicios?.length || 0) + ' svc'" style="flex:0 0 42px;"></span>
-                <iconify-icon icon="lucide:chevron-right" style="width:14px;height:14px;color:#444;flex-shrink:0;"></iconify-icon>
-              </div>
-            </template>
-          </div>
-          <div class="empty-state" x-show="servers.length === 0">
-            <iconify-icon icon="lucide:layers"></iconify-icon>
-            <h3>Sin servidores en la infraestructura</h3>
-            <p>Agrega servidores para ver la vista completa de infraestructura</p>
-          </div>
+      <!-- Infraestructura -->
+      <a href="infrastructure.html" class="hub-module-card"
+         @click.prevent="window.location.href='infrastructure.html'"
+         onmouseenter="this.style.borderColor='rgba(243,156,18,0.35)'"
+         onmouseleave="this.style.borderColor=''">
+        <div class="hub-module-arrow-badge">
+          <iconify-icon icon="lucide:arrow-up-right" style="width:20px;height:20px;"></iconify-icon>
         </div>
-      </template>
-
-      <!-- ===== VIEW: ADMIN (Superadmin only) ===== -->
-      <template x-if="activeView === 'admin'">
-        <div>
-          <!-- Stats row 1: Users -->
-          <div class="admin-stats-grid">
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:users" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
-              Usuarios
-              <strong x-text="managedUsers.length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="admin-dot super"></span> Superadmins
-              <strong x-text="managedUsers.filter(u => u.role === 'superadmin').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="admin-dot admin"></span> Admins
-              <strong x-text="managedUsers.filter(u => u.role === 'admin').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="admin-dot ro"></span> Read-only
-              <strong x-text="managedUsers.filter(u => u.role === 'readonly').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:server" style="width:13px;height:13px;color:#3498db;"></iconify-icon>
-              Servidores
-              <strong x-text="servers.length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:activity" style="width:13px;height:13px;color:#2ecc71;"></iconify-icon>
-              Activos
-              <strong x-text="servers.filter(s => s.estado === 'Activo').length"></strong>
-            </div>
-          </div>
-          <!-- Stats row 2: Infrastructure -->
-          <div class="admin-stats-grid" style="margin-top:0.4rem;">
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:hard-drive" style="width:13px;height:13px;color:#1abc9c;"></iconify-icon>
-              Discos
-              <strong x-text="servers.reduce((sum, s) => sum + diskCount(s), 0)"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:globe" style="width:13px;height:13px;color:#f39c12;"></iconify-icon>
-              Servicios
-              <strong x-text="allServices.length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:wifi" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
-              IPs
-              <strong x-text="allIPs.length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:layers" style="width:13px;height:13px;color:#888;"></iconify-icon>
-              Subredes
-              <strong x-text="uniqueSubnets.length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:memory-stick" style="width:13px;height:13px;color:#a29bfe;"></iconify-icon>
-              RAM
-              <strong x-text="totalRam + ' GB'"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:cpu" style="width:13px;height:13px;color:#e74c3c;"></iconify-icon>
-              Almacenamiento
-              <strong x-text="totalStorageTB + ' TB'"></strong>
-            </div>
-          </div>
-
-          <!-- Stats row 3: Status breakdown -->
-          <div class="admin-stats-grid" style="margin-top:0.4rem;">
-            <div class="admin-stat">
-              <span class="status-dot dot-activo" style="margin-right:0.2rem;"></span> Activos
-              <strong x-text="servers.filter(s => s.estado === 'Activo').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="status-dot dot-inactivo" style="margin-right:0.2rem;"></span> Inactivos
-              <strong x-text="servers.filter(s => s.estado === 'Inactivo').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="status-dot dot-pendiente" style="margin-right:0.2rem;"></span> Pendientes
-              <strong x-text="servers.filter(s => s.estado === 'Pendiente').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <span class="status-dot dot-libre" style="margin-right:0.2rem;"></span> Libres
-              <strong x-text="servers.filter(s => s.estado === 'Libre').length"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:map-pin" style="width:13px;height:13px;color:#f39c12;"></iconify-icon>
-              Ubicaciones
-              <strong x-text="new Set(servers.filter(s => s.ubicacion).map(s => s.ubicacion)).size"></strong>
-            </div>
-            <div class="admin-stat">
-              <iconify-icon icon="lucide:boxes" style="width:13px;height:13px;color:#1abc9c;"></iconify-icon>
-              Modelos
-              <strong x-text="new Set(servers.filter(s => s.modelo).map(s => s.modelo)).size"></strong>
-            </div>
-          </div>
-
-          <!-- User search + table -->
-          <div style="margin-top:1rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
-              <div class="search-compact" style="flex:1;">
-                <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
-                <input type="text" class="sb-input" x-model="adminUserSearch" placeholder="Buscar usuario por email o rol...">
-                <button class="sb-clear" x-show="adminUserSearch" @click="adminUserSearch = ''" title="Limpiar búsqueda">
-                  <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
-                </button>
-              </div>
-              <button class="at-btn" @click="fetchUsers()" style="font-size:0.65rem;padding:0.25rem 0.5rem;border:1px solid var(--border-subtle);border-radius:8px;white-space:nowrap;">
-                <iconify-icon icon="lucide:refresh-cw" style="width:11px;height:11px;"></iconify-icon>
-                Recargar
-              </button>
-              <a class="at-btn" href="https://supabase.com/dashboard/project/unaadjavtrsogkzcbmev/auth/users" target="_blank" style="font-size:0.65rem;padding:0.25rem 0.5rem;border:1px solid var(--border-subtle);border-radius:8px;white-space:nowrap;">
-                <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
-                Crear usuario
-              </a>
-            </div>
-            <div class="admin-user-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="u in filteredManagedUsers" :key="u.id">
-                    <tr>
-                      <td x-text="u.email || u.id.slice(0,8) + '...'" style="font-size:0.7rem;"></td>
-                      <td><span :class="'role-tag ' + (u.role === 'superadmin' ? 'super' : u.role === 'admin' ? 'admin' : 'readonly')" x-text="u.role"></span></td>
-                      <td>
-                        <template x-if="u.role === 'superadmin'">
-                          <span style="color:#555;font-size:0.6rem;">Protegido</span>
-                        </template>
-                        <template x-if="u.email && u.role !== 'superadmin'">
-                          <button class="btn role-toggle" @click="updateUserRole(u.id, u.role === 'admin' ? 'readonly' : 'admin')" x-text="u.role === 'admin' ? 'Revocar admin' : 'Hacer admin'"></button>
-                        </template>
-                      </td>
-                    </tr>
-                  </template>
-                  <tr x-show="filteredManagedUsers.length === 0">
-                    <td colspan="3" style="text-align:center;color:#444;padding:0.75rem 0;font-size:0.65rem;">
-                      <span x-show="adminUserSearch">Sin usuarios que coincidan con "<strong x-text="adminUserSearch"></strong>"</span>
-                      <span x-show="!adminUserSearch">No hay usuarios registrados</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- AUDIT LOG -->
-          <div class="admin-section" style="margin-top:1.5rem;">
-            <h2 class="det-section-title">
-              <iconify-icon icon="lucide:clipboard-list" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
-              Auditoría
-              <span class="det-count" x-text="auditLogs.length"></span>
-            </h2>
-
-            <div class="log-filters">
-              <button :class="{ active: auditActionFilter === 'all' }" @click="auditActionFilter = 'all'">Todas</button>
-              <button :class="{ active: auditActionFilter === 'server.creada' }" @click="auditActionFilter = 'server.creada'">Creadas</button>
-              <button :class="{ active: auditActionFilter === 'server.actualizada' }" @click="auditActionFilter = 'server.actualizada'">Actualizadas</button>
-              <button :class="{ active: auditActionFilter === 'server.eliminada' }" @click="auditActionFilter = 'server.eliminada'">Eliminadas</button>
-            </div>
-
-            <div class="admin-user-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Usuario</th>
-                    <th>Acción</th>
-                    <th>Servidor</th>
-                    <th>Cambios</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="a in filteredAuditLogs" :key="a.id">
-                    <tr>
-                      <td style="font-size:0.6rem;white-space:nowrap;" x-text="formatDate(a.created_at)"></td>
-                      <td style="font-size:0.65rem;" x-text="a.user_email || a.user_id?.slice(0,8) || '—'"></td>
-                      <td><span class="log-accion" :class="logAccionClassAudit(a.accion)" x-text="a.accion ? a.accion.replace('server.', '') : ''"></span></td>
-                      <td style="font-size:0.65rem;">
-                        <template x-if="a.server_id">
-                          <a :href="'server-detail.html?id=' + a.server_id" @click.prevent="window.location.href='server-detail.html?id=' + a.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="(a.descripcion || '').replace('Servidor creado: ','').replace('Servidor eliminado: ','').split(':')[0] || '#' + a.server_id"></a>
-                        </template>
-                        <span x-show="!a.server_id" style="color:#444;">—</span>
-                      </td>
-                      <td style="font-size:0.55rem;">
-                        <button @click="viewAuditDetail(a)" style="background:transparent;border:1px solid var(--border-subtle);border-radius:6px;color:#888;cursor:pointer;font-size:0.6rem;padding:0.15rem 0.4rem;transition:all 0.15s;" @mouseenter="$el.style.borderColor='#6c5ce7';$el.style.color='#6c5ce7'" @mouseleave="$el.style.borderColor='';$el.style.color=''">
-                          Ver
-                        </button>
-                      </td>
-                    </tr>
-                  </template>
-                  <tr x-show="filteredAuditLogs.length === 0">
-                    <td colspan="5" style="text-align:center;color:#444;padding:1rem 0;font-size:0.7rem;">Sin registros de auditoría</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div style="margin-top:0.5rem;">
-              <button class="at-btn" @click="loadAuditLogs()" style="font-size:0.7rem;padding:0.3rem 0.6rem;border:1px solid var(--border-subtle);border-radius:6px;">
-                <iconify-icon icon="lucide:refresh-cw" style="width:11px;height:11px;"></iconify-icon>
-                Recargar auditoría
-              </button>
-            </div>
-          </div>
+        <div class="hub-module-icon" style="background:rgba(243,156,18,0.12);color:#f39c12;">
+          <iconify-icon icon="lucide:layout-dashboard"></iconify-icon>
         </div>
-      </template>
-
-    </div><!-- /.container -->
-
-  <!-- COMMAND PALETTE -->
-  <div class="palette-overlay" x-show="showPalette" x-cloak @click.self="showPalette = false" @keydown.escape="showPalette = false" x-trap.noreturn="showPalette">
-    <div class="palette-modal">
-      <div class="palette-input-wrap">
-        <iconify-icon icon="lucide:search"></iconify-icon>
-        <input type="text" class="palette-input" x-model="paletteQuery" placeholder="Buscar acci&oacute;n o servidor..." @keydown.enter="executePalette(); showPalette = false" @keydown.down.prevent="paletteIndex = Math.min(paletteIndex + 1, filteredPalette.length - 1)" @keydown.up.prevent="paletteIndex = Math.max(paletteIndex - 1, 0)" x-ref="paletteInput" autofocus>
-      </div>
-      <div class="palette-list">
-        <template x-for="(item, i) in filteredPalette" :key="item.label">
-          <div class="palette-item" :class="paletteIndex === i ? 'active' : ''" @click="item.action(); showPalette = false" @mouseenter="paletteIndex = i">
-            <iconify-icon :icon="item.icon" style="width:16px;height:16px;color:#666;flex-shrink:0;"></iconify-icon>
-            <span x-text="item.label"></span>
-            <span class="pi-shortcut" x-show="item.shortcut" x-text="item.shortcut"></span>
-          </div>
-        </template>
-        <div class="empty-state" x-show="filteredPalette.length === 0" style="padding:1.5rem 1rem;">
-          <h3 style="font-size:0.8rem;">Sin resultados</h3>
+        <h3>Infraestructura</h3>
+        <div class="hub-module-desc">
+          <iconify-icon icon="lucide:pie-chart" style="width:12px;height:12px;color:#f39c12;flex-shrink:0;"></iconify-icon>
+          Analítica global de RAM, CPU y discos
         </div>
-      </div>
+        <div class="hub-module-footer" style="color:#f39c12;">
+          <iconify-icon icon="lucide:arrow-right" style="width:13px;height:13px;"></iconify-icon>
+          Explorar módulo
+        </div>
+      </a>
     </div>
-  </div>
 
-  <!-- MODAL: DETALLE DE AUDITORÍA -->
-  <div class="modal-overlay" x-show="Boolean(auditDetailItem)" x-cloak @click.self="auditDetailItem = null" @keydown.escape.window="auditDetailItem = null">
-    <div class="modal" style="max-width:600px;" x-show="Boolean(auditDetailItem)">
-      <template x-if="auditDetailItem">
-        <div>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
-            <h3 style="margin:0;font-size:0.9rem;">Detalle de auditoría</h3>
-            <span class="log-accion" :class="logAccionClassAudit(auditDetailItem?.accion)" x-text="auditDetailItem?.accion ? auditDetailItem.accion.replace('server.', '') : ''" style="font-size:0.65rem;"></span>
-          </div>
-          <div class="det-meta" style="display:flex;gap:0.75rem;font-size:0.65rem;color:#666;margin-bottom:1rem;flex-wrap:wrap;">
-            <span><span style="color:#999;">Fecha:</span> <span x-text="formatDate(auditDetailItem?.created_at)" style="color:#ccc;"></span></span>
-            <span><span style="color:#999;">Usuario:</span> <span x-text="auditDetailItem?.user_email || auditDetailItem?.user_id?.slice(0,8) || '—'" style="color:#ccc;"></span></span>
-            <span x-show="auditDetailItem?.server_id"><span style="color:#999;">Servidor:</span>
-              <a :href="'server-detail.html?id=' + auditDetailItem?.server_id" @click.prevent="window.location.href='server-detail.html?id=' + auditDetailItem?.server_id" style="color:#6c5ce7;text-decoration:none;" x-text="auditDetailItem?.descripcion?.split(':')[0] || '#' + auditDetailItem?.server_id"></a>
-            </span>
-          </div>
-          <template x-if="auditDetailItem?.cambios && typeof auditDetailItem.cambios === 'object' && Object.keys(auditDetailItem.cambios).length > 0">
-            <div>
-              <div style="font-size:0.65rem;color:#999;margin-bottom:0.4rem;">Campos modificados:</div>
-              <div class="audit-diff-table">
-                <template x-for="(val, field) in auditDetailItem.cambios" :key="field">
-                  <div class="audit-diff-row">
-                    <div class="ad-field" x-text="field"></div>
-                    <div class="ad-values">
-                      <div class="ad-old" x-text="formatDiffVal(val?.old)"></div>
-                      <div class="ad-arrow"><iconify-icon icon="lucide:arrow-right" style="width:12px;height:12px;"></iconify-icon></div>
-                      <div class="ad-new" x-text="formatDiffVal(val?.new)"></div>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-          <div x-show="!auditDetailItem?.cambios || typeof auditDetailItem?.cambios !== 'object' || Object.keys(auditDetailItem.cambios).length === 0" style="color:#555;font-size:0.7rem;padding:0.5rem 0;">
-            Sin detalle de cambios
-          </div>
-          <button class="btn" @click="auditDetailItem = null" style="margin-top:1rem;">Cerrar</button>
-        </div>
-      </template>
+    <!-- LOADING STATE -->
+    <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+      <iconify-icon icon="lucide:loader" style="width:28px;height:28px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
+      <p style="margin-top:0.75rem;color:#666;font-size:0.8rem;">Cargando datos del laboratorio...</p>
     </div>
-  </div>
 
-  <!-- MODAL: VISTA RÁPIDA DE SERVIDOR (POPUP INDEPENDIENTE) -->
-  <div class="modal-overlay" x-show="Boolean(quickServerItem)" x-cloak @click.self="closeQuickServer()" @keydown.escape.window="closeQuickServer()">
-    <div class="modal" style="max-width:640px;width:92%;padding:1.5rem;" x-show="Boolean(quickServerItem)">
-      <template x-if="quickServerItem">
-        <div>
-          <!-- Header -->
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
-            <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div class="card-icon-box" style="width:40px;height:40px;border-radius:10px;background:rgba(108,92,231,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <iconify-icon icon="lucide:server" style="width:20px;height:20px;color:#6c5ce7;"></iconify-icon>
-              </div>
-              <div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                  <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;" x-text="quickServerItem.hostname"></h3>
-                  <div class="card-status-label" :class="'sl-' + (quickServerItem.estado ? quickServerItem.estado.toLowerCase() : '')" style="padding:0.15rem 0.5rem;font-size:0.6rem;">
-                    <span class="sl-dot"></span>
-                    <span x-text="quickServerItem.estado"></span>
-                  </div>
-                </div>
-                <div style="font-size:0.68rem;color:#888;margin-top:0.15rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
-                  <span><iconify-icon icon="lucide:map-pin" style="width:11px;height:11px;color:#6c5ce7;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.ubicacion"></span></span>
-                  <span x-show="quickServerItem.modelo"><iconify-icon icon="lucide:box" style="width:11px;height:11px;color:#888;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.modelo"></span></span>
-                  <span x-show="quickServerItem.sn"><iconify-icon icon="lucide:hash" style="width:11px;height:11px;color:#888;margin-right:2px;"></iconify-icon><span x-text="quickServerItem.sn"></span></span>
-                </div>
-              </div>
-            </div>
-            <button class="icon-btn" @click="closeQuickServer()" title="Cerrar (Esc)" style="background:transparent;border:none;color:#888;cursor:pointer;">
-              <iconify-icon icon="lucide:x" style="width:18px;height:18px;"></iconify-icon>
-            </button>
-          </div>
-
-          <!-- Quick Actions Bar -->
-          <div style="display:flex;gap:0.4rem;margin-bottom:1rem;flex-wrap:wrap;">
-            <button class="btn" @click="gotoServer(quickServerItem.id)" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:#6c5ce7;color:#fff;border-radius:6px;border:none;cursor:pointer;">
-              <iconify-icon icon="lucide:external-link" style="width:13px;height:13px;"></iconify-icon>
-              Ficha Técnica Completa
-            </button>
-            <a class="btn" :href="'edit-server.html?id=' + quickServerItem.id" x-show="canEdit" @click.prevent="closeQuickServer(); window.location.href = 'edit-server.html?id=' + quickServerItem.id" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:var(--bg-dark);color:#ccc;border-radius:6px;border:1px solid var(--border-subtle);text-decoration:none;">
-              <iconify-icon icon="lucide:pencil" style="width:13px;height:13px;color:#6c5ce7;"></iconify-icon>
-              Editar
-            </a>
-            <a class="btn" :href="'https://' + credsMap[quickServerItem.id]?.ipmi" target="_blank" x-show="credsMap[quickServerItem.id]?.ipmi" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.35rem 0.75rem;background:rgba(108,92,231,0.12);color:#8e7ff3;border-radius:6px;border:1px solid rgba(108,92,231,0.3);text-decoration:none;">
-              <iconify-icon icon="lucide:monitor" style="width:13px;height:13px;"></iconify-icon>
-              Acceso IPMI
-            </a>
-          </div>
-
-          <!-- Content Grid -->
-          <div style="display:flex;flex-direction:column;gap:0.85rem;max-height:60vh;overflow-y:auto;padding-right:0.25rem;">
-            
-            <!-- Hardware -->
-            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
-              <div style="font-size:0.65rem;color:#6c5ce7;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.3rem;">
-                <iconify-icon icon="lucide:cpu" style="width:13px;height:13px;"></iconify-icon>
-                Especificaciones de Hardware
-              </div>
-              <div style="font-size:0.75rem;display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:0.5rem;color:#ccc;">
-                <div>
-                  <span style="color:#777;display:block;font-size:0.62rem;">PROCESADOR</span>
-                  <strong style="font-weight:600;" x-text="quickServerItem.procesador || '—'"></strong>
-                </div>
-                <div>
-                  <span style="color:#777;display:block;font-size:0.62rem;">MEMORIA RAM</span>
-                  <strong style="font-weight:600;" x-text="quickServerItem.ram_gb ? quickServerItem.ram_gb + ' GB' : '—'"></strong>
-                </div>
-                <div>
-                  <span style="color:#777;display:block;font-size:0.62rem;">TIPO HARDWARE</span>
-                  <span x-text="quickServerItem.tipo_hardware || '—'"></span>
-                </div>
-                <div>
-                  <span style="color:#777;display:block;font-size:0.62rem;">MARCA / FABRICANTE</span>
-                  <span x-text="quickServerItem.marca || '—'"></span>
-                </div>
-              </div>
-
-              <!-- Storage -->
-              <div x-show="diskList(quickServerItem).length > 0" style="margin-top:0.6rem;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);">
-                <span style="color:#777;display:block;font-size:0.62rem;margin-bottom:0.25rem;">UNIDADES DE ALMACENAMIENTO / RAID</span>
-                <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                  <template x-for="d in diskList(quickServerItem)" :key="d.bay + d.tipo">
-                    <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);border-radius:5px;padding:0.15rem 0.45rem;font-size:0.65rem;color:#aaa;display:inline-flex;align-items:center;gap:0.25rem;">
-                      <iconify-icon icon="lucide:hard-drive" style="width:11px;height:11px;color:#6c5ce7;"></iconify-icon>
-                      <span x-text="(d.bay ? d.bay + ': ' : '') + (d.tipo || '') + (d.tamano ? ' ' + d.tamano : '')"></span>
-                    </span>
-                  </template>
-                </div>
-              </div>
-            </div>
-
-            <!-- Network & Services -->
-            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
-              <div style="font-size:0.65rem;color:#2ecc71;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.3rem;">
-                <iconify-icon icon="lucide:globe" style="width:13px;height:13px;"></iconify-icon>
-                Servicios y Redes
-              </div>
-              <div x-show="quickServerItem.servicios && quickServerItem.servicios.length > 0" style="display:flex;flex-direction:column;gap:0.3rem;">
-                <template x-for="svc in (quickServerItem.servicios || [])" :key="svc.nombre">
-                  <div style="font-size:0.7rem;color:#ccc;background:rgba(255,255,255,0.03);border-radius:6px;padding:0.35rem 0.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.3rem;">
-                    <div style="display:flex;align-items:center;gap:0.35rem;">
-                      <iconify-icon icon="lucide:globe" style="width:12px;height:12px;color:#2ecc71;"></iconify-icon>
-                      <span style="font-weight:600;color:#fff;" x-text="svc.nombre"></span>
-                    </div>
-                    <div style="display:flex;gap:0.25rem;align-items:center;flex-wrap:wrap;">
-                      <!-- IPs (Superadmin & Admin only) -->
-                      <template x-if="canEdit">
-                        <div style="display:flex;gap:0.25rem;align-items:center;">
-                          <template x-for="ip in (svc.ips || [])" :key="ip">
-                            <a :href="'https://' + ip" target="_blank" style="color:#6c5ce7;text-decoration:none;font-size:0.62rem;background:rgba(108,92,231,0.15);padding:0.1rem 0.35rem;border-radius:4px;" x-text="ip"></a>
-                          </template>
-                        </div>
-                      </template>
-                      <!-- Service Credentials (Superadmin & Admin only) -->
-                      <template x-if="canEdit && (svc.usuario || svc.password)">
-                        <div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.62rem;color:#aaa;background:rgba(0,0,0,0.3);padding:0.1rem 0.35rem;border-radius:4px;border:1px solid rgba(255,255,255,0.05);">
-                          <iconify-icon icon="lucide:key" style="width:10px;height:10px;color:#e74c3c;"></iconify-icon>
-                          <span x-show="svc.usuario" style="color:#ccc;" x-text="svc.usuario"></span>
-                          <span x-show="svc.password" @click="copyToClipboard(svc.password)" title="Clic para copiar contraseña al portapapeles" style="display:inline-flex;align-items:center;gap:0.2rem;cursor:pointer;">
-                            <code style="color:#888;letter-spacing:2px;">••••••••</code>
-                            <iconify-icon icon="lucide:copy" style="width:10px;height:10px;color:#8e7ff3;"></iconify-icon>
-                          </span>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-              </div>
-              <div x-show="!quickServerItem.servicios || quickServerItem.servicios.length === 0" style="font-size:0.7rem;color:#666;">
-                Sin servicios configurados
-              </div>
-            </div>
-
-            <!-- Notes -->
-            <div x-show="quickServerItem.notas" style="background:rgba(0,0,0,0.2);border:1px solid var(--border-subtle);border-radius:8px;padding:0.75rem;">
-              <div style="font-size:0.65rem;color:#f39c12;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.3rem;">
-                <iconify-icon icon="lucide:file-text" style="width:13px;height:13px;"></iconify-icon>
-                Notas del Servidor
-              </div>
-              <p style="font-size:0.72rem;color:#bbb;margin:0;line-height:1.5;white-space:pre-wrap;" x-text="quickServerItem.notas"></p>
-            </div>
-
-            <!-- Tags -->
-            <div x-show="serverTagsMap[quickServerItem.id] && serverTagsMap[quickServerItem.id].length > 0">
-              <div style="font-size:0.62rem;color:#777;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:0.3rem;">Tags Asociados</div>
-              <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                <template x-for="t in (serverTagsMap[quickServerItem.id] || [])" :key="t.id">
-                  <span class="card-tag-pill" :style="'background:' + t.color + '22;color:' + t.color + ';border-color:' + t.color + '44;padding:0.15rem 0.45rem;font-size:0.65rem;'">
-                    <span class="card-tag-dot" :style="'background:' + t.color"></span>
-                    <span x-text="t.name"></span>
-                  </span>
-                </template>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Footer -->
-          <div style="margin-top:1.25rem;padding-top:0.75rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;">
-            <button class="btn" @click="closeQuickServer()" style="font-size:0.75rem;padding:0.35rem 0.85rem;background:var(--bg-dark);border:1px solid var(--border-subtle);color:#888;border-radius:6px;cursor:pointer;">Cerrar</button>
-          </div>
-        </div>
-      </template>
-    </div>
   </div>
 </div>
 
@@ -1020,17 +685,5 @@
 <script src="js/core/utils.js"></script>
 <script src="js/core/audit.js"></script>
 <script src="js/pages/dashboard.js"></script>
-
-<!-- Toast container -->
-<div x-data x-show="$store.toast.items.length" class="toast-container">
-  <template x-for="t in $store.toast.items" :key="t.id">
-    <div class="toast" :class="t.type">
-      <iconify-icon icon="lucide:check-circle" x-show="t.type==='success'" style="width:16px;height:16px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
-      <iconify-icon icon="lucide:alert-circle" x-show="t.type==='error'" style="width:16px;height:16px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
-      <iconify-icon icon="lucide:info" x-show="t.type==='info'" style="width:16px;height:16px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
-      <span x-text="t.message"></span>
-    </div>
-  </template>
-</div>
 </body>
 </html>

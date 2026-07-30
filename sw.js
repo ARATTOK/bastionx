@@ -1,8 +1,12 @@
-const CACHE = 'bastionx-v4'
+const CACHE = 'bastionx-v6'
 const STATIC = [
   './',
   './login.html',
   './dashboard.html',
+  './servers.html',
+  './services.html',
+  './networks.html',
+  './infrastructure.html',
   './admin.html',
   './server-detail.html',
   './add-server.html',
@@ -21,6 +25,10 @@ const STATIC = [
   './js/core/audit.js',
   './js/pages/login.js',
   './js/pages/dashboard.js',
+  './js/pages/servers.js',
+  './js/pages/services.js',
+  './js/pages/networks.js',
+  './js/pages/infrastructure.js',
   './js/pages/server-detail.js',
   './js/pages/add-server.js',
   './js/pages/edit-server.js',

@@ -3108,6 +3108,28 @@ svg { display: inline-block; vertical-align: middle; }
   background: rgba(108,92,231,0.05);
 }
 
+/* 1-click service preset buttons */
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border: 1px solid rgba(243,156,18,0.25);
+  border-radius: 6px;
+  background: rgba(243,156,18,0.08);
+  color: #f39c12;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.preset-btn:hover {
+  background: rgba(243,156,18,0.18);
+  border-color: rgba(243,156,18,0.5);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 .disk-field-wrap { display: flex; flex-direction: column; gap: 0.15rem; }
 .disk-field-err { font-size: 0.55rem; color: #e74c3c; line-height: 1.1; }
 .disk-row.has-error { background: rgba(231,76,60,0.03); border-radius: 4px; padding: 0.15rem 0; }
@@ -3420,4 +3442,352 @@ svg { display: inline-block; vertical-align: middle; }
   margin-top: 0.2rem;
   font-weight: 500;
 }
+
+/* === DASHBOARD MODULE HUB & TOP NAV (namethatui.com inspired) === */
+.module-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 0.35rem 0.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.module-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #999;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.module-nav-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.module-nav-item.active {
+  color: #fff;
+  background: rgba(108, 92, 231, 0.25);
+  border: 1px solid rgba(108, 92, 231, 0.4);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.15);
+}
+
+.hub-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.hub-hero {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.12) 0%, rgba(0, 206, 201, 0.06) 100%);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hub-hero::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.module-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(108, 92, 231, 0.4);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 15px rgba(108, 92, 231, 0.15);
+}
+
+.module-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(108, 92, 231, 0.12);
+  color: #6c5ce7;
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.module-card.servers .module-card-icon { background: rgba(108, 92, 231, 0.15); color: #8e7ff3; }
+.module-card.services .module-card-icon { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+.module-card.network .module-card-icon { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+.module-card.infra .module-card-icon { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
+
+.module-card-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* RBAC Granular Matrix Table in Admin */
+.rbac-matrix-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.rbac-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.rbac-matrix-table th,
+.rbac-matrix-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+}
+
+.rbac-matrix-table th {
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.65rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.rbac-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.rbac-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.rbac-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #333;
+  transition: .3s;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+}
+
+.rbac-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.rbac-toggle-switch input:checked + .rbac-toggle-slider {
+  background-color: #2ecc71;
+}
+
+.rbac-toggle-switch input:checked + .rbac-toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* === MINIMALIST EXECUTIVE HUB DESIGN (namethatui.com clean aesthetic) === */
+.minimal-hub-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.minimal-hero {
+  background: rgba(18, 20, 29, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 2.25rem 2.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.minimal-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.minimal-kpi-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.minimal-kpi-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.minimal-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.minimal-card {
+  background: rgba(18, 20, 29, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none !important;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.minimal-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(108, 92, 231, 0.4);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(108, 92, 231, 0.12);
+}
+
+.minimal-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.minimal-card-arrow {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.minimal-card:hover .minimal-card-arrow {
+  color: #fff;
+  transform: translateX(3px);
+}
+
+/* === ENHANCED ROLE SIMULATOR BAR & ICON-DRIVEN CARDS === */
+.role-simulator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 92, 231, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.15);
+  transition: all 0.2s ease;
+}
+
+.role-simulator-pill:hover {
+  border-color: rgba(0, 206, 201, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 206, 201, 0.2);
+}
+
+.icon-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.icon-card-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+}
+
+.minimal-card:hover .icon-card-large {
+  transform: scale(1.08);
+  border-color: rgba(108, 92, 231, 0.4);
+}
+
+
+
 

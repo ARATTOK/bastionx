@@ -198,6 +198,13 @@ document.addEventListener('alpine:init', () => {
       this.form.servicios.push({ nombre: '', ips: [''], puerto: '', descripcion: '', usuario: '', password: '' })
     },
 
+    addServicePreset(nombre, puerto) {
+      this.form.servicios.push({ nombre, ips: [''], puerto, descripcion: '', usuario: '', password: '' })
+      this.showAdvanced = true
+      // Scroll to services section after short delay
+      setTimeout(() => this.scrollToSection('sec-services'), 100)
+    },
+
     removeService(idx) {
       this.form.servicios.splice(idx, 1)
     },

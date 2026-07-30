@@ -233,6 +233,10 @@ document.addEventListener('alpine:init', () => {
       this.form.servicios.push({ nombre: '', ips: [''], puerto: '', descripcion: '', usuario: '', password: '' })
     },
 
+    addServicePreset(nombre, puerto) {
+      this.form.servicios.push({ nombre, ips: [''], puerto, descripcion: '', usuario: '', password: '' })
+    },
+
     removeService(idx) {
       this.form.servicios.splice(idx, 1)
     },

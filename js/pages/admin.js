@@ -22,6 +22,44 @@ document.addEventListener('alpine:init', () => {
     deleteUserTarget: null,
     deletingUser: false,
 
+    rolePermissions: {
+      admin: {
+        ver_contrasenas: true,
+        crear_editar_servidores: true,
+        eliminar_servidores: true,
+        agendar_mantenimiento: true,
+        exportar_redes_csv: true
+      },
+      readonly: {
+        ver_contrasenas: false,
+        crear_editar_servidores: false,
+        eliminar_servidores: false,
+        agendar_mantenimiento: false,
+        exportar_redes_csv: false
+      }
+    },
+
+    realUserRole: 'superadmin',
+    simulatedRole: '',
+
+    simulateRole(role) {
+      this.simulatedRole = role
+      if (role) {
+        BastionUtils.showToast(`Vista simulada como: ${role}`, 'info')
+      }
+    },
+
+    resetSimulation() {
+      this.simulatedRole = ''
+      BastionUtils.showToast('Vista restaurada a Superadmin', 'success')
+    },
+
+    saveRolePermissions() {
+      localStorage.setItem('bastion_role_permissions', JSON.stringify(this.rolePermissions))
+      BastionUtils.showToast('Configuración RBAC guardada exitosamente', 'success')
+      auditLog(null, this.user?.id, 'rbac.permissions_updated', this.rolePermissions, 'Superadmin actualizo permisos granulares de roles')
+    },
+
     get isValidNewUserEmail() {
       return BastionUtils.isValidIPv4 ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newUserEmail.trim()) : false
     },

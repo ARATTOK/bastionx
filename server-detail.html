@@ -36,6 +36,17 @@
     </div>
   </template>
 
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
   <template x-if="server">
     <div class="container" style="max-width:1080px;padding:2rem 1rem;">
       <!-- TOP BAR -->
@@ -50,7 +61,18 @@
             <span x-text="server.hostname"></span>
           </h1>
         </div>
-        <div style="display:flex;gap:0.4rem;">
+        <div style="display:flex;gap:0.4rem;align-items:center;">
+          <!-- SUPERADMIN ROLE SIMULATOR -->
+          <div class="role-simulator-bar" x-show="realUserRole === 'superadmin'" style="display:inline-flex;align-items:center;gap:0.35rem;background:rgba(108,92,231,0.15);border:1px solid rgba(108,92,231,0.3);padding:0.25rem 0.6rem;border-radius:8px;font-size:0.7rem;">
+            <iconify-icon icon="lucide:eye" style="color:#00cec9;width:14px;height:14px;"></iconify-icon>
+            <span style="color:#aaa;font-weight:600;">Simular Vista:</span>
+            <select class="role-select" style="padding:0.15rem 0.4rem !important;font-size:0.68rem !important;height:auto !important;background:#12121a !important;color:#fff !important;border-radius:4px !important;" x-model="simulatedRole" @change="simulateRole($event.target.value)">
+              <option value="">Superadmin (Real)</option>
+              <option value="admin">Admin</option>
+              <option value="readonly">Readonly</option>
+            </select>
+          </div>
+
           <template x-if="canEdit">
             <button class="btn" @click="goEdit()" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#6c5ce7;cursor:pointer;">
               <iconify-icon icon="lucide:pencil" style="width:12px;height:12px;"></iconify-icon>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BastionLAB — Infraestructura & Analítica</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#151515">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body>
+<div x-data="infraApp()" x-init="init()">
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="app-layout" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
+    <main class="main-content">
+      <div class="kanban-board">
+        <!-- TOPBAR -->
+        <div class="topbar" style="margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="btn" @click="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+              <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+              Dashboard
+            </button>
+            <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+              <iconify-icon icon="lucide:cpu" style="width:18px;height:18px;color:#f39c12;margin-right:6px;"></iconify-icon>
+              Infraestructura & Topología Global
+            </h1>
+          </div>
+        </div>
+
+        <!-- INFRASTRUCTURE METRICS CARDS -->
+        <div x-show="!loading" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1.25rem;margin-bottom:2rem;">
+          <div class="admin-card-section" style="padding:1.5rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+              <iconify-icon icon="lucide:memory-stick" style="color:#6c5ce7;width:20px;height:20px;"></iconify-icon>
+              <strong style="color:#fff;font-size:0.9rem;">Memoria RAM Total</strong>
+            </div>
+            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalRam + ' GB'"></div>
+            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
+              <div style="background:#6c5ce7;height:100%;width:75%;border-radius:3px;"></div>
+            </div>
+          </div>
+
+          <div class="admin-card-section" style="padding:1.5rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+              <iconify-icon icon="lucide:hard-drive" style="color:#2ecc71;width:20px;height:20px;"></iconify-icon>
+              <strong style="color:#fff;font-size:0.9rem;">Almacenamiento Total</strong>
+            </div>
+            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalStorageTB + ' TB'"></div>
+            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
+              <div style="background:#2ecc71;height:100%;width:60%;border-radius:3px;"></div>
+            </div>
+          </div>
+
+          <div class="admin-card-section" style="padding:1.5rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+              <iconify-icon icon="lucide:cpu" style="color:#f39c12;width:20px;height:20px;"></iconify-icon>
+              <strong style="color:#fff;font-size:0.9rem;">Procesamiento CPU</strong>
+            </div>
+            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalCpuGHz + ' GHz'"></div>
+            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
+              <div style="background:#f39c12;height:100%;width:80%;border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOCATION BREAKDOWN TABLE -->
+        <div x-show="!loading" class="admin-card-section" style="padding:1.25rem;">
+          <h3 style="font-size:0.95rem;font-weight:700;color:#fff;margin:0 0 1rem 0;display:flex;align-items:center;gap:0.4rem;">
+            <iconify-icon icon="lucide:map-pin" style="color:#00cec9;"></iconify-icon>
+            Distribución de Recursos por Ubicación / Rack
+          </h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+              <thead>
+                <tr style="text-align:left;color:#777;border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <th style="padding:0.6rem;">Ubicación / Rack</th>
+                  <th style="padding:0.6rem;">Servidores Asignados</th>
+                  <th style="padding:0.6rem;">RAM Acumulada</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="loc in locationBreakdown" :key="loc.location">
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.6rem;font-weight:700;color:#fff;" x-text="loc.location"></td>
+                    <td style="padding:0.6rem;color:#00cec9;font-weight:600;" x-text="loc.serversCount + ' Servidor(es)'"></td>
+                    <td style="padding:0.6rem;font-family:monospace;color:#6c5ce7;" x-text="loc.ramTotal + ' GB RAM'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/infrastructure.js"></script>
+</body>
+</html>

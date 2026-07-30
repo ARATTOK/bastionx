@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BastionLAB — Inventario de Servidores</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#151515">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body>
+<div x-data="serversApp()" x-init="init()">
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="app-layout" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
+    <main class="main-content">
+      <div class="kanban-board">
+        <!-- TOPBAR -->
+        <div class="topbar" style="margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="btn" @click="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+              <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+              Dashboard
+            </button>
+            <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+              <iconify-icon icon="lucide:server" style="width:18px;height:18px;color:#6c5ce7;margin-right:6px;"></iconify-icon>
+              Inventario de Servidores
+            </h1>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+            <!-- VIEW MODE TOGGLE BUTTONS -->
+            <div style="display:inline-flex;background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:8px;padding:2px;">
+              <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'active' : ''" style="border:none;background:transparent;color:#fff;padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.25rem;" :style="viewMode === 'grid' ? 'background:rgba(108,92,231,0.25);color:#fff;' : 'color:#777;'">
+                <iconify-icon icon="lucide:layout-grid" style="width:13px;height:13px;"></iconify-icon>
+                Grid
+              </button>
+              <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'active' : ''" style="border:none;background:transparent;color:#fff;padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.25rem;" :style="viewMode === 'table' ? 'background:rgba(108,92,231,0.25);color:#fff;' : 'color:#777;'">
+                <iconify-icon icon="lucide:list" style="width:13px;height:13px;"></iconify-icon>
+                Tabla
+              </button>
+            </div>
+
+            <a class="at-btn" href="add-server.html" x-show="canEdit" @click.prevent="window.location.href='add-server.html'">
+              <iconify-icon icon="lucide:plus" style="pointer-events:none;"></iconify-icon>
+              Agregar Servidor
+            </a>
+            <button class="at-btn" @click="refreshServers()">
+              <iconify-icon icon="lucide:refresh-cw" style="pointer-events:none;"></iconify-icon>
+              Recargar
+            </button>
+          </div>
+        </div>
+
+        <!-- SEARCH, FILTERS & LOCATION CONTROL BAR -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <div class="search-compact" style="width:280px;">
+              <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+              <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar por hostname, IP, modelo...">
+              <button class="sb-clear" x-show="searchQuery" @click="searchQuery=''" title="Limpiar">
+                <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+              </button>
+            </div>
+
+            <!-- LOCATION FILTER SELECTOR -->
+            <select class="role-select" style="padding:0.3rem 0.6rem !important;font-size:0.72rem !important;height:34px !important;background:#12121a !important;color:#fff !important;border:1px solid var(--border-subtle) !important;border-radius:8px !important;" x-model="selectedLocation">
+              <option value="todos">Todas las Ubicaciones</option>
+              <template x-for="loc in locations" :key="loc">
+                <option :value="loc" x-text="loc"></option>
+              </template>
+            </select>
+          </div>
+
+          <div class="filter-tabs">
+            <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
+              Todos (<span x-text="servers.length"></span>)
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Activo' ? 'active' : ''" @click="activeFilter = 'Activo'">
+              Activos (<span x-text="countByStatus('Activo')"></span>)
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Inactivo' ? 'active' : ''" @click="activeFilter = 'Inactivo'">
+              Inactivos (<span x-text="countByStatus('Inactivo')"></span>)
+            </button>
+            <button class="filter-tab" :class="activeFilter === 'Pendiente' ? 'active' : ''" @click="activeFilter = 'Pendiente'">
+              Pendientes (<span x-text="countByStatus('Pendiente')"></span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- VISTA 1: BENTO GRID -->
+        <div class="bento-grid" x-show="!loading && viewMode === 'grid' && filteredServers.length > 0">
+          <template x-for="s in filteredServers" :key="s.id">
+            <div class="kanban-card" @click="gotoServer(s.id)">
+              <div class="card-section card-section--identity">
+                <div class="card-top">
+                  <div class="card-icon-box">
+                    <iconify-icon icon="lucide:server" style="color:#6c5ce7;"></iconify-icon>
+                  </div>
+                  <div class="card-title-group">
+                    <strong class="card-hostname" x-text="s.hostname"></strong>
+                    <span class="card-model-tag" x-show="s.modelo" x-text="s.modelo"></span>
+                  </div>
+                  <div class="card-actions">
+                    <!-- IPMI QUICK LAUNCH BUTTON -->
+                    <button class="icon-btn" x-show="credsMap[s.id]" @click.stop="openIpmi(credsMap[s.id])" title="Abrir Consola Web IPMI (Nueva Pestaña)" style="color:#00cec9;">
+                      <iconify-icon icon="lucide:external-link"></iconify-icon>
+                    </button>
+                    <button class="icon-btn" @click.stop="gotoServer(s.id)" title="Ver ficha técnica">
+                      <iconify-icon icon="lucide:arrow-right"></iconify-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:0.75rem 1rem;font-size:0.72rem;color:#888;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+                <span>IP: <strong style="color:#ccc;" x-text="s.ip || 'N/A'"></strong></span>
+                <span class="status-badge" :class="(s.estado || 'Activo').toLowerCase()" x-text="s.estado || 'Activo'"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- VISTA 2: TABLA MINIMALISTA -->
+        <div x-show="!loading && viewMode === 'table' && filteredServers.length > 0" class="admin-card-section" style="padding:1rem;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+              <thead>
+                <tr style="text-align:left;color:#777;border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <th style="padding:0.6rem;">Hostname</th>
+                  <th style="padding:0.6rem;">IP Principal</th>
+                  <th style="padding:0.6rem;">Modelo / Fabricante</th>
+                  <th style="padding:0.6rem;">Ubicación</th>
+                  <th style="padding:0.6rem;">Estado</th>
+                  <th style="padding:0.6rem;text-align:right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="s in filteredServers" :key="s.id">
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;" @click="gotoServer(s.id)">
+                    <td style="padding:0.6rem;font-weight:700;color:#fff;" x-text="s.hostname"></td>
+                    <td style="padding:0.6rem;font-family:monospace;color:#6c5ce7;" x-text="s.ip || 'N/A'"></td>
+                    <td style="padding:0.6rem;color:#aaa;" x-text="s.modelo || 'N/A'"></td>
+                    <td style="padding:0.6rem;color:#888;" x-text="s.ubicacion || 'N/A'"></td>
+                    <td style="padding:0.6rem;">
+                      <span class="status-badge" :class="(s.estado || 'Activo').toLowerCase()" x-text="s.estado || 'Activo'"></span>
+                    </td>
+                    <td style="padding:0.6rem;text-align:right;">
+                      <button class="at-btn" x-show="credsMap[s.id]" @click.stop="openIpmi(credsMap[s.id])" style="padding:0.2rem 0.55rem;font-size:0.65rem;color:#00cec9;border-color:rgba(0,206,201,0.3);margin-right:0.3rem;" title="Abrir Consola Web IPMI">
+                        <iconify-icon icon="lucide:external-link"></iconify-icon> IPMI
+                      </button>
+                      <button class="at-btn" @click.stop="gotoServer(s.id)" style="padding:0.2rem 0.55rem;font-size:0.65rem;">
+                        Ver
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div x-show="!loading && filteredServers.length === 0" style="text-align:center;padding:3rem;color:#666;">
+          No se encontraron servidores registrados.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/servers.js"></script>
+</body>
+</html>

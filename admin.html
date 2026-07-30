@@ -157,6 +157,16 @@
           <span x-text="user?.email"></span>
           <span class="role-badge super">super admin</span>
         </div>
+        <!-- ROLE SIMULATION SELECTOR -->
+        <div class="role-simulator-bar" x-show="realUserRole === 'superadmin'" style="display:inline-flex;align-items:center;gap:0.35rem;background:rgba(108,92,231,0.15);border:1px solid rgba(108,92,231,0.3);padding:0.25rem 0.6rem;border-radius:8px;font-size:0.7rem;margin-top:0.5rem;">
+          <iconify-icon icon="lucide:eye" style="color:#00cec9;width:14px;height:14px;"></iconify-icon>
+          <span style="color:#aaa;font-weight:600;">Simular Vista:</span>
+          <select class="role-select" style="padding:0.15rem 0.4rem !important;font-size:0.68rem !important;height:auto !important;background:#12121a !important;color:#fff !important;border-radius:4px !important;" x-model="simulatedRole" @change="simulateRole($event.target.value)">
+            <option value="">Superadmin (Real)</option>
+            <option value="admin">Admin</option>
+            <option value="readonly">Readonly</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -268,6 +278,143 @@
         <div x-show="filteredUsers.length === 0" style="text-align:center;padding:2rem;color:#666;font-size:0.75rem;">
           Sin usuarios coincidentes con "<span x-text="searchUserQuery"></span>"
         </div>
+      </div>
+    </div>
+
+    <!-- GRANULAR RBAC PERMISSIONS MANAGEMENT SECTION -->
+    <div class="admin-card-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="admin-section-title" style="margin:0;">
+          <iconify-icon icon="lucide:sliders" style="color:#00cec9;"></iconify-icon>
+          Gestión Modular de Permisos Granulares por Rol
+        </div>
+        <button class="at-btn" @click="saveRolePermissions()" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.8rem;background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;font-size:0.72rem;font-weight:600;cursor:pointer;">
+          <iconify-icon icon="lucide:save" style="width:13px;height:13px;"></iconify-icon>
+          Guardar Configuración RBAC
+        </button>
+      </div>
+      <p style="font-size:0.72rem;color:#aaa;margin-bottom:1rem;line-height:1.45;">
+        Configura los permisos específicos que tendrán los roles <strong>Administrador (admin)</strong> y <strong>Lectura (readonly)</strong> dentro de los módulos de Servidores, Servicios, Redes e Infraestructura. Los Superadministradores siempre poseen acceso irrestricto.
+      </p>
+
+      <div style="overflow-x:auto;">
+        <table class="rbac-matrix-table">
+          <thead>
+            <tr>
+              <th>Módulo / Acción Granular</th>
+              <th style="text-align:center;width:160px;">Rol Admin</th>
+              <th style="text-align:center;width:160px;">Rol Readonly</th>
+              <th style="text-align:center;width:160px;">Superadmin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong style="color:#fff;">Ver & Copiar Contraseñas</strong>
+                <div style="font-size:0.65rem;color:#777;">Revelar y copiar al portapapeles contraseñas de servicio y servidores</div>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.admin.ver_contrasenas">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.readonly.ver_contrasenas">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;color:#2ecc71;font-weight:700;">
+                <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;"></iconify-icon>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong style="color:#fff;">Crear & Editar Servidores</strong>
+                <div style="font-size:0.65rem;color:#777;">Acceso a add-server.html y edit-server.html para modificar inventario</div>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.admin.crear_editar_servidores">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.readonly.crear_editar_servidores">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;color:#2ecc71;font-weight:700;">
+                <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;"></iconify-icon>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong style="color:#fff;">Eliminar Servidores</strong>
+                <div style="font-size:0.65rem;color:#777;">Permiso para dar de baja y borrar servidores registrados de la BD</div>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.admin.eliminar_servidores">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.readonly.eliminar_servidores">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;color:#2ecc71;font-weight:700;">
+                <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;"></iconify-icon>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong style="color:#fff;">Agendar Tareas de Mantenimiento</strong>
+                <div style="font-size:0.65rem;color:#777;">Crear, completar y reabrir tareas de mantenimiento preventivo</div>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.admin.agendar_mantenimiento">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.readonly.agendar_mantenimiento">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;color:#2ecc71;font-weight:700;">
+                <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;"></iconify-icon>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong style="color:#fff;">Exportar Reportes & CSV de Redes</strong>
+                <div style="font-size:0.65rem;color:#777;">Descarga de archivos CSV de subredes e inventario completo</div>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.admin.exportar_redes_csv">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;">
+                <label class="rbac-toggle-switch">
+                  <input type="checkbox" x-model="rolePermissions.readonly.exportar_redes_csv">
+                  <span class="rbac-toggle-slider"></span>
+                </label>
+              </td>
+              <td style="text-align:center;color:#2ecc71;font-weight:700;">
+                <iconify-icon icon="lucide:check-circle" style="width:16px;height:16px;"></iconify-icon>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -458,7 +605,7 @@
       <div style="font-size:0.8rem;color:#ccc;line-height:1.5;margin-bottom:1.25rem;">
         ¿Estás seguro de que deseas eliminar al usuario <strong style="color:#fff;" x-text="deleteUserTarget?.email || deleteUserTarget?.id"></strong>?
         <div style="font-size:0.72rem;color:#e74c3c;margin-top:0.5rem;background:rgba(231,76,60,0.1);padding:0.5rem;border-radius:6px;border:1px solid rgba(231,76,60,0.25);">
-          ⚠️ Esta acción removerá el perfil y los permisos del usuario en BASTIONX LAB.
+          <iconify-icon icon=\"lucide:alert-triangle\" style=\"color:#e74c3c;margin-right:4px;\"></iconify-icon> Esta acción removerá el perfil y los permisos del usuario en BASTIONX LAB.
         </div>
       </div>
 

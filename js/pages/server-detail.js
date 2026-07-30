@@ -2,8 +2,30 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('detailApp', () => ({
     loading: true,
     user: null,
-    isSuperAdmin: false,
-    canEdit: false,
+    realUserRole: 'readonly',
+    simulatedRole: BastionUtils.getSimulatedRole(),
+
+    get userRole() {
+      return (this.realUserRole === 'superadmin' && this.simulatedRole) ? this.simulatedRole : this.realUserRole
+    },
+
+    get isSuperAdmin() {
+      return this.userRole === 'superadmin'
+    },
+
+    get canEdit() {
+      return this.isSuperAdmin || this.userRole === 'admin'
+    },
+
+    simulateRole(role) {
+      this.simulatedRole = role
+      BastionUtils.setSimulatedRole(role)
+    },
+
+    resetSimulation() {
+      this.simulatedRole = ''
+      BastionUtils.setSimulatedRole('')
+    },
     server: null,
     serverCreds: null,
     tags: [],
@@ -52,8 +74,7 @@ document.addEventListener('alpine:init', () => {
           const { data } = await sb.from('user_profiles').select('role').eq('id', this.user.id).single()
           if (data?.role) role = data.role
         } catch(e) {}
-        this.isSuperAdmin = role === 'superadmin'
-        this.canEdit = this.isSuperAdmin || role === 'admin'
+        this.realUserRole = role
 
         const params = new URLSearchParams(window.location.search)
         const id = params.get('id')

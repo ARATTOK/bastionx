@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BastionLAB — Redes & Direccionamiento IP</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#151515">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body>
+<div x-data="networksApp()" x-init="init()">
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="app-layout" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
+    <main class="main-content">
+      <div class="kanban-board">
+        <!-- TOPBAR -->
+        <div class="topbar" style="margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="btn" @click="window.location.href='dashboard.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+              <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+              Dashboard
+            </button>
+            <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+              <iconify-icon icon="lucide:network" style="width:18px;height:18px;color:#3498db;margin-right:6px;"></iconify-icon>
+              Redes & Direccionamiento IP
+            </h1>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <!-- EXPORT CSV BUTTON -->
+            <button class="at-btn" @click="exportCsv()" style="padding:0.35rem 0.7rem;font-size:0.7rem;color:#3498db;border-color:rgba(52,152,219,0.4);">
+              <iconify-icon icon="lucide:download"></iconify-icon>
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- SEARCH AND IP TYPE FILTER BAR -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;">
+          <div class="search-compact" style="width:280px;">
+            <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+            <input type="text" class="sb-input" x-model="searchQuery" placeholder="Filtrar subred, IP o hostname...">
+            <button class="sb-clear" x-show="searchQuery" @click="searchQuery=''" title="Limpiar">
+              <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+            </button>
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab" :class="selectedIpType === 'todas' ? 'active' : ''" @click="selectedIpType = 'todas'">Todas las IPs</button>
+            <button class="filter-tab" :class="selectedIpType === 'ipmi' ? 'active' : ''" @click="selectedIpType = 'ipmi'">IPMI Gestor</button>
+            <button class="filter-tab" :class="selectedIpType === 'servicio' ? 'active' : ''" @click="selectedIpType = 'servicio'">Servicios</button>
+            <button class="filter-tab" :class="selectedIpType === 'host' ? 'active' : ''" @click="selectedIpType = 'host'">Hosts Principales</button>
+          </div>
+        </div>
+
+        <!-- NETWORK SUBNETS LIST -->
+        <div x-show="!loading" style="display:flex;flex-direction:column;gap:1.5rem;">
+          <template x-for="subnet in filteredSubnets" :key="subnet.name">
+            <div class="admin-card-section" style="padding:1.25rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-subtle);">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <iconify-icon icon="lucide:network" style="color:#3498db;width:18px;height:18px;"></iconify-icon>
+                  <strong style="font-size:1rem;color:#fff;" x-text="'Subred ' + subnet.name"></strong>
+                </div>
+                <span style="font-size:0.72rem;color:#aaa;" x-text="subnet.ips.length + ' dirección(es) IP asignadas'"></span>
+              </div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+                  <thead>
+                    <tr style="text-align:left;color:#777;border-bottom:1px solid rgba(255,255,255,0.05);">
+                      <th style="padding:0.5rem;">Dirección IP</th>
+                      <th style="padding:0.5rem;">Tipo / Interfaz</th>
+                      <th style="padding:0.5rem;">Servidor Host</th>
+                      <th style="padding:0.5rem;text-align:right;">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="ip in subnet.ips" :key="ip.ip">
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                        <td style="padding:0.5rem;font-family:monospace;color:#3498db;font-weight:600;" x-text="ip.ip"></td>
+                        <td style="padding:0.5rem;" x-text="ip.tipo"></td>
+                        <td style="padding:0.5rem;color:#ccc;" x-text="ip.hostname"></td>
+                        <td style="padding:0.5rem;text-align:right;">
+                          <button class="at-btn" x-show="ip.category === 'ipmi'" @click="openIpmi(ip.ip)" style="padding:0.2rem 0.5rem;font-size:0.65rem;color:#00cec9;border-color:rgba(0,206,201,0.3);margin-right:0.3rem;" title="Abrir Consola IPMI en nueva pestaña">
+                            <iconify-icon icon="lucide:external-link"></iconify-icon> IPMI
+                          </button>
+                          <button class="at-btn" @click="copyIp(ip.ip)" style="padding:0.2rem 0.5rem;font-size:0.65rem;">
+                            <iconify-icon icon="lucide:copy"></iconify-icon> Copiar
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="!loading && filteredSubnets.length === 0" style="text-align:center;padding:3rem;color:#666;">
+          No se encontraron direcciones IP ni subredes registradas para este filtro.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/networks.js"></script>
+</body>
+</html>
