@@ -184,7 +184,7 @@ document.addEventListener('alpine:init', () => {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      Alpine.store('toast').success('Reporte CSV descargado con éxito')
+      BastionUtils.showToast('success', 'Reporte CSV descargado con éxito')
     },
 
     print() {

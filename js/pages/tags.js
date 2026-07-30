@@ -36,13 +36,12 @@ document.addEventListener('alpine:init', () => {
 
     async save() {
       if (!this.form.name.trim()) return
-      const t = Alpine.store('toast')
       if (this.editingTag) {
         await sb.from('tags').update({ name: this.form.name.trim(), color: this.form.color }).eq('id', this.editingTag.id)
-        if (t) t.success('Tag actualizado')
+        BastionUtils.showToast('success', 'Tag actualizado')
       } else {
         await sb.from('tags').insert({ name: this.form.name.trim(), color: this.form.color })
-        if (t) t.success('Tag creado')
+        BastionUtils.showToast('success', 'Tag creado')
       }
       this.showModal = false
       await this.loadTags()
@@ -59,8 +58,7 @@ document.addEventListener('alpine:init', () => {
       await this.loadTags()
       this.showDeleteConfirm = false
       this.pendingDeleteId = null
-      const t = Alpine.store('toast')
-      if (t) t.success('Tag eliminado')
+      BastionUtils.showToast('success', 'Tag eliminado')
     },
 
     cancelDelete() {

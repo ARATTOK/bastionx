@@ -24,12 +24,26 @@ document.addEventListener('alpine:init', () => {
       this.loading = false
     },
 
+    get isValidEmail() {
+      if (!this.loginEmail.trim()) return false
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.loginEmail.trim())
+    },
+
+    get isFormValid() {
+      return this.isValidEmail && this.loginPassword.length >= 6
+    },
+
     async login() {
       if (this.authenticating) return
       this.loginError = ''
 
       if (!this.loginEmail.trim() || !this.loginPassword) {
         this.loginError = 'Completa todos los campos antes de ingresar.'
+        return
+      }
+
+      if (!this.isValidEmail) {
+        this.loginError = 'Ingresa una dirección de correo electrónico válida.'
         return
       }
 
@@ -49,7 +63,7 @@ document.addEventListener('alpine:init', () => {
           }
           this.loginError = msgs[error.message] || `Error: ${error.message}`
         } else {
-          Alpine.store('toast').success('Sesión iniciada correctamente')
+          BastionUtils.showToast('success', 'Sesión iniciada correctamente')
           setTimeout(() => { window.location.href = 'dashboard.html' }, 300)
         }
       } catch (e) {

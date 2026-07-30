@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BASTIONX LAB — Agregar servidor</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
   <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#151515">
@@ -52,11 +52,34 @@
         </button>
       </div>
 
+      <!-- SECTION NAVIGATION BAR -->
+      <div class="form-section-nav">
+        <button type="button" class="form-nav-item" :class="activeSection === 'sec-general' ? 'active' : ''" @click="scrollToSection('sec-general')">
+          <iconify-icon icon="lucide:server" style="width:13px;height:13px;"></iconify-icon>
+          General
+        </button>
+        <button type="button" class="form-nav-item" :class="activeSection === 'sec-tags' ? 'active' : ''" @click="scrollToSection('sec-tags')">
+          <iconify-icon icon="lucide:tag" style="width:13px;height:13px;"></iconify-icon>
+          Tags
+          <span class="nav-badge" x-text="selectedTagIds.length"></span>
+        </button>
+        <button type="button" class="form-nav-item" :class="activeSection === 'sec-disks' ? 'active' : ''" @click="scrollToSection('sec-disks')">
+          <iconify-icon icon="lucide:hard-drive" style="width:13px;height:13px;"></iconify-icon>
+          Discos RAID
+          <span class="nav-badge" x-text="form.raids.length"></span>
+        </button>
+        <button type="button" class="form-nav-item" :class="activeSection === 'sec-services' ? 'active' : ''" @click="scrollToSection('sec-services')">
+          <iconify-icon icon="lucide:boxes" style="width:13px;height:13px;"></iconify-icon>
+          Servicios
+          <span class="nav-badge" x-text="form.servicios.length"></span>
+        </button>
+      </div>
+
       <!-- CARD -->
       <div class="edit-form-card">
 
         <!-- INFORMACION DEL SERVIDOR -->
-        <div class="edit-section">
+        <div class="edit-section" id="sec-general">
           <h2 class="det-section-title">
             <iconify-icon icon="lucide:server" style="width:14px;height:14px;color:#6c5ce7;flex-shrink:0;"></iconify-icon>
             Informaci&oacute;n del servidor
@@ -139,7 +162,7 @@
           </div>
 
           <!-- RAIDs + DISCOS -->
-          <div class="edit-section">
+          <div class="edit-section" id="sec-disks">
             <h2 class="det-section-title">
               <iconify-icon icon="lucide:hard-drive" style="width:14px;height:14px;color:#1abc9c;flex-shrink:0;"></iconify-icon>
               RAIDs y discos <span style="color:#555;font-size:0.6rem;font-weight:400;">(opcional)</span>
@@ -275,13 +298,31 @@
         </div><!-- /advanced-content -->
 
       </div><!-- /edit-form-card -->
+
+      <!-- STICKY ACTION FOOTER -->
+      <div class="sticky-form-footer">
+        <div class="val-status" :class="errorCount === 0 ? 'valid' : 'invalid'">
+          <iconify-icon :icon="errorCount === 0 ? 'lucide:check-circle' : 'lucide:alert-triangle'" style="width:14px;height:14px;"></iconify-icon>
+          <span x-text="errorCount === 0 ? 'Campos válidos' : errorCount + ' error(es) detectado(s)'"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <button class="btn" @click="goBack()" type="button" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">
+            Cancelar
+          </button>
+          <button class="btn" @click="save()" :disabled="saving" type="button" style="background:#6c5ce7;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1.1rem;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:0.35rem;box-shadow:0 4px 12px rgba(108,92,231,0.3);">
+            <iconify-icon icon="lucide:save" style="width:13px;height:13px;"></iconify-icon>
+            <span x-text="saving ? 'Guardando servidor...' : 'Guardar Servidor'"></span>
+          </button>
+        </div>
+      </div>
     </div>
   </template>
 </div>
-<script src="js/supabase.js"></script>
-<script src="js/toast.js"></script>
-<script src="js/audit.js"></script>
-<script src="js/add-server.js"></script>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/add-server.js"></script>
 
 <!-- Toast container -->
 <div x-data x-show="$store.toast.items.length" class="toast-container">

@@ -44,14 +44,24 @@ document.addEventListener('alpine:init', () => {
       return JSON.stringify(this.form) !== this._formSnapshot
     },
 
+    activeSection: 'general',
+
+    scrollToSection(sectionId) {
+      this.activeSection = sectionId
+      const el = document.getElementById(sectionId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    },
+
     validateField(name) {
       this.errors[name] = null
       if (name === 'hostname') {
         if (!this.form.hostname.trim()) this.errors.hostname = 'El hostname es obligatorio'
-        else if (this.form.hostname.trim().length < 3) this.errors.hostname = 'M\u00ednimo 3 caracteres'
+        else if (this.form.hostname.trim().length < 3) this.errors.hostname = 'Mínimo 3 caracteres'
       }
       if (name === 'sn') {
-        if (!this.form.sn.trim()) this.errors.sn = 'El n\u00famero de serie es obligatorio'
+        if (!this.form.sn.trim()) this.errors.sn = 'El número de serie es obligatorio'
       }
       if (name === 'modelo') {
         if (!this.form.modelo.trim()) this.errors.modelo = 'El modelo es obligatorio'
@@ -70,18 +80,16 @@ document.addEventListener('alpine:init', () => {
       }
       if (!disk.tipo) errs.tipo = 'Selecciona tipo'
       if (!disk.tamano?.trim()) errs.tamano = 'Requerido'
-      else if (isNaN(parseFloat(disk.tamano))) errs.tamano = 'Debe ser un n\u00famero'
+      else if (isNaN(parseFloat(disk.tamano))) errs.tamano = 'Debe ser un número'
       this.diskErrors[key] = Object.keys(errs).length > 0 ? errs : null
     },
 
     isValidIP(ip) {
-      if (!ip || !ip.trim()) return true
-      const parts = ip.trim().split('.')
-      if (parts.length !== 4) return false
-      return parts.every(p => {
-        const n = Number(p)
-        return !isNaN(n) && n >= 0 && n <= 255 && p === String(n)
-      })
+      return BastionUtils.isValidIPv4(ip)
+    },
+
+    isValidPort(port) {
+      return BastionUtils.isValidPort(port)
     },
 
     validateAll() {
@@ -94,6 +102,10 @@ document.addEventListener('alpine:init', () => {
       this.errors.servicios = ''
       for (let si = 0; si < this.form.servicios.length; si++) {
         const svc = this.form.servicios[si]
+        if (svc.puerto && !this.isValidPort(svc.puerto)) {
+          this.errors.servicios = 'Puerto inválido (1-65535) en ' + (svc.nombre || 'servicio ' + (si + 1))
+          break
+        }
         if (Array.isArray(svc.ips)) {
           for (let ii = 0; ii < svc.ips.length; ii++) {
             if (!this.isValidIP(svc.ips[ii])) {
@@ -106,6 +118,18 @@ document.addEventListener('alpine:init', () => {
       }
       const hasDiskErr = Object.values(this.diskErrors).some(Boolean)
       return !Object.values(this.errors).some(Boolean) && !hasDiskErr
+    },
+
+    get errorCount() {
+      let count = 0;
+      if (this.errors.hostname) count++;
+      if (this.errors.sn) count++;
+      if (this.errors.modelo) count++;
+      if (this.errors.servicios) count++;
+      Object.values(this.diskErrors).forEach(err => {
+        if (err) count += Object.keys(err).length;
+      });
+      return count;
     },
 
     get filteredTags() {
@@ -189,8 +213,7 @@ document.addEventListener('alpine:init', () => {
 
     async save() {
       if (!this.validateAll()) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Corrige los errores en el formulario antes de guardar')
+        BastionUtils.showToast('error', 'Corrige los errores en el formulario antes de guardar')
         return
       }
 
@@ -239,8 +262,7 @@ document.addEventListener('alpine:init', () => {
           })
           .select()
         if (error) {
-          const t = Alpine.store('toast')
-          if (t) t.error('Error al guardar: ' + error.message)
+          BastionUtils.showToast('error', 'Error al guardar: ' + error.message)
           this.saving = false
           return
         }
@@ -254,12 +276,10 @@ document.addEventListener('alpine:init', () => {
           await sb.from('server_tags').insert(inserts)
         }
 
-        const t = Alpine.store('toast')
-        if (t) t.success('Servidor creado correctamente')
+        BastionUtils.showToast('success', 'Servidor creado correctamente')
         setTimeout(() => { window.location.href = 'server-detail.html?id=' + serverId }, 500)
       } catch (e) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al guardar: ' + (e.message || e))
+        BastionUtils.showToast('error', 'Error al guardar: ' + (e.message || e))
         this.saving = false
       }
     }

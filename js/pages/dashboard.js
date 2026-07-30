@@ -142,13 +142,8 @@ document.addEventListener('alpine:init', () => {
       const actions = [
         { icon: 'lucide:plus', label: 'Agregar servidor', action: () => window.location.href='add-server.html' },
         { icon: 'lucide:file-down', label: 'Exportar CSV', action: () => this.exportCSV() },
-        { icon: 'lucide:clipboard-list', label: 'Abrir reporte', action: () => window.location.href='report.html' },
         { icon: 'lucide:refresh-cw', label: 'Recargar inventario', action: () => this.refreshServers() },
-        { icon: 'lucide:printer', label: 'Imprimir etiquetas', action: () => window.location.href='labels.html' },
-        { icon: 'lucide:tag', label: 'Administrar tags', action: () => window.location.href='tags.html' },
       ]
-      if (this.isSuperAdmin) {
-      }
       actions.push({ type: 'divider' })
       this.servers.forEach(s => {
         actions.push({
@@ -176,13 +171,12 @@ document.addEventListener('alpine:init', () => {
       a.download = `bastionx-${filename}-${new Date().toISOString().slice(0,10)}.csv`
       a.click()
       URL.revokeObjectURL(a.href)
-      const t = Alpine.store('toast')
-      if (t) t.success('CSV exportado correctamente')
+      BastionUtils.showToast('success', 'CSV exportado correctamente')
     },
 
     exportCSV() {
       const isRestricted = !this.canEdit
-      const headers = ['Hostname','SN','Modelo','Ubicaci\u00f3n','Estado','CPU','RAM (GB)','Discos','Servicios','Tags']
+      const headers = ['Hostname','SN','Modelo','Ubicación','Estado','CPU','RAM (GB)','Discos','Servicios','Tags']
       if (!isRestricted) headers.push('IPMI', 'IP Servicio')
       const rows = this.servers.map(s => {
         const tags = this.serverTagsMap[s.id]?.map(t => t.name).join('; ') || ''
@@ -286,28 +280,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     getCountdownText(fechaLimite) {
-      if (!fechaLimite) return ''
-      const due = new Date(fechaLimite)
-      const today = new Date()
-      today.setHours(0,0,0,0)
-      due.setHours(0,0,0,0)
-      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
-      if (diffDays < 0) return `Vencido (${Math.abs(diffDays)}d)`
-      if (diffDays === 0) return 'Mantenimiento HOY'
-      if (diffDays === 1) return 'Mañana'
-      return `En ${diffDays} días`
+      return BastionUtils.getCountdownText(fechaLimite)
     },
 
     getCountdownClass(fechaLimite) {
-      if (!fechaLimite) return ''
-      const due = new Date(fechaLimite)
-      const today = new Date()
-      today.setHours(0,0,0,0)
-      due.setHours(0,0,0,0)
-      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
-      if (diffDays < 0) return 'cd-overdue'
-      if (diffDays <= 3) return 'cd-urgent'
-      return 'cd-upcoming'
+      return BastionUtils.getCountdownClass(fechaLimite)
     },
 
     async loadCreds() {
@@ -334,10 +311,6 @@ document.addEventListener('alpine:init', () => {
       await this.loadTags()
     },
 
-    // =============================================================
-    // USERS
-    // =============================================================
-
     async fetchUsers() {
       const { data } = await sb
         .from('user_profiles')
@@ -352,15 +325,13 @@ document.addEventListener('alpine:init', () => {
         .update({ role: newRole })
         .eq('id', userId)
       if (error) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al actualizar rol: ' + error.message)
+        BastionUtils.showToast('error', 'Error al actualizar rol: ' + error.message)
       } else {
         await this.fetchUsers()
         if (userId === this.user.id) {
           this.userRole = newRole
         }
-        const t = Alpine.store('toast')
-        if (t) t.success('Rol actualizado correctamente')
+        BastionUtils.showToast('success', 'Rol actualizado correctamente')
       }
     },
 
@@ -419,9 +390,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     formatDate(ts) {
-      if (!ts) return ''
-      const d = new Date(ts)
-      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      return BastionUtils.formatDate(ts)
     },
 
     serversByStatus(status) {
@@ -491,7 +460,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     shortCpu(cpu) {
-      if (!cpu || cpu === '') return '\u2014'
+      if (!cpu || cpu === '') return '—'
       if (cpu.includes('Silver')) return cpu.split('@')[0].replace('Intel ', '').trim()
       if (cpu.includes('E5')) return cpu.split('@')[0].replace('Intel ', '').trim()
       if (cpu.includes('E-')) return cpu.split('@')[0].replace('Intel ', '').trim()
@@ -524,9 +493,9 @@ document.addEventListener('alpine:init', () => {
         if (!Array.isArray(d) || d.length === 0) return ''
         if (d[0] && d[0].nombre !== undefined) {
           return d.flatMap(r => Array.isArray(r.discos) ? r.discos : [])
-            .map(dd => dd.bay + ': ' + (dd.tipo || '\u2014')).join('<br>')
+            .map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
         }
-        return d.map(dd => dd.bay + ': ' + (dd.tipo || '\u2014')).join('<br>')
+        return d.map(dd => dd.bay + ': ' + (dd.tipo || '—')).join('<br>')
       } catch { return '' }
     },
 
@@ -542,10 +511,6 @@ document.addEventListener('alpine:init', () => {
       if (pct >= 50) return '#5dade2'
       if (pct >= 25) return '#f39c12'
       return '#e74c3c'
-    },
-    toggleExpand(id) {
-      this.expandedCard = this.expandedCard === id ? null : id
-      this.expandedServerId = this.expandedCard
     },
 
     openQuickServer(s) {
@@ -632,11 +597,7 @@ document.addEventListener('alpine:init', () => {
     netStatusFilter: '',
 
     copyToClipboard(text) {
-      if (!text) return
-      navigator.clipboard.writeText(text).then(() => {
-        const t = Alpine.store('toast')
-        if (t) t.success('Contraseña copiada al portapapeles')
-      }).catch(() => {})
+      BastionUtils.copyToClipboard(text)
     },
 
     get allIPs() {

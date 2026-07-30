@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BASTIONX LAB — Login</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
   <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#151515">
@@ -43,12 +43,12 @@
         <form @submit.prevent="login()">
           <div class="field">
             <iconify-icon icon="lucide:mail" class="field-icon"></iconify-icon>
-            <input type="email" x-model="loginEmail" @input="loginError=''" placeholder="tu.correo@bastionx.com" required autocomplete="email">
+            <input type="email" x-model="loginEmail" @input="loginError=''" placeholder="tu.correo@bastionx.com" required autocomplete="email" :class="{ 'is-valid': isValidEmail, 'is-invalid': loginEmail.trim() && !isValidEmail }">
           </div>
 
           <div class="field" style="position:relative;">
             <iconify-icon icon="lucide:lock" class="field-icon"></iconify-icon>
-            <input :type="showPassword ? 'text' : 'password'" x-model="loginPassword" @input="loginError=''" placeholder="Contraseña" required autocomplete="current-password" style="padding-right:2.4rem !important;">
+            <input :type="showPassword ? 'text' : 'password'" x-model="loginPassword" @input="loginError=''" placeholder="Contraseña" required autocomplete="current-password" style="padding-right:2.4rem !important;" :class="{ 'is-valid': loginPassword.length >= 6 }">
             <button type="button" @click="showPassword = !showPassword" title="Mostrar/ocultar contraseña" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#888;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;">
               <iconify-icon :icon="showPassword ? 'lucide:eye-off' : 'lucide:eye'" style="width:16px;height:16px;"></iconify-icon>
             </button>
@@ -73,9 +73,10 @@
   </div>
 </div>
 
-<script src="js/supabase.js"></script>
-<script src="js/toast.js"></script>
-<script src="js/login.js"></script>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/pages/login.js"></script>
 
 <!-- Toast container -->
 <div x-data x-show="$store.toast.items.length" class="toast-container">

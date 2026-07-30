@@ -36,7 +36,7 @@ document.addEventListener('alpine:init', () => {
       this.showPassword = !this.showPassword
       if (this.showPassword && this.server && this.user) {
         await auditLog(this.server.id, this.user.id, 'credential.revealed', { hostname: this.server.hostname }, 'Visualización de contraseña para ' + this.server.hostname)
-        Alpine.store('toast').success('Consulta de contraseña registrada en bitácora')
+        BastionUtils.showToast('success', 'Consulta de contraseña registrada en bitácora')
       }
     },
 
@@ -80,7 +80,7 @@ document.addEventListener('alpine:init', () => {
         this.loading = false
       } catch (err) {
         console.error('Init error:', err)
-        Alpine.store('toast').error('Error al cargar datos del servidor')
+        BastionUtils.showToast('error', 'Error al cargar datos del servidor')
         this.loading = false
       }
     },
@@ -110,8 +110,7 @@ document.addEventListener('alpine:init', () => {
       await sb.from('server_credentials').delete().eq('server_id', this.server.id)
       await sb.from('server_tasks').delete().eq('server_id', this.server.id)
       await sb.from('servers').delete().eq('id', this.server.id)
-      const t = Alpine.store('toast')
-      if (t) t.success('Servidor eliminado')
+      BastionUtils.showToast('success', 'Servidor eliminado')
       setTimeout(() => { window.location.href = 'dashboard.html' }, 400)
     },
 
@@ -119,39 +118,18 @@ document.addEventListener('alpine:init', () => {
     goEdit() { window.location.href = 'edit-server.html?id=' + this.server.id },
 
     copyToClipboard(text) {
-      if (!text) return
-      navigator.clipboard.writeText(text).then(() => {
-        const t = Alpine.store('toast')
-        if (t) t.success('Contraseña copiada al portapapeles')
-      }).catch(() => {})
+      BastionUtils.copyToClipboard(text)
     },
 
-    newTaskFechaLimite: '',
-
     getCountdownText(fechaLimite) {
-      if (!fechaLimite) return ''
-      const due = new Date(fechaLimite)
-      const today = new Date()
-      today.setHours(0,0,0,0)
-      due.setHours(0,0,0,0)
-      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
-      if (diffDays < 0) return `Vencido (${Math.abs(diffDays)}d)`
-      if (diffDays === 0) return 'Mantenimiento HOY'
-      if (diffDays === 1) return 'Mañana'
-      return `En ${diffDays} días`
+      return BastionUtils.getCountdownText(fechaLimite)
     },
 
     getCountdownClass(fechaLimite) {
-      if (!fechaLimite) return ''
-      const due = new Date(fechaLimite)
-      const today = new Date()
-      today.setHours(0,0,0,0)
-      due.setHours(0,0,0,0)
-      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
-      if (diffDays < 0) return 'cd-overdue'
-      if (diffDays <= 3) return 'cd-urgent'
-      return 'cd-upcoming'
+      return BastionUtils.getCountdownClass(fechaLimite)
     },
+
+    newTaskFechaLimite: '',
 
     async addTask() {
       if (!this.newTaskTitulo.trim()) return
@@ -168,15 +146,13 @@ document.addEventListener('alpine:init', () => {
 
       const { data, error } = await sb.from('server_tasks').insert(payload).select().single()
       if (error) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error: ' + error.message)
+        BastionUtils.showToast('error', 'Error: ' + error.message)
         return
       }
       if (data) {
         this.tasks.unshift(data)
         await this.insertLog(data.id, 'creada', null)
-        const t = Alpine.store('toast')
-        if (t) t.success('Tarea / Mantenimiento agendado correctamente')
+        BastionUtils.showToast('success', 'Tarea / Mantenimiento agendado correctamente')
       }
       this.newTaskTitulo = ''
       this.newTaskDesc = ''
@@ -204,8 +180,7 @@ document.addEventListener('alpine:init', () => {
         task.completada = true
         task.completed_at = new Date().toISOString()
         await this.insertLog(task.id, 'completada', desc)
-        const t = Alpine.store('toast')
-        if (t) t.success('Tarea completada')
+        BastionUtils.showToast('success', 'Tarea completada')
       }
       this.showCompleteModal = false
       this.pendingCompleteTask = null
@@ -291,20 +266,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     formatDate(ts) {
-      if (!ts) return ''
-      const d = new Date(ts)
-      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      return BastionUtils.formatDate(ts)
     },
 
     taskSeverityClass(c) {
-      if (c === 'critica') return 'tsk-critical'
-      if (c === 'configuracion') return 'tsk-config'
-      return 'tsk-normal'
+      return BastionUtils.taskSeverityClass(c)
     },
 
     taskSeverityLabel(c) {
-      if (c === 'critica') return 'Cr\u00edtica'
-      if (c === 'configuracion') return 'Configuraci\u00f3n'
+      if (c === 'critica') return 'Crítica'
+      if (c === 'configuracion') return 'Configuración'
       return 'Normal'
     },
 
@@ -344,6 +315,6 @@ document.addEventListener('alpine:init', () => {
         groups[key].discos.push({ bay: x.bay, tipo: x.tipo || '', tamano: x.tamano || '', velocidad: x.velocidad || '' })
       })
       return Object.values(groups)
-    },
+    }
   }))
 })

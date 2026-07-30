@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BASTIONX LAB — Inventory Control</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
   <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#151515">
@@ -1015,10 +1015,11 @@
   </div>
 </div>
 
-<script src="js/supabase.js"></script>
-<script src="js/toast.js"></script>
-<script src="js/audit.js"></script>
-<script src="js/app.js"></script>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/dashboard.js"></script>
 
 <!-- Toast container -->
 <div x-data x-show="$store.toast.items.length" class="toast-container">

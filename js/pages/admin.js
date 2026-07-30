@@ -22,6 +22,14 @@ document.addEventListener('alpine:init', () => {
     deleteUserTarget: null,
     deletingUser: false,
 
+    get isValidNewUserEmail() {
+      return BastionUtils.isValidIPv4 ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newUserEmail.trim()) : false
+    },
+
+    get isNewUserPasswordValid() {
+      return this.newUserPassword && this.newUserPassword.length >= 6
+    },
+
     openCreateUserModal() {
       this.newUserEmail = ''
       this.newUserPassword = ''
@@ -37,8 +45,7 @@ document.addEventListener('alpine:init', () => {
 
     openDeleteUserModal(u) {
       if (u.id === this.user.id) {
-        const t = Alpine.store('toast')
-        if (t) t.error('No puedes eliminar tu propia cuenta de Superadmin')
+        BastionUtils.showToast('error', 'No puedes eliminar tu propia cuenta de Superadmin')
         return
       }
       this.deleteUserTarget = u
@@ -48,8 +55,7 @@ document.addEventListener('alpine:init', () => {
     async confirmDeleteUser() {
       if (!this.deleteUserTarget) return
       if (this.deleteUserTarget.id === this.user.id) {
-        const t = Alpine.store('toast')
-        if (t) t.error('No puedes eliminar tu propia cuenta de Superadmin')
+        BastionUtils.showToast('error', 'No puedes eliminar tu propia cuenta de Superadmin')
         return
       }
 
@@ -60,16 +66,14 @@ document.addEventListener('alpine:init', () => {
 
         await auditLog(null, this.user.id, 'user.deleted', { deleted_user_id: this.deleteUserTarget.id, email: this.deleteUserTarget.email }, `Eliminación de usuario ${this.deleteUserTarget.email || this.deleteUserTarget.id}`)
 
-        const t = Alpine.store('toast')
-        if (t) t.success(`Usuario ${this.deleteUserTarget.email || 'eliminado'} removido correctamente`)
+        BastionUtils.showToast('success', `Usuario ${this.deleteUserTarget.email || 'eliminado'} removido correctamente`)
 
         this.showDeleteUserModal = false
         this.deleteUserTarget = null
         await this.loadUsers()
         await this.loadAuditLogs()
       } catch (e) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al eliminar usuario: ' + e.message)
+        BastionUtils.showToast('error', 'Error al eliminar usuario: ' + e.message)
       } finally {
         this.deletingUser = false
       }
@@ -77,8 +81,7 @@ document.addEventListener('alpine:init', () => {
 
     async resetUserPassword() {
       if (!this.resetNewPassword || this.resetNewPassword.length < 6) {
-        const t = Alpine.store('toast')
-        if (t) t.error('La contraseña debe tener al menos 6 caracteres')
+        BastionUtils.showToast('error', 'La contraseña debe tener al menos 6 caracteres')
         return
       }
 
@@ -94,12 +97,10 @@ document.addEventListener('alpine:init', () => {
 
         await auditLog(null, this.user.id, 'user.password_reset', { target_user_id: this.resetPasswordUser.id, email: this.resetPasswordUser.email }, `Reinicio de contraseña para usuario ${this.resetPasswordUser.email || this.resetPasswordUser.id}`)
 
-        const t = Alpine.store('toast')
-        if (t) t.success(`Solicitud de cambio de contraseña procesada para ${this.resetPasswordUser.email || 'usuario'}`)
+        BastionUtils.showToast('success', `Solicitud de cambio de contraseña procesada para ${this.resetPasswordUser.email || 'usuario'}`)
         this.showResetPasswordModal = false
       } catch (e) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al resetear contraseña: ' + e.message)
+        BastionUtils.showToast('error', 'Error al resetear contraseña: ' + e.message)
       } finally {
         this.resettingPassword = false
       }
@@ -107,8 +108,7 @@ document.addEventListener('alpine:init', () => {
 
     async createUser() {
       if (!this.newUserEmail.trim() || !this.newUserPassword) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Email y contraseña son obligatorios')
+        BastionUtils.showToast('error', 'Email y contraseña son obligatorios')
         return
       }
 
@@ -120,8 +120,7 @@ document.addEventListener('alpine:init', () => {
         })
 
         if (error) {
-          const t = Alpine.store('toast')
-          if (t) t.error('Error al crear usuario: ' + error.message)
+          BastionUtils.showToast('error', 'Error al crear usuario: ' + error.message)
           return
         }
 
@@ -134,16 +133,14 @@ document.addEventListener('alpine:init', () => {
 
           await auditLog(null, this.user.id, 'user.created', { created_user_id: data.user.id, role: this.newUserRole }, `Creación de usuario ${data.user.email} con rol ${this.newUserRole}`)
 
-          const t = Alpine.store('toast')
-          if (t) t.success(`Usuario ${data.user.email} creado con rol ${this.newUserRole}`)
+          BastionUtils.showToast('success', `Usuario ${data.user.email} creado con rol ${this.newUserRole}`)
 
           this.showCreateUserModal = false
           await this.loadUsers()
           await this.loadAuditLogs()
         }
       } catch (e) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al registrar usuario: ' + e.message)
+        BastionUtils.showToast('error', 'Error al registrar usuario: ' + e.message)
       } finally {
         this.creatingUser = false
       }
@@ -164,8 +161,7 @@ document.addEventListener('alpine:init', () => {
         } else if (profile.role === 'superadmin' || profile.role === 'admin') {
           this.isSuperAdmin = true
         } else {
-          const t = Alpine.store('toast')
-          if (t) t.error('Acceso denegado: Requiere permisos de Administración')
+          BastionUtils.showToast('error', 'Acceso denegado: Requiere permisos de Administración')
           setTimeout(() => { window.location.href = 'dashboard.html' }, 500)
           return
         }
@@ -174,8 +170,7 @@ document.addEventListener('alpine:init', () => {
         await this.loadAuditLogs()
       } catch (err) {
         console.error('Admin init error:', err)
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al inicializar panel de administración')
+        BastionUtils.showToast('error', 'Error al inicializar panel de administración')
       } finally {
         this.loading = false
       }
@@ -250,23 +245,20 @@ document.addEventListener('alpine:init', () => {
 
     async changeUserRole(userId, targetRole, userEmail) {
       if (userId === this.user.id && targetRole !== 'superadmin') {
-        const t = Alpine.store('toast')
-        if (t) t.error('No puedes remover tu propio rol de Superadmin')
+        BastionUtils.showToast('error', 'No puedes remover tu propio rol de Superadmin')
         await this.loadUsers()
         return
       }
 
       const { error } = await sb.from('user_profiles').update({ role: targetRole }).eq('id', userId)
       if (error) {
-        const t = Alpine.store('toast')
-        if (t) t.error('Error al cambiar rol: ' + error.message)
+        BastionUtils.showToast('error', 'Error al cambiar rol: ' + error.message)
         await this.loadUsers()
         return
       }
 
       await auditLog(null, this.user.id, 'user.role_changed', { target_user_id: userId, new_role: targetRole }, `Cambio de rol a ${targetRole} para ${userEmail || userId.slice(0, 8)}`)
-      const t = Alpine.store('toast')
-      if (t) t.success(`Rol actualizado a "${targetRole}" para ${userEmail || 'usuario'}`)
+      BastionUtils.showToast('success', `Rol actualizado a "${targetRole}" para ${userEmail || 'usuario'}`)
       await this.loadUsers()
       await this.loadAuditLogs()
     },
@@ -276,9 +268,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     formatDate(ts) {
-      if (!ts) return ''
-      const d = new Date(ts)
-      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      return BastionUtils.formatDate(ts)
     },
 
     logAccionClass(accion) {

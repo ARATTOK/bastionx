@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BASTIONX LAB — Detalle</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
   <meta name="apple-mobile-web-app-title" content="BASTIONX LAB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#151515">
@@ -406,7 +406,8 @@
         <div style="display:flex;flex-direction:column;gap:0.85rem;">
           <div class="field-group">
             <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Título de la Tarea / Evento *</label>
-            <input type="text" x-model="newTaskTitulo" placeholder="Ej: Mantenimiento preventivo de discos y fuente" required style="width:100%;">
+            <input type="text" x-model="newTaskTitulo" placeholder="Ej: Mantenimiento preventivo de discos y fuente" required style="width:100%;" :class="{ 'is-valid': newTaskTitulo.trim().length >= 3, 'is-invalid': newTaskTitulo && newTaskTitulo.trim().length < 3 }">
+            <div class="field-error" :class="{ 'show': newTaskTitulo && newTaskTitulo.trim().length < 3 }">Mínimo 3 caracteres</div>
           </div>
 
           <div class="field-group">
@@ -433,16 +434,17 @@
 
         <div style="margin-top:1.5rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:0.5rem;">
           <button type="button" class="btn" @click="showAddTaskModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
-          <button type="submit" class="btn" style="background:#6c5ce7;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">Agendar / Guardar</button>
+          <button type="submit" class="btn" :disabled="!newTaskTitulo.trim() || newTaskTitulo.trim().length < 3" style="background:#6c5ce7;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">Agendar / Guardar</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-<script src="js/supabase.js"></script>
-<script src="js/toast.js"></script>
-<script src="js/audit.js"></script>
-<script src="js/detail-server.js"></script>
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/server-detail.js"></script>
 
 <!-- Toast container -->
 <div x-data x-show="$store.toast.items.length" class="toast-container">
