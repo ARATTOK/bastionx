@@ -30,6 +30,7 @@ document.addEventListener('alpine:init', () => {
     servers: [],
     allServicesCount: 0,
     subnetsCount: 0,
+    myPendingTasksCount: 0,
 
     async init() {
       try {
@@ -91,7 +92,22 @@ document.addEventListener('alpine:init', () => {
         this.allServicesCount = svcCount
         this.subnetsCount = subnetsSet.size
       }
+
+      try {
+        const { data: tasks } = await sb.from('server_tasks')
+          .select('id, titulo, criticidad, fecha_limite, completada, assigned_to, server_id, servers(hostname)')
+          .eq('completada', false)
+          .order('fecha_limite', { ascending: true })
+
+        if (tasks) {
+          this.pendingTasksList = tasks.filter(t => !t.assigned_to || t.assigned_to === this.user?.id || t.assigned_to === this.user?.email)
+          this.myPendingTasksCount = this.pendingTasksList.length
+        }
+      } catch(e) {}
     },
+
+    showNotificationsMenu: false,
+    pendingTasksList: [],
 
     get totalStorageTB() {
       let totalGB = 0

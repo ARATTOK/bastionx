@@ -17,6 +17,21 @@ document.addEventListener('alpine:init', () => {
       raids: [], servicios: []
     },
 
+    rackName: 'RACK-MAIN-01',
+    uStart: 34,
+    uHeight: 2,
+    otherServers: [],
+
+    cpuSockets: 2,
+    cpuModel: 'Intel Xeon Gold 6248R',
+    cpuCores: '24 Cores / 48 Threads',
+    cpuGhz: '3.0 GHz',
+
+    ramDimmsCount: 4,
+    ramDimmCap: 32,
+    ramType: 'DDR4 ECC',
+    ramSpeed: '3200 MHz',
+
     async init() {
       const { data: { session } } = await sb.auth.getSession()
       if (!session) { window.location.href = 'login.html'; return }
@@ -36,8 +51,85 @@ document.addEventListener('alpine:init', () => {
       const { data: allTags } = await sb.from('tags').select('*').order('name')
       if (allTags) this.allTags = allTags
 
+      await this.loadOtherServers()
+      this.updateUbicacionString()
+      this.updateHardwareStrings()
+
       this._formSnapshot = JSON.stringify(this.form)
       this.loading = false
+    },
+
+    async loadOtherServers() {
+      const { data } = await sb.from('servers').select('id, hostname, ubicacion')
+      if (data) this.otherServers = data
+    },
+
+    isUOccupied(u) {
+      const targetU = parseInt(u, 10)
+      const myRack = (this.rackName || 'RACK-MAIN-01').trim().toLowerCase()
+      for (const s of this.otherServers) {
+        const loc = (s.ubicacion || '').trim()
+        const match = loc.match(/(?:(.*?),?\s*)?U(\d+)(?:\s*-\s*U?(\d+))?/i)
+        if (match) {
+          const otherRack = (match[1] || 'RACK-MAIN-01').trim().toLowerCase()
+          if (otherRack === myRack) {
+            const oStart = parseInt(match[2], 10)
+            const oEnd = match[3] ? parseInt(match[3], 10) : oStart
+            if (targetU >= oStart && targetU <= oEnd) {
+              return s.hostname
+            }
+          }
+        }
+      }
+      return null
+    },
+
+    get uConflictError() {
+      if (!this.rackName || !this.uStart) return null
+      const myStart = parseInt(this.uStart, 10)
+      const myHeight = parseInt(this.uHeight || 1, 10)
+      const myEnd = myStart + myHeight - 1
+      const myRack = (this.rackName || '').trim().toLowerCase()
+
+      for (const s of this.otherServers) {
+        const loc = (s.ubicacion || '').trim()
+        const match = loc.match(/(?:(.*?),?\s*)?U(\d+)(?:\s*-\s*U?(\d+))?/i)
+        if (match) {
+          const otherRack = (match[1] || 'RACK-MAIN-01').trim().toLowerCase()
+          if (otherRack === myRack) {
+            const oStart = parseInt(match[2], 10)
+            const oEnd = match[3] ? parseInt(match[3], 10) : oStart
+            if (Math.max(myStart, oStart) <= Math.min(myEnd, oEnd)) {
+              const myRangeLabel = myHeight > 1 ? `U${myStart}-U${myEnd}` : `U${myStart}`
+              const otherRangeLabel = oEnd > oStart ? `U${oStart}-U${oEnd}` : `U${oStart}`
+              return `Conflicto de U: El rango ${myRangeLabel} en ${this.rackName} se solapa con el servidor "${s.hostname}" (${otherRangeLabel})`
+            }
+          }
+        }
+      }
+      return null
+    },
+
+    updateUbicacionString() {
+      const uStartNum = parseInt(this.uStart || 1, 10)
+      const uH = parseInt(this.uHeight || 1, 10)
+      const uEndNum = uStartNum + uH - 1
+      const rangeStr = uH > 1 ? `U${uStartNum} - U${uEndNum}` : `U${uStartNum}`
+      this.form.ubicacion = `${this.rackName || 'RACK-MAIN-01'}, ${rangeStr}`
+    },
+
+    updateHardwareStrings() {
+      const sockets = this.cpuSockets || 1
+      const model = (this.cpuModel || '').trim()
+      const cores = (this.cpuCores || '').trim()
+      const ghz = (this.cpuGhz || '').trim()
+      this.form.procesador = `${sockets}x ${model} (${cores} @ ${ghz})`.trim()
+
+      const dimms = parseInt(this.ramDimmsCount || 0, 10)
+      const cap = parseInt(this.ramDimmCap || 0, 10)
+      this.form.ram_gb = dimms * cap
+      this.form.ram_modulos = `${dimms} x ${cap} GB`
+      this.form.ram_velocidad = `${this.ramType || ''} ${this.ramSpeed || ''}`.trim()
     },
 
     get formChanged() {
@@ -93,6 +185,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     validateAll() {
+      if (this.uConflictError) {
+        BastionUtils.showToast('error', this.uConflictError)
+        return false
+      }
       this.validateField('hostname')
       this.validateField('sn')
       this.validateField('modelo')
@@ -117,7 +213,7 @@ document.addEventListener('alpine:init', () => {
         if (this.errors.servicios) break
       }
       const hasDiskErr = Object.values(this.diskErrors).some(Boolean)
-      return !Object.values(this.errors).some(Boolean) && !hasDiskErr
+      return !Object.values(this.errors).some(Boolean) && !hasDiskErr && !this.uConflictError
     },
 
     get errorCount() {

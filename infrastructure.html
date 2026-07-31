@@ -50,63 +50,78 @@
           </div>
         </div>
 
-        <!-- INFRASTRUCTURE METRICS CARDS -->
-        <div x-show="!loading" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1.25rem;margin-bottom:2rem;">
-          <div class="admin-card-section" style="padding:1.5rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
-              <iconify-icon icon="lucide:memory-stick" style="color:#6c5ce7;width:20px;height:20px;"></iconify-icon>
-              <strong style="color:#fff;font-size:0.9rem;">Memoria RAM Total</strong>
+        <!-- INFRASTRUCTURE METRICS CARDS (4 compact KPI cards) -->
+        <div x-show="!loading" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:0.85rem;margin-bottom:1.5rem;">
+          <!-- CPU -->
+          <div class="admin-card-section" style="padding:1rem;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+              <span style="font-size:0.68rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Procesamiento CPU</span>
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(243,156,18,0.15);display:flex;align-items:center;justify-content:center;color:#f39c12;">
+                <iconify-icon icon="lucide:cpu" style="width:16px;height:16px;"></iconify-icon>
+              </div>
             </div>
-            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalRam + ' GB'"></div>
-            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
-              <div style="background:#6c5ce7;height:100%;width:75%;border-radius:3px;"></div>
-            </div>
+            <div style="font-size:1.3rem;font-weight:800;color:#fff;" x-text="totalCpuInfo.sockets + ' Sockets'"></div>
+            <div style="font-size:0.68rem;color:#f39c12;font-weight:600;margin-top:0.2rem;" x-text="(totalCpuInfo.cores || '—') + ' Cores Acumulados'"></div>
           </div>
 
-          <div class="admin-card-section" style="padding:1.5rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
-              <iconify-icon icon="lucide:hard-drive" style="color:#2ecc71;width:20px;height:20px;"></iconify-icon>
-              <strong style="color:#fff;font-size:0.9rem;">Almacenamiento Total</strong>
+          <!-- RAM -->
+          <div class="admin-card-section" style="padding:1rem;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+              <span style="font-size:0.68rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Memoria RAM Total</span>
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(108,92,231,0.15);display:flex;align-items:center;justify-content:center;color:#8e7ff3;">
+                <iconify-icon icon="lucide:memory-stick" style="width:16px;height:16px;"></iconify-icon>
+              </div>
             </div>
-            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalStorageTB + ' TB'"></div>
-            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
-              <div style="background:#2ecc71;height:100%;width:60%;border-radius:3px;"></div>
-            </div>
+            <div style="font-size:1.3rem;font-weight:800;color:#fff;" x-text="totalRamGB + ' GB'"></div>
+            <div style="font-size:0.68rem;color:#8e7ff3;font-weight:600;margin-top:0.2rem;" x-text="(totalRamGB >= 1024 ? (totalRamGB / 1024).toFixed(2) + ' TB RAM' : 'Capacidad en Servidores')"></div>
           </div>
 
-          <div class="admin-card-section" style="padding:1.5rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
-              <iconify-icon icon="lucide:cpu" style="color:#f39c12;width:20px;height:20px;"></iconify-icon>
-              <strong style="color:#fff;font-size:0.9rem;">Procesamiento CPU</strong>
+          <!-- STORAGE -->
+          <div class="admin-card-section" style="padding:1rem;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+              <span style="font-size:0.68rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Almacenamiento Discos</span>
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(46,204,113,0.15);display:flex;align-items:center;justify-content:center;color:#2ecc71;">
+                <iconify-icon icon="lucide:hard-drive" style="width:16px;height:16px;"></iconify-icon>
+              </div>
             </div>
-            <div style="font-size:2rem;font-weight:800;color:#fff;" x-text="totalCpuGHz + ' GHz'"></div>
-            <div style="margin-top:0.75rem;background:rgba(255,255,255,0.05);height:6px;border-radius:3px;overflow:hidden;">
-              <div style="background:#f39c12;height:100%;width:80%;border-radius:3px;"></div>
+            <div style="font-size:1.3rem;font-weight:800;color:#fff;" x-text="totalStorageTB + ' TB'"></div>
+            <div style="font-size:0.68rem;color:#2ecc71;font-weight:600;margin-top:0.2rem;">Volumen Total en Laboratorio</div>
+          </div>
+
+          <!-- SERVERS & RACK OCCUPATION -->
+          <div class="admin-card-section" style="padding:1rem;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+              <span style="font-size:0.68rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Ocupación Rack 42U</span>
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,206,201,0.15);display:flex;align-items:center;justify-content:center;color:#00cec9;">
+                <iconify-icon icon="lucide:server" style="width:16px;height:16px;"></iconify-icon>
+              </div>
             </div>
+            <div style="font-size:1.3rem;font-weight:800;color:#fff;" x-text="rackOccupation.percent + '%'"></div>
+            <div style="font-size:0.68rem;color:#00cec9;font-weight:600;margin-top:0.2rem;" x-text="rackOccupation.occupiedU + ' / 42 U Ocupadas (' + rackOccupation.serverCount + ' equipos)'"></div>
           </div>
         </div>
 
         <!-- LOCATION BREAKDOWN TABLE -->
-        <div x-show="!loading" class="admin-card-section" style="padding:1.25rem;margin-bottom:2rem;">
-          <h3 style="font-size:0.95rem;font-weight:700;color:#fff;margin:0 0 1rem 0;display:flex;align-items:center;gap:0.4rem;">
+        <div x-show="!loading" class="admin-card-section" style="padding:1.25rem;margin-bottom:1.5rem;">
+          <h3 style="font-size:0.9rem;font-weight:700;color:#fff;margin:0 0 0.85rem 0;display:flex;align-items:center;gap:0.4rem;">
             <iconify-icon icon="lucide:map-pin" style="color:#00cec9;"></iconify-icon>
             Distribución de Recursos por Ubicación / Rack
           </h3>
           <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
               <thead>
                 <tr style="text-align:left;color:#777;border-bottom:1px solid rgba(255,255,255,0.06);">
-                  <th style="padding:0.6rem;">Ubicación / Rack</th>
-                  <th style="padding:0.6rem;">Servidores Asignados</th>
-                  <th style="padding:0.6rem;">RAM Acumulada</th>
+                  <th style="padding:0.5rem 0.6rem;">Ubicación / Rack</th>
+                  <th style="padding:0.5rem 0.6rem;">Servidores Asignados</th>
+                  <th style="padding:0.5rem 0.6rem;">RAM Acumulada</th>
                 </tr>
               </thead>
               <tbody>
                 <template x-for="loc in locationBreakdown" :key="loc.location">
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                    <td style="padding:0.6rem;font-weight:700;color:#fff;" x-text="loc.location"></td>
-                    <td style="padding:0.6rem;color:#00cec9;font-weight:600;" x-text="loc.count + ' Servidor(es)'"></td>
-                    <td style="padding:0.6rem;font-family:monospace;color:#6c5ce7;" x-text="loc.ram + ' GB RAM'"></td>
+                    <td style="padding:0.5rem 0.6rem;font-weight:700;color:#fff;" x-text="loc.location"></td>
+                    <td style="padding:0.5rem 0.6rem;color:#00cec9;font-weight:600;" x-text="loc.count + ' Servidor(es)'"></td>
+                    <td style="padding:0.5rem 0.6rem;font-family:monospace;color:#6c5ce7;" x-text="loc.ram + ' GB RAM'"></td>
                   </tr>
                 </template>
               </tbody>
@@ -116,48 +131,58 @@
 
         <!-- VISUAL RACK DIAGRAM SECTION -->
         <div x-show="!loading" class="admin-card-section" style="padding:1.5rem;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem;">
             <div>
               <h3 style="font-size:1rem;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:0.4rem;">
                 <iconify-icon icon="lucide:server" style="color:#6c5ce7;"></iconify-icon>
-                Diagrama Visual Interactivo de Racks (Bastidor 42U)
+                Diagrama Visual de Bastidor (Rack 42U)
               </h3>
-              <span style="font-size:0.68rem;color:#888;">Simulación de posicionamiento físico 1U a 42U. Pasa el puntero sobre una unidad o haz click para ver su ficha detallada.</span>
+              <span style="font-size:0.68rem;color:#888;">Orden físico de U42 (superior) a U1 (inferior). Haz clic en una U ocupada para abrir su ficha.</span>
             </div>
-            <div style="display:flex;gap:0.75rem;font-size:0.68rem;color:#aaa;">
-              <span style="display:flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(46,204,113,0.3);border:1px solid #2ecc71;"></span> Activo</span>
-              <span style="display:flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(243,156,18,0.3);border:1px solid #f39c12;"></span> Mantenimiento</span>
-              <span style="display:flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);"></span> Vacío (1U)</span>
+
+            <!-- MULTI-RACK TAB SELECTOR -->
+            <div style="display:flex;align-items:center;gap:0.4rem;background:rgba(0,0,0,0.4);padding:0.25rem;border-radius:8px;border:1px solid var(--border-subtle);">
+              <template x-for="r in availableRacks" :key="r">
+                <button type="button" @click="selectedRack = r"
+                  style="font-size:0.68rem;font-weight:600;padding:0.25rem 0.65rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.15s;"
+                  :style="selectedRack === r ? 'background:#6c5ce7;color:#fff;' : 'background:transparent;color:#aaa;'"
+                  x-text="r">
+                </button>
+              </template>
             </div>
           </div>
 
-          <div style="background:#0a0a12;border:2px solid rgba(255,255,255,0.1);border-radius:12px;padding:1rem;max-width:800px;margin:0 auto;box-shadow:inset 0 0 20px rgba(0,0,0,0.8);">
-            <div style="text-align:center;font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
-              <iconify-icon icon="lucide:arrow-down" style="width:12px;height:12px;"></iconify-icon>
-              Bastidor Principal RACK-MAIN-01
+          <div style="background:#0a0a12;border:2px solid rgba(255,255,255,0.1);border-radius:12px;padding:1.25rem;max-width:850px;margin:0 auto;box-shadow:inset 0 0 20px rgba(0,0,0,0.8);">
+            <div style="text-align:center;font-size:0.65rem;color:#8e7ff3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.85rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              <iconify-icon icon="lucide:arrow-up" style="width:12px;height:12px;"></iconify-icon>
+              Gabinete Físico: <span x-text="selectedRack" style="color:#fff;"></span> (U42 → U1)
               <iconify-icon icon="lucide:arrow-down" style="width:12px;height:12px;"></iconify-icon>
             </div>
 
+            <!-- 42U RACK GRID (U42 TOP TO U1 BOTTOM) -->
             <div style="display:flex;flex-direction:column;gap:3px;">
-              <template x-for="unit in rackUnits" :key="unit.u">
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                  <span style="font-size:0.6rem;color:#444;font-family:monospace;width:24px;text-align:right;" x-text="'U' + (unit.u < 10 ? '0' + unit.u : unit.u)"></span>
+              <template x-for="unit in rackDiagram" :key="unit.u">
+                <div x-show="!unit.isCovered" style="display:flex;align-items:center;gap:0.6rem;">
+                  <!-- U NUMBER LABEL -->
+                  <span style="font-size:0.62rem;color:#666;font-family:monospace;width:42px;text-align:right;font-weight:600;" x-text="unit.uRangeLabel"></span>
                   
-                  <div style="flex:1;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;padding:0 0.6rem;font-size:0.68rem;transition:all 0.15s;position:relative;"
-                       :style="unit.isOccupied ? 'background:rgba(108,92,231,0.15);border:1px solid rgba(108,92,231,0.4);cursor:pointer;' : 'background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.05);color:#444;'"
+                  <!-- SLOT / MULTI-U BLOCK -->
+                  <div style="flex:1;border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 0.75rem;font-size:0.7rem;transition:all 0.15s;position:relative;"
+                       :style="unit.isOccupied ? ('background:rgba(255,255,255,0.03);border:2px solid ' + getStatusColor(unit.server.estado) + ';height:' + (unit.height * 28 + (unit.height - 1) * 3) + 'px;cursor:pointer;') : 'background:rgba(255,255,255,0.015);border:1px dashed rgba(255,255,255,0.05);height:26px;color:#444;'"
                        @click="unit.isOccupied && gotoServer(unit.server.id)"
-                       :title="unit.isOccupied ? 'Hostname: ' + unit.server.hostname + '\nModelo: ' + (unit.server.modelo || 'Servidor') + '\nIP: ' + (unit.server.ip || 'N/A') + '\nEstado: ' + (unit.server.estado || 'Activo') : 'Unidad Vacía (1U)'">
+                       :title="unit.isOccupied ? 'Hostname: ' + unit.server.hostname + '\nModelo: ' + (unit.server.modelo || 'Servidor') + '\nIP: ' + (unit.server.ip || 'N/A') + '\nUbicación: ' + unit.server.ubicacion + '\nEstado: ' + (unit.server.estado || 'Activo') : 'Unidad Vacía (' + unit.uRangeLabel + ')'">
                     
                     <template x-if="unit.isOccupied">
-                      <div style="display:flex;align-items:center;gap:0.5rem;width:100%;justify-content:space-between;">
-                        <span style="display:flex;align-items:center;gap:0.35rem;color:#fff;font-weight:700;">
-                          <iconify-icon icon="lucide:hard-drive" style="width:12px;height:12px;color:#6c5ce7;"></iconify-icon>
-                          <span x-text="unit.server.hostname"></span>
-                        </span>
-                        <span style="display:flex;align-items:center;gap:0.6rem;">
-                          <span style="font-family:monospace;color:#00cec9;font-size:0.65rem;" x-text="unit.server.ip || ''"></span>
-                          <span class="status-badge" :class="(unit.server.estado || 'Activo').toLowerCase()" style="font-size:0.58rem;padding:0.1rem 0.4rem;" x-text="unit.server.estado || 'Activo'"></span>
-                        </span>
+                      <div style="display:flex;align-items:center;gap:0.6rem;width:100%;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;gap:0.4rem;">
+                          <iconify-icon icon="lucide:server" :style="'color:' + getStatusColor(unit.server.estado) + ';width:14px;height:14px;'"></iconify-icon>
+                          <span style="color:#fff;font-weight:700;" x-text="unit.server.hostname"></span>
+                          <span style="font-size:0.6rem;color:#888;" x-text="'(' + (unit.server.modelo || 'Chasis') + ')'"></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                          <span style="font-family:monospace;color:#00cec9;font-size:0.65rem;" x-text="unit.server.ip || 'Sin IP'"></span>
+                          <span class="status-badge" :class="(unit.server.estado || 'Activo').toLowerCase()" style="font-size:0.58rem;padding:0.1rem 0.45rem;" x-text="unit.server.estado || 'Activo'"></span>
+                        </div>
                       </div>
                     </template>
 
@@ -173,6 +198,25 @@
       </div>
     </main>
   </div>
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
 </div>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/toast.js"></script>

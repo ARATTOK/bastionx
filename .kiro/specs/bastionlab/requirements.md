@@ -180,3 +180,40 @@ BastionLAB is an agile, zero-build infrastructure inventory, credentials, networ
   - `admin-audit.html`: `Dashboard → Administrador → Logs de Auditoría`
 - All subpages **SHALL** maintain dark-glass minimal aesthetics (`--glass-bg`, `--glass-border`, `#6c5ce7` accent), strict iconify `<iconify-icon>` usage, zero emojis, and separate JS controller isolation in `js/pages/`.
 
+---
+
+### Requirement 16: U-Rack Interactive Range Selection & Real-Time Occupation Validation
+- **WHEN** editing or creating a server in `add-server.html` or `edit-server.html`, the system **SHALL** replace simple text location inputs with interactive U-Rack selectors (`U Inicial` from U1-U42, and `Altura U` from 1U-4U) calculating range notation (e.g. `U34 - U36`).
+- **WHEN** any U unit within the chosen range is already occupied by another server in that rack/location, the system **SHALL** highlight the conflict, render an alert banner (`lucide:alert-triangle`), and prevent form submission.
+
+---
+
+### Requirement 17: Structured CPU & RAM Hardware Configuration
+- **WHEN** configuring CPU specs in server forms, the system **SHALL** collect structured inputs for Sockets (1, 2, 4), Model/Family, Cores per Socket, and Base Frequency (GHz).
+- **WHEN** configuring RAM specs, the system **SHALL** collect DIMMs count, capacity per DIMM (GB), memory type, and speed, automatically calculating total RAM GB (`ram_gb`).
+
+---
+
+### Requirement 18: Dedicated Tasks Module (`tasks.html`), Superadmin Assignment (`admin-tasks.html`) & Completion Flow
+- **WHEN** standard users access tasks, the system **SHALL** render a dedicated module `tasks.html` (`Dashboard → Mis Tareas`) listing assigned tasks with deadline indicators (`lucide:clock`), server direct links (`lucide:server`), priority badges, and a completion modal to attach execution logs.
+- **WHEN** Superadmin accesses `admin-tasks.html` (`Dashboard → Administrador → Asignación de Tareas`), the system **SHALL** provide global task assignment, user selection, deadline configuration, and progress monitoring.
+- **WHEN** viewing `server-detail.html`, task management actions **SHALL** be replaced with a read-only tasks history and evidence summary.
+
+---
+
+### Requirement 19: Visual Active Status Feedback, Disabled Occupied U-Slots, Topbar Notifications & Unified Footer
+- **WHEN** selecting a server status in `.status-pill-group` (`edit-server.html`), the system **SHALL** highlight the active status pill using a 2px active accent border, LED glowing box-shadow, and 100% opacity versus 45% for inactive status options.
+- **WHEN** opening the `Unidad U Inicial` dropdown in `edit-server.html` or `add-server.html`, the system **SHALL** disable (`disabled`) and render in muted color (`#555`) all U-slots already occupied by another server in the target rack, appending `(Ocupada por [hostname])`.
+- **WHEN** clicking the bell icon (`lucide:bell`) in `dashboard.html` Topbar, the system **SHALL** toggle a dark-glass floating dropdown displaying pending tasks with direct links to `tasks.html`.
+- **WHEN** rendering any page in the BastionLAB suite, the system **SHALL** include a unified global footer (`.bx-footer`) displaying system version `v2.4.0`, green LED system status indicator (`Sistema Operativo`), and navigation links.
+
+---
+
+### Requirement 20: Separated Hardware Metrics Summary & 42U Multi-Rack Diagram (U42-U1)
+- **WHEN** rendering `infrastructure.html`, the system **SHALL** display a top row of 4 compact KPI cards aggregating Total CPU (Sockets & Cores), Total RAM (GB/TB), Total Storage (TB), and Registered Servers with % U Rack Occupation.
+- **WHEN** displaying the 42U Rack diagram, the system **SHALL** order units vertically from U42 at the top down to U1 at the bottom.
+- **WHEN** servers exist across multiple cabinets, the system **SHALL** provide a multi-rack tab bar allowing dynamic switching between racks (`RACK-MAIN-01`, `RACK-SEC-02`).
+- **WHEN** a server occupies multi-U chassis space (1U to 4U), the system **SHALL** render a unified merged block spanning the exact U range with a colored border corresponding to the server status (`Activo` = green `#2ecc71`, `Mantenimiento` = orange `#f39c12`, `Falla` = red `#e74c3c`).
+
+
+

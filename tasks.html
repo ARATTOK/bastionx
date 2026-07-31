@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Mis Tareas</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    [x-cloak] { display: none !important; }
+    .tasks-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .task-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .task-card:hover {
+      border-color: rgba(108,92,231,0.4);
+      transform: translateY(-2px);
+    }
+    .prio-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .prio-alta { background: rgba(231,76,60,0.18); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .prio-media { background: rgba(243,156,18,0.18); color: #f39c12; border: 1px solid rgba(243,156,18,0.3); }
+    .prio-baja { background: rgba(170,170,170,0.1); color: #aaa; border: 1px solid rgba(170,170,170,0.2); }
+  </style>
+</head>
+<body>
+<div x-data="tasksApp()" x-init="init()">
+  <div class="tasks-page">
+
+    <!-- BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación" style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0;max-height:32px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 1.5rem;border-radius:6px;">
+      <a href="dashboard.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Dashboard</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <span aria-current="page" style="font-size:0.68rem;color:#ccc;font-weight:600;padding:0 0.25rem;">Mis Tareas</span>
+    </nav>
+
+    <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+      <iconify-icon icon="lucide:loader" style="width:24px;height:24px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
+      Cargando Tareas Asignadas...
+    </div>
+
+    <div x-show="!loading" x-cloak>
+      <!-- TOPBAR -->
+      <div class="topbar" style="margin-bottom:1.5rem;">
+        <div>
+          <h1 style="font-size:1.25rem;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:0.5rem;">
+            <iconify-icon icon="lucide:check-square" style="color:#6c5ce7;"></iconify-icon>
+            Mis Tareas & Trabajos Asignados
+          </h1>
+          <div style="font-size:0.72rem;color:#888;margin-top:0.2rem;">Tareas operativas y mantenimientos asignados por la administración</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <a class="at-btn" href="dashboard.html" style="background:var(--glass-bg);color:#ccc;border:1px solid var(--border-subtle);padding:0.35rem 0.75rem;border-radius:8px;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+            <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+            Volver al Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- FILTERS & STATS BAR -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <button class="at-btn" @click="filterStatus = 'pending'" :style="filterStatus === 'pending' ? 'background:rgba(108,92,231,0.2);color:#8e7ff3;border-color:rgba(108,92,231,0.4);' : 'background:transparent;color:#888;border-color:var(--border-subtle);'" style="padding:0.35rem 0.8rem;border-radius:8px;font-size:0.72rem;font-weight:600;">
+            Pendientes (<span x-text="pendingCount"></span>)
+          </button>
+          <button class="at-btn" @click="filterStatus = 'completed'" :style="filterStatus === 'completed' ? 'background:rgba(46,204,113,0.2);color:#2ecc71;border-color:rgba(46,204,113,0.4);' : 'background:transparent;color:#888;border-color:var(--border-subtle);'" style="padding:0.35rem 0.8rem;border-radius:8px;font-size:0.72rem;font-weight:600;">
+            Completadas (<span x-text="completedCount"></span>)
+          </button>
+          <button class="at-btn" @click="filterStatus = 'all'" :style="filterStatus === 'all' ? 'background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);' : 'background:transparent;color:#888;border-color:var(--border-subtle);'" style="padding:0.35rem 0.8rem;border-radius:8px;font-size:0.72rem;font-weight:600;">
+            Todas
+          </button>
+        </div>
+
+        <div class="search-compact" style="width:260px;">
+          <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+          <input type="text" class="sb-input" x-model="searchQuery" placeholder="Buscar por título o servidor...">
+          <button class="sb-clear" x-show="searchQuery" @click="searchQuery=''" title="Limpiar">
+            <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- TASK LIST -->
+      <template x-if="filteredTasks.length === 0">
+        <div style="background:var(--glass-bg);border:1px dashed var(--glass-border);border-radius:14px;padding:3rem;text-align:center;color:#666;">
+          <iconify-icon icon="lucide:check-circle" style="width:36px;height:36px;color:#444;margin-bottom:0.5rem;"></iconify-icon>
+          <div style="font-size:0.85rem;color:#888;">No tienes tareas en esta categoría.</div>
+        </div>
+      </template>
+
+      <template x-for="task in filteredTasks" :key="task.id">
+        <div class="task-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+            <div style="flex:1;min-width:260px;">
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+                <strong style="font-size:0.95rem;color:#fff;" x-text="task.titulo"></strong>
+                <span class="prio-badge" :class="'prio-' + (task.criticidad || 'media')" x-text="task.criticidad || 'Media'"></span>
+              </div>
+
+              <!-- SERVER LINK -->
+              <div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:#8e7ff3;margin-bottom:0.6rem;background:rgba(108,92,231,0.1);padding:0.2rem 0.55rem;border-radius:6px;border:1px solid rgba(108,92,231,0.25);cursor:pointer;" @click="gotoServerDetail(task.server_id)" title="Ir a la ficha del servidor">
+                <iconify-icon icon="lucide:server" style="width:13px;height:13px;"></iconify-icon>
+                Servidor: <strong style="color:#fff;" x-text="task.servers?.hostname || 'Desconocido'"></strong>
+                <iconify-icon icon="lucide:external-link" style="width:11px;height:11px;"></iconify-icon>
+              </div>
+
+              <!-- DESCRIPTION -->
+              <div style="font-size:0.75rem;color:#ccc;line-height:1.45;margin-bottom:0.6rem;" x-show="task.descripcion" x-text="task.descripcion"></div>
+
+              <!-- DEADLINE INDICATOR -->
+              <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;font-weight:600;">
+                <iconify-icon :icon="getUrgencyInfo(task.fecha_limite, task.completada).icon" :style="'color:' + getUrgencyInfo(task.fecha_limite, task.completada).color"></iconify-icon>
+                <span :style="'color:' + getUrgencyInfo(task.fecha_limite, task.completada).color" x-text="getUrgencyInfo(task.fecha_limite, task.completada).label"></span>
+                <span style="color:#666;" x-show="task.fecha_limite"> (Límite: <span x-text="formatDate(task.fecha_limite)"></span>)</span>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTON -->
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <template x-if="!task.completada">
+                <button class="at-btn" @click="openCompleteModal(task)" style="background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;padding:0.45rem 0.95rem;border-radius:8px;font-size:0.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.35rem;">
+                  <iconify-icon icon="lucide:check-circle-2"></iconify-icon>
+                  Marcar Completada
+                </button>
+              </template>
+              <template x-if="task.completada">
+                <span style="font-size:0.72rem;color:#2ecc71;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem;">
+                  <iconify-icon icon="lucide:check-check" style="width:16px;height:16px;"></iconify-icon>
+                  Finalizada
+                </span>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
+    </div>
+  </div>
+
+  <!-- MODAL: DOCUMENTAR CUMPLIMIENTO -->
+  <div class="modal-overlay" x-show="showCompleteModal" x-cloak @click.self="showCompleteModal = false" @keydown.escape.window="showCompleteModal = false">
+    <div class="modal" style="max-width:500px;width:92%;padding:1.5rem;" x-show="showCompleteModal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:check-circle-2" style="width:18px;height:18px;color:#2ecc71;"></iconify-icon>
+          Documentar Cumplimiento de Tarea
+        </h3>
+        <button class="btn-icon" @click="showCompleteModal = false" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <div style="font-size:0.8rem;color:#ccc;margin-bottom:1rem;" x-show="selectedTask">
+        Tarea: <strong style="color:#fff;" x-text="selectedTask?.titulo"></strong>
+      </div>
+
+      <form @submit.prevent="confirmCompletion()">
+        <div class="field-group">
+          <label style="font-size:0.72rem;color:#aaa;font-weight:600;margin-bottom:0.3rem;display:block;">Bitácora / Nota de Cumplimiento *</label>
+          <textarea x-model="completionNote" placeholder="Describe los cambios aplicados o resultados del mantenimiento (ej: Firmware actualizado a v4.2, reinicio de servicios verificado)..." required style="width:100%;height:90px;font-size:0.75rem;padding:0.5rem;background:#12121a;border:1px solid var(--border-subtle);color:#fff;border-radius:8px;"></textarea>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button type="button" class="btn" @click="showCompleteModal = false" style="background:transparent;border:1px solid var(--border-subtle);color:#aaa;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;">Cancelar</button>
+          <button type="submit" class="btn" :disabled="completing || !completionNote.trim()" style="background:#2ecc71;color:#fff;font-size:0.75rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;">
+            <span x-text="completing ? 'Guardando...' : 'Confirmar & Guardar Bitácora'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
+</div>
+
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/tasks.js"></script>
+</body>
+</html>

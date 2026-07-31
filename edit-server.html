@@ -186,11 +186,11 @@
           <!-- Activo -->
           <button type="button" role="radio" :aria-checked="form.estado === 'Activo'"
             class="status-pill" :class="{ active: form.estado === 'Activo' }"
-            :style="form.estado === 'Activo' ? 'border-color:#2ecc71;background:rgba(46,204,113,0.1);box-shadow:0 0 0 2px #2ecc71;' : ''"
+            :style="form.estado === 'Activo' ? 'border:2px solid #2ecc71;background:rgba(46,204,113,0.18);box-shadow:0 0 14px rgba(46,204,113,0.4);opacity:1;' : 'opacity:0.45;'"
             @click="form.estado = 'Activo'" aria-label="Activo">
             <div class="sp-top">
               <iconify-icon icon="lucide:check-circle" style="width:14px;height:14px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
-              <span class="sp-name" :style="form.estado === 'Activo' ? 'color:#2ecc71;' : ''">Activo</span>
+              <span class="sp-name" :style="form.estado === 'Activo' ? 'color:#2ecc71;font-weight:700;' : ''">Activo</span>
             </div>
             <span class="sp-desc">En producción, operativo</span>
           </button>
@@ -198,11 +198,11 @@
           <!-- Mantenimiento -->
           <button type="button" role="radio" :aria-checked="form.estado === 'Mantenimiento'"
             class="status-pill" :class="{ active: form.estado === 'Mantenimiento' }"
-            :style="form.estado === 'Mantenimiento' ? 'border-color:#f39c12;background:rgba(243,156,18,0.1);box-shadow:0 0 0 2px #f39c12;' : ''"
+            :style="form.estado === 'Mantenimiento' ? 'border:2px solid #f39c12;background:rgba(243,156,18,0.18);box-shadow:0 0 14px rgba(243,156,18,0.4);opacity:1;' : 'opacity:0.45;'"
             @click="form.estado = 'Mantenimiento'" aria-label="Mantenimiento">
             <div class="sp-top">
               <iconify-icon icon="lucide:wrench" style="width:14px;height:14px;color:#f39c12;flex-shrink:0;"></iconify-icon>
-              <span class="sp-name" :style="form.estado === 'Mantenimiento' ? 'color:#f39c12;' : ''">Mantenimiento</span>
+              <span class="sp-name" :style="form.estado === 'Mantenimiento' ? 'color:#f39c12;font-weight:700;' : ''">Mantenimiento</span>
             </div>
             <span class="sp-desc">Fuera de línea planeado</span>
           </button>
@@ -210,11 +210,11 @@
           <!-- Inactivo -->
           <button type="button" role="radio" :aria-checked="form.estado === 'Inactivo'"
             class="status-pill" :class="{ active: form.estado === 'Inactivo' }"
-            :style="form.estado === 'Inactivo' ? 'border-color:#aaa;background:rgba(170,170,170,0.08);box-shadow:0 0 0 2px #aaa;' : ''"
+            :style="form.estado === 'Inactivo' ? 'border:2px solid #aaa;background:rgba(170,170,170,0.15);box-shadow:0 0 14px rgba(170,170,170,0.3);opacity:1;' : 'opacity:0.45;'"
             @click="form.estado = 'Inactivo'" aria-label="Inactivo">
             <div class="sp-top">
               <iconify-icon icon="lucide:pause-circle" style="width:14px;height:14px;color:#aaa;flex-shrink:0;"></iconify-icon>
-              <span class="sp-name" :style="form.estado === 'Inactivo' ? 'color:#aaa;' : ''">Inactivo</span>
+              <span class="sp-name" :style="form.estado === 'Inactivo' ? 'color:#aaa;font-weight:700;' : ''">Inactivo</span>
             </div>
             <span class="sp-desc">Detenido, sin tráfico</span>
           </button>
@@ -222,11 +222,11 @@
           <!-- Falla -->
           <button type="button" role="radio" :aria-checked="form.estado === 'Falla'"
             class="status-pill" :class="{ active: form.estado === 'Falla' }"
-            :style="form.estado === 'Falla' ? 'border-color:#e74c3c;background:rgba(231,76,60,0.1);box-shadow:0 0 0 2px #e74c3c;' : ''"
+            :style="form.estado === 'Falla' ? 'border:2px solid #e74c3c;background:rgba(231,76,60,0.18);box-shadow:0 0 14px rgba(231,76,60,0.4);opacity:1;' : 'opacity:0.45;'"
             @click="form.estado = 'Falla'" aria-label="Falla">
             <div class="sp-top">
               <iconify-icon icon="lucide:alert-octagon" style="width:14px;height:14px;color:#e74c3c;flex-shrink:0;"></iconify-icon>
-              <span class="sp-name" :style="form.estado === 'Falla' ? 'color:#e74c3c;' : ''">Falla</span>
+              <span class="sp-name" :style="form.estado === 'Falla' ? 'color:#e74c3c;font-weight:700;' : ''">Falla</span>
             </div>
             <span class="sp-desc">Requiere atención urgente</span>
           </button>
@@ -234,11 +234,11 @@
           <!-- Retirado -->
           <button type="button" role="radio" :aria-checked="form.estado === 'Retirado'"
             class="status-pill" :class="{ active: form.estado === 'Retirado' }"
-            :style="form.estado === 'Retirado' ? 'border-color:#636e72;background:rgba(99,110,114,0.1);box-shadow:0 0 0 2px #636e72;' : ''"
+            :style="form.estado === 'Retirado' ? 'border:2px solid #636e72;background:rgba(99,110,114,0.18);box-shadow:0 0 14px rgba(99,110,114,0.3);opacity:1;' : 'opacity:0.45;'"
             @click="form.estado = 'Retirado'" aria-label="Retirado">
             <div class="sp-top">
               <iconify-icon icon="lucide:archive" style="width:14px;height:14px;color:#636e72;flex-shrink:0;"></iconify-icon>
-              <span class="sp-name" :style="form.estado === 'Retirado' ? 'color:#636e72;' : ''">Retirado</span>
+              <span class="sp-name" :style="form.estado === 'Retirado' ? 'color:#636e72;font-weight:700;' : ''">Retirado</span>
             </div>
             <span class="sp-desc">Dado de baja definitiva</span>
           </button>
@@ -276,11 +276,126 @@
             <input type="text" x-model="form.sn" @blur="validateField('sn')" :class="errors.sn ? 'is-invalid' : ''">
             <div class="field-error" :class="errors.sn ? 'show' : ''" x-text="errors.sn"></div>
           </div>
-          <div class="field-group"><label>Ubicaci&oacute;n</label><input type="text" x-model="form.ubicacion" placeholder="Ej: U34"></div>
-          <div class="field-group"><label>Procesador</label><input type="text" x-model="form.procesador"></div>
-          <div class="field-group"><label>RAM (GB)</label><input type="number" x-model="form.ram_gb"></div>
-          <div class="field-group"><label>M&oacute;dulos RAM</label><input type="text" x-model="form.ram_modulos" placeholder="Ej: 8"></div>
-          <div class="field-group"><label>Velocidad RAM</label><input type="text" x-model="form.ram_velocidad" placeholder="Ej: 2666 MHz"></div>
+          <!-- UBICACIÓN Y SELECCIÓN U-RACK -->
+          <div class="field-group" style="grid-column:1 / -1;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;margin-top:0.5rem;">
+            <label style="font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;margin-bottom:0.6rem;">
+              <iconify-icon icon="lucide:server" style="color:#00cec9;"></iconify-icon>
+              Ubicación Física & Rango de Unidades U (Rack)
+            </label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:0.75rem;align-items:center;">
+              <div>
+                <label style="font-size:0.68rem;color:#aaa;">Nombre de Rack / Gabinete</label>
+                <input type="text" x-model="rackName" @input="updateUbicacionString()" placeholder="Ej: RACK-MAIN-01" style="margin:0;">
+              </div>
+              <div>
+                <label style="font-size:0.68rem;color:#aaa;">Unidad U Inicial</label>
+                <select x-model="uStart" @change="updateUbicacionString()" style="margin:0;background:#12121a;color:#fff;">
+                  <template x-for="u in 42" :key="u">
+                    <option :value="u" :disabled="!!isUOccupied(u)" :style="isUOccupied(u) ? 'color:#555;' : ''" x-text="isUOccupied(u) ? 'U' + u + ' (Ocupada por ' + isUOccupied(u) + ')' : 'U' + u"></option>
+                  </template>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.68rem;color:#aaa;">Altura del Chasis (U)</label>
+                <select x-model="uHeight" @change="updateUbicacionString()" style="margin:0;background:#12121a;color:#fff;">
+                  <option value="1">1U (Factor Compacto)</option>
+                  <option value="2">2U (Standard Server)</option>
+                  <option value="3">3U (Storage / GPU Node)</option>
+                  <option value="4">4U (Enterprise Modular)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:0.6rem;font-size:0.72rem;color:#8e7ff3;font-weight:600;display:flex;align-items:center;gap:0.4rem;">
+              <iconify-icon icon="lucide:map-pin"></iconify-icon>
+              Rango Asignado: <span x-text="form.ubicacion" style="color:#fff;"></span>
+            </div>
+            <!-- ALERT BANNER SI HAY CONFLICTO DE U -->
+            <div x-show="uConflictError" style="margin-top:0.75rem;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#e74c3c;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.72rem;display:flex;align-items:center;gap:0.5rem;">
+              <iconify-icon icon="lucide:alert-triangle" style="width:18px;height:18px;flex-shrink:0;"></iconify-icon>
+              <span x-text="uConflictError"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HARDWARE ESTRUCTURADO (CPU & RAM) -->
+      <div class="edit-section">
+        <h2 class="det-section-title">
+          <iconify-icon icon="lucide:cpu" style="width:14px;height:14px;color:#3498db;flex-shrink:0;"></iconify-icon>
+          Hardware & Especificaciones de Procesamiento / Memoria
+        </h2>
+
+        <!-- CPU STRUCTURING -->
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:#fff;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem;">
+            <iconify-icon icon="lucide:cpu" style="color:#3498db;"></iconify-icon>
+            Configuración del Procesador (CPU)
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:0.75rem;">
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Sockets Ocupados</label>
+              <select x-model="cpuSockets" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                <option value="1">1 Socket (Single CPU)</option>
+                <option value="2">2 Sockets (Dual CPU)</option>
+                <option value="4">4 Sockets (Quad CPU)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Modelo / Familia</label>
+              <input type="text" x-model="cpuModel" @input="updateHardwareStrings()" placeholder="Ej: Intel Xeon Gold 6248R" style="margin:0;">
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Cores por Socket</label>
+              <input type="text" x-model="cpuCores" @input="updateHardwareStrings()" placeholder="Ej: 24 Cores / 48 Threads" style="margin:0;">
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Frecuencia Base (GHz)</label>
+              <input type="text" x-model="cpuGhz" @input="updateHardwareStrings()" placeholder="Ej: 3.0 GHz" style="margin:0;">
+            </div>
+          </div>
+          <div style="font-size:0.68rem;color:#888;margin-top:0.4rem;">
+            Resumen Generado: <strong style="color:#3498db;" x-text="form.procesador"></strong>
+          </div>
+        </div>
+
+        <!-- RAM STRUCTURING -->
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:#fff;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem;">
+            <iconify-icon icon="lucide:memory-stick" style="color:#2ecc71;"></iconify-icon>
+            Configuración de Memoria RAM
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:0.75rem;">
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Número de Módulos (DIMMs)</label>
+              <input type="number" x-model="ramDimmsCount" @input="updateHardwareStrings()" min="1" placeholder="Ej: 4" style="margin:0;">
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Capacidad por Módulo (GB)</label>
+              <select x-model="ramDimmCap" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                <option value="8">8 GB</option>
+                <option value="16">16 GB</option>
+                <option value="32">32 GB</option>
+                <option value="64">64 GB</option>
+                <option value="128">128 GB</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Tipo de Memoria</label>
+              <select x-model="ramType" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                <option value="DDR4 ECC">DDR4 ECC</option>
+                <option value="DDR5 ECC">DDR5 ECC</option>
+                <option value="DDR4 Non-ECC">DDR4 Non-ECC</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.68rem;color:#aaa;">Velocidad Bus</label>
+              <input type="text" x-model="ramSpeed" @input="updateHardwareStrings()" placeholder="Ej: 3200 MHz" style="margin:0;">
+            </div>
+          </div>
+          <div style="font-size:0.68rem;color:#888;margin-top:0.4rem;display:flex;align-items:center;gap:0.75rem;">
+            <span>Capacidad Total Calculada: <strong style="color:#2ecc71;" x-text="form.ram_gb + ' GB'"></strong></span>
+            <span>Configuración: <strong style="color:#fff;" x-text="form.ram_modulos"></strong></span>
+          </div>
         </div>
       </div>
 
@@ -536,8 +651,25 @@
           </button>
         </div>
       </div>
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
     </div>
-  </template>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
 </div>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/toast.js"></script>

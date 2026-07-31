@@ -17,7 +17,8 @@ document.addEventListener('alpine:init', () => {
       usersCount: 0,
       serviceTypesCount: 0,
       subnetsCount: 0,
-      auditLogsCount: 0
+      auditLogsCount: 0,
+      globalTasksCount: 0
     },
 
     simulateRole(role) {
@@ -85,6 +86,11 @@ document.addEventListener('alpine:init', () => {
       try {
         const { count: auditCount } = await sb.from('audit_logs').select('*', { count: 'exact', head: true })
         this.stats.auditLogsCount = auditCount || 0
+      } catch(e) {}
+
+      try {
+        const { count: tasksCount } = await sb.from('server_tasks').select('*', { count: 'exact', head: true })
+        this.stats.globalTasksCount = tasksCount || 0
       } catch(e) {}
     },
 

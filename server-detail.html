@@ -244,52 +244,40 @@
         </div>
       </div>
 
-      <!-- TAREAS PENDIENTES -->
+      <!-- HISTORIAL DE TAREAS (Modo Lectura) -->
       <div class="det-section">
         <h2 class="det-section-title">
           <iconify-icon icon="lucide:list-checks" style="width:14px;height:14px;color:#2ecc71;flex-shrink:0;"></iconify-icon>
-          Tareas <span class="det-count" x-text="tasks.length"></span>
+          Historial de Tareas Asignadas <span class="det-count" x-text="tasks.length"></span>
         </h2>
 
         <template x-if="tasks.length === 0">
-          <div style="font-size:0.7rem;color:#444;padding:0.5rem 0;">No hay tareas para este servidor.</div>
+          <div style="font-size:0.7rem;color:#555;padding:0.5rem 0;">No hay tareas registradas para este servidor.</div>
         </template>
 
         <template x-for="t in tasks" :key="t.id">
-          <div class="task-item" :class="{ 'task-done': t.completada }">
-            <div style="display:flex;align-items:flex-start;gap:0.5rem;flex:1;">
-              <input type="checkbox" :checked="t.completada" @click="toggleTask(t)" style="margin-top:0.15rem;">
+          <div class="task-item" :class="{ 'task-done': t.completada }" style="padding:0.75rem;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;margin-bottom:0.6rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.6rem;flex:1;">
+              <iconify-icon :icon="t.completada ? 'lucide:check-circle-2' : 'lucide:clock'" :style="'width:16px;height:16px;margin-top:0.1rem;color:' + (t.completada ? '#2ecc71' : '#f39c12')"></iconify-icon>
               <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
-                  <strong style="font-size:0.78rem;color:#ccc;" x-text="t.titulo"></strong>
+                  <strong style="font-size:0.8rem;color:#fff;" x-text="t.titulo"></strong>
                   <span class="tsk-badge" :class="taskSeverityClass(t.criticidad)" x-text="taskSeverityLabel(t.criticidad)"></span>
                   <span class="countdown-pill" :class="getCountdownClass(t.fecha_limite)" x-show="t.fecha_limite && !t.completada" x-text="getCountdownText(t.fecha_limite)"></span>
                 </div>
-                <div style="font-size:0.65rem;color:#555;margin-top:0.15rem;" x-show="t.descripcion" x-text="t.descripcion"></div>
-                <div style="font-size:0.55rem;color:#444;margin-top:0.15rem;" x-show="t.completada && t.completed_at">
-                  Completada el <span x-text="formatDate(t.completed_at)"></span>
+                <div style="font-size:0.68rem;color:#aaa;margin-top:0.2rem;" x-show="t.descripcion" x-text="t.descripcion"></div>
+                <div style="font-size:0.6rem;color:#666;margin-top:0.25rem;" x-show="t.completada">
+                  ✓ Completada el <span x-text="formatDate(t.completed_at || t.updated_at)"></span>
                 </div>
                 <template x-if="t.completada && taskEvidenceDesc(t.id)">
-                  <button @click="viewEvidence(t)" style="background:transparent;border:none;color:#2ecc71;cursor:pointer;font-size:0.6rem;padding:0;margin-top:0.15rem;text-decoration:underline;text-underline-offset:2px;">
-                    Ver evidencia
-                  </button>
+                  <div style="margin-top:0.35rem;padding:0.4rem 0.6rem;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:6px;font-size:0.65rem;color:#2ecc71;">
+                    <strong>Evidencia de cumplimiento:</strong> <span x-text="taskEvidenceDesc(t.id)"></span>
+                  </div>
                 </template>
               </div>
             </div>
-          <template x-if="canEdit">
-              <button class="btn-icon danger" @click="deleteTask(t.id)" title="Eliminar tarea" style="flex-shrink:0;">
-                <iconify-icon icon="lucide:trash-2" style="width:12px;height:12px;"></iconify-icon>
-              </button>
-            </template>
           </div>
         </template>
-
-        <div style="margin-top:0.75rem;" x-show="canEdit">
-          <button class="at-btn" @click="openAddTaskModal()" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.85rem;background:linear-gradient(135deg,#6c5ce7,#a855f7);color:#fff;border-radius:8px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(108,92,231,0.25);">
-            <iconify-icon icon="lucide:plus" style="width:14px;height:14px;"></iconify-icon>
-            Agendar Tarea / Mantenimiento
-          </button>
-        </div>
       </div>
 
       <!-- BITÁCORA -->
@@ -469,7 +457,25 @@
         </div>
       </form>
     </div>
-  </div>
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
 </div>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/toast.js"></script>

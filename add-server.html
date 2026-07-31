@@ -102,9 +102,44 @@
               <input id="add-modelo" type="text" x-model="form.modelo" placeholder="Ej: PowerEdge R740" required @blur="validateField('modelo')" :class="errors.modelo ? 'is-invalid' : ''">
               <div class="field-error" :class="errors.modelo ? 'show' : ''" x-text="errors.modelo"></div>
             </div>
-            <div class="field-group">
-              <label for="add-ubicacion">Ubicaci&oacute;n</label>
-              <input id="add-ubicacion" type="text" x-model="form.ubicacion" placeholder="Ej: Rack A, U12">
+            <!-- UBICACIÓN Y SELECCIÓN U-RACK -->
+            <div class="field-group" style="grid-column:1 / -1;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;">
+              <label style="font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;margin-bottom:0.6rem;">
+                <iconify-icon icon="lucide:server" style="color:#00cec9;"></iconify-icon>
+                Ubicación Física & Rango de Unidades U (Rack)
+              </label>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:0.75rem;align-items:center;">
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Nombre de Rack / Gabinete</label>
+                  <input type="text" x-model="rackName" @input="updateUbicacionString()" placeholder="Ej: RACK-MAIN-01" style="margin:0;">
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Unidad U Inicial</label>
+                  <select x-model="uStart" @change="updateUbicacionString()" style="margin:0;background:#12121a;color:#fff;">
+                    <template x-for="u in 42" :key="u">
+                      <option :value="u" :disabled="!!isUOccupied(u)" :style="isUOccupied(u) ? 'color:#555;' : ''" x-text="isUOccupied(u) ? 'U' + u + ' (Ocupada por ' + isUOccupied(u) + ')' : 'U' + u"></option>
+                    </template>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Altura del Chasis (U)</label>
+                  <select x-model="uHeight" @change="updateUbicacionString()" style="margin:0;background:#12121a;color:#fff;">
+                    <option value="1">1U (Factor Compacto)</option>
+                    <option value="2">2U (Standard Server)</option>
+                    <option value="3">3U (Storage / GPU Node)</option>
+                    <option value="4">4U (Enterprise Modular)</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:0.6rem;font-size:0.72rem;color:#8e7ff3;font-weight:600;display:flex;align-items:center;gap:0.4rem;">
+                <iconify-icon icon="lucide:map-pin"></iconify-icon>
+                Rango Asignado: <span x-text="form.ubicacion" style="color:#fff;"></span>
+              </div>
+              <!-- ALERT BANNER SI HAY CONFLICTO DE U -->
+              <div x-show="uConflictError" style="margin-top:0.75rem;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#e74c3c;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.72rem;display:flex;align-items:center;gap:0.5rem;">
+                <iconify-icon icon="lucide:alert-triangle" style="width:18px;height:18px;flex-shrink:0;"></iconify-icon>
+                <span x-text="uConflictError"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -149,17 +184,84 @@
         <!-- ADVANCED FIELDS -->
         <div class="advanced-content" x-show="showAdvanced" x-collapse>
 
-          <!-- HARDWARE -->
+          <!-- HARDWARE ESTRUCTURADO (CPU & RAM) -->
           <div class="edit-section">
             <h2 class="det-section-title">
               <iconify-icon icon="lucide:cpu" style="width:14px;height:14px;color:#3498db;flex-shrink:0;"></iconify-icon>
-              Hardware
+              Hardware & Especificaciones de Procesamiento / Memoria
             </h2>
-            <div class="edit-grid">
-              <div class="field-group"><label>Procesador</label><input type="text" x-model="form.procesador" placeholder="Ej: Intel Xeon Silver 4314"></div>
-              <div class="field-group"><label>RAM (GB)</label><input type="number" x-model="form.ram_gb" placeholder="Ej: 64"></div>
-              <div class="field-group"><label>M&oacute;dulos RAM</label><input type="text" x-model="form.ram_modulos" placeholder="Ej: 4"></div>
-              <div class="field-group"><label>Velocidad RAM</label><input type="text" x-model="form.ram_velocidad" placeholder="Ej: 3200MHz"></div>
+
+            <!-- CPU STRUCTURING -->
+            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+              <div style="font-size:0.75rem;font-weight:700;color:#fff;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem;">
+                <iconify-icon icon="lucide:cpu" style="color:#3498db;"></iconify-icon>
+                Configuración del Procesador (CPU)
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:0.75rem;">
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Sockets Ocupados</label>
+                  <select x-model="cpuSockets" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                    <option value="1">1 Socket (Single CPU)</option>
+                    <option value="2">2 Sockets (Dual CPU)</option>
+                    <option value="4">4 Sockets (Quad CPU)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Modelo / Familia</label>
+                  <input type="text" x-model="cpuModel" @input="updateHardwareStrings()" placeholder="Ej: Intel Xeon Gold 6248R" style="margin:0;">
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Cores por Socket</label>
+                  <input type="text" x-model="cpuCores" @input="updateHardwareStrings()" placeholder="Ej: 24 Cores / 48 Threads" style="margin:0;">
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Frecuencia Base (GHz)</label>
+                  <input type="text" x-model="cpuGhz" @input="updateHardwareStrings()" placeholder="Ej: 3.0 GHz" style="margin:0;">
+                </div>
+              </div>
+              <div style="font-size:0.68rem;color:#888;margin-top:0.4rem;">
+                Resumen Generado: <strong style="color:#3498db;" x-text="form.procesador"></strong>
+              </div>
+            </div>
+
+            <!-- RAM STRUCTURING -->
+            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;">
+              <div style="font-size:0.75rem;font-weight:700;color:#fff;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem;">
+                <iconify-icon icon="lucide:memory-stick" style="color:#2ecc71;"></iconify-icon>
+                Configuración de Memoria RAM
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:0.75rem;">
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Número de Módulos (DIMMs)</label>
+                  <input type="number" x-model="ramDimmsCount" @input="updateHardwareStrings()" min="1" placeholder="Ej: 4" style="margin:0;">
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Capacidad por Módulo (GB)</label>
+                  <select x-model="ramDimmCap" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                    <option value="8">8 GB</option>
+                    <option value="16">16 GB</option>
+                    <option value="32">32 GB</option>
+                    <option value="64">64 GB</option>
+                    <option value="128">128 GB</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Tipo de Memoria</label>
+                  <select x-model="ramType" @change="updateHardwareStrings()" style="margin:0;background:#12121a;color:#fff;">
+                    <option value="DDR4 ECC">DDR4 ECC</option>
+                    <option value="DDR5 ECC">DDR5 ECC</option>
+                    <option value="DDR4 Non-ECC">DDR4 Non-ECC</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.68rem;color:#aaa;">Velocidad Bus</label>
+                  <input type="text" x-model="ramSpeed" @input="updateHardwareStrings()" placeholder="Ej: 3200 MHz" style="margin:0;">
+                </div>
+              </div>
+              <div style="font-size:0.68rem;color:#888;margin-top:0.4rem;display:flex;align-items:center;gap:0.75rem;">
+                <span>Capacidad Total Calculada: <strong style="color:#2ecc71;" x-text="form.ram_gb + ' GB'"></strong></span>
+                <span>Configuración: <strong style="color:#fff;" x-text="form.ram_modulos"></strong></span>
+              </div>
             </div>
           </div>
 
@@ -356,8 +458,25 @@
           </button>
         </div>
       </div>
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
     </div>
-  </template>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
 </div>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/toast.js"></script>

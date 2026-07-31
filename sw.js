@@ -1,4 +1,4 @@
-const CACHE = 'bastionx-v9'
+const CACHE = 'bastionx-v12'
 const STATIC = [
   './',
   './login.html',
@@ -7,11 +7,13 @@ const STATIC = [
   './services.html',
   './networks.html',
   './infrastructure.html',
+  './tasks.html',
   './admin.html',
   './admin-users.html',
   './admin-services.html',
   './admin-subnets.html',
   './admin-audit.html',
+  './admin-tasks.html',
   './server-detail.html',
   './add-server.html',
   './edit-server.html',
@@ -33,6 +35,7 @@ const STATIC = [
   './js/pages/services.js',
   './js/pages/networks.js',
   './js/pages/infrastructure.js',
+  './js/pages/tasks.js',
   './js/pages/server-detail.js',
   './js/pages/add-server.js',
   './js/pages/edit-server.js',
@@ -41,6 +44,7 @@ const STATIC = [
   './js/pages/admin-services.js',
   './js/pages/admin-subnets.js',
   './js/pages/admin-audit.js',
+  './js/pages/admin-tasks.js',
   './js/pages/tags.js',
   './js/pages/report.js',
   './js/pages/labels.js',

@@ -287,8 +287,13 @@
     /* ─── Module Cards (protagonist row) ──────────── */
     .hub-module-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.85rem;
+    }
+    @media (max-width: 1100px) {
+      .hub-module-grid {
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      }
     }
     .hub-module-card {
       position: relative;
@@ -483,6 +488,56 @@
           </div>
         </div>
 
+        <!-- NOTIFICATIONS BELL CENTER -->
+        <div style="position:relative;" @click.outside="showNotificationsMenu = false">
+          <button @click="showNotificationsMenu = !showNotificationsMenu" style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);color:#ccc;padding:0.35rem 0.6rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;position:relative;" title="Notificaciones de Tareas">
+            <iconify-icon icon="lucide:bell" style="width:16px;height:16px;"></iconify-icon>
+            <span x-show="myPendingTasksCount > 0" x-text="myPendingTasksCount" style="position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:0.55rem;font-weight:700;padding:0.1rem 0.35rem;border-radius:10px;border:1px solid #12121a;"></span>
+          </button>
+
+          <!-- FLOATING NOTIFICATIONS DROPDOWN MENU -->
+          <div class="role-sim-panel" x-show="showNotificationsMenu" x-cloak style="position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#12121a;border:1px solid var(--glass-border);border-radius:12px;padding:0.85rem;box-shadow:0 12px 30px rgba(0,0,0,0.6);z-index:999;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.5rem;border-bottom:1px solid var(--border-subtle);margin-bottom:0.5rem;">
+              <span style="font-size:0.75rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.3rem;">
+                <iconify-icon icon="lucide:bell" style="color:#6c5ce7;"></iconify-icon>
+                Tareas Pendientes
+              </span>
+              <span style="font-size:0.65rem;color:#888;" x-text="myPendingTasksCount + ' por realizar'"></span>
+            </div>
+
+            <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:0.4rem;">
+              <template x-if="pendingTasksList.length === 0">
+                <div style="font-size:0.7rem;color:#555;padding:0.8rem;text-align:center;">¡No tienes tareas pendientes!</div>
+              </template>
+              <template x-for="t in pendingTasksList" :key="t.id">
+                <div @click="window.location.href='tasks.html'" style="background:rgba(255,255,255,0.03);padding:0.5rem 0.65rem;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,0.04);transition:background 0.15s;" onmouseenter="this.style.background='rgba(108,92,231,0.15)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
+                  <div style="font-size:0.75rem;font-weight:600;color:#fff;" x-text="t.titulo"></div>
+                  <div style="font-size:0.65rem;color:#888;display:flex;align-items:center;gap:0.4rem;margin-top:0.15rem;">
+                    <span style="color:#8e7ff3;" x-text="t.servers?.hostname || 'Servidor'"></span>
+                    <span>•</span>
+                    <span style="color:#f39c12;" x-text="t.fecha_limite ? BastionUtils.formatDate(t.fecha_limite) : 'Sin fecha'"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div style="margin-top:0.6rem;padding-top:0.4rem;border-top:1px solid var(--border-subtle);text-align:center;">
+              <a href="tasks.html" style="font-size:0.68rem;color:#8e7ff3;text-decoration:none;font-weight:600;">Ver todas mis tareas →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIS TAREAS LINK -->
+        <a class="admin-link-btn" href="tasks.html"
+           @click.prevent="window.location.href='tasks.html'"
+           title="Ver mis tareas asignadas"
+           aria-label="Mis tareas"
+           style="background:rgba(108,92,231,0.15);border-color:rgba(108,92,231,0.3);color:#8e7ff3;">
+          <iconify-icon icon="lucide:check-square" style="width:14px;height:14px;"></iconify-icon>
+          Mis Tareas
+          <span class="det-count" x-show="myPendingTasksCount > 0" x-text="myPendingTasksCount" style="background:#6c5ce7;color:#fff;font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:10px;margin-left:2px;"></span>
+        </a>
+
         <!-- ADMIN PANEL LINK -->
         <a class="admin-link-btn" href="admin.html"
            x-show="isSuperAdmin"
@@ -654,6 +709,29 @@
     <!-- MODULE NAVIGATION GRID -->
     <div class="hub-module-grid" x-show="!loading">
 
+      <!-- Mis Tareas -->
+      <a href="tasks.html" class="hub-module-card"
+         @click.prevent="window.location.href='tasks.html'"
+         style="--hover-border: rgba(108,92,231,0.4);"
+         onmouseenter="this.style.borderColor='rgba(108,92,231,0.35)'"
+         onmouseleave="this.style.borderColor=''">
+        <div class="hub-module-arrow-badge">
+          <iconify-icon icon="lucide:arrow-up-right" style="width:20px;height:20px;"></iconify-icon>
+        </div>
+        <div class="hub-module-icon" style="background:rgba(108,92,231,0.12);color:#8e7ff3;">
+          <iconify-icon icon="lucide:check-square"></iconify-icon>
+        </div>
+        <h3>Mis Tareas</h3>
+        <div class="hub-module-desc">
+          <iconify-icon icon="lucide:clock" style="width:12px;height:12px;color:#8e7ff3;flex-shrink:0;"></iconify-icon>
+          Trabajos asignados y mantenimiento
+        </div>
+        <div class="hub-module-footer" style="color:#8e7ff3;">
+          <span x-text="myPendingTasksCount + ' pendientes'"></span>
+          <iconify-icon icon="lucide:arrow-right" style="width:13px;height:13px;"></iconify-icon>
+        </div>
+      </a>
+
       <!-- Servidores -->
       <a href="servers.html" class="hub-module-card"
          @click.prevent="window.location.href='servers.html'"
@@ -750,7 +828,25 @@
       <p style="margin-top:0.75rem;color:#666;font-size:0.8rem;">Cargando datos del laboratorio...</p>
     </div>
 
-  </div>
+  <!-- GLOBAL UNIFIED FOOTER -->
+  <footer class="bx-footer" style="margin-top:3rem;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);padding:0.75rem 1.5rem;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;font-size:0.7rem;color:#777;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <iconify-icon icon="lucide:shield-check" style="width:16px;height:16px;color:#6c5ce7;"></iconify-icon>
+      <strong style="color:#fff;font-weight:700;">BASTIONX LAB</strong>
+      <span style="color:#444;">|</span>
+      <span style="color:#aaa;">v2.4.0</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.68rem;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;"></span>
+      <span style="color:#2ecc71;font-weight:600;">Sistema Operativo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="dashboard.html" style="color:#888;text-decoration:none;">Dashboard</a>
+      <a href="servers.html" style="color:#888;text-decoration:none;">Servidores</a>
+      <a href="tasks.html" style="color:#888;text-decoration:none;">Tareas</a>
+      <a href="admin.html" style="color:#888;text-decoration:none;">Administración</a>
+    </div>
+  </footer>
 </div>
 
 <script src="js/core/supabase.js"></script>
