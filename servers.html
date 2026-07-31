@@ -28,6 +28,12 @@
   </div>
 
   <div class="app-layout" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
+    <!-- GLOBAL BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación" style="margin-bottom:1rem;display:flex;align-items:center;gap:0;max-height:32px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 1.5rem;border-radius:6px;">
+      <a href="dashboard.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Dashboard</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <span aria-current="page" style="font-size:0.68rem;color:#ccc;font-weight:600;padding:0 0.25rem;">Servidores</span>
+    </nav>
     <main class="main-content">
       <div class="kanban-board">
         <!-- TOPBAR -->
@@ -43,13 +49,13 @@
             </h1>
           </div>
           <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-            <!-- VIEW MODE TOGGLE BUTTONS -->
+            <!-- VIEW MODE TOGGLE BUTTONS (Segmented Control) -->
             <div style="display:inline-flex;background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:8px;padding:2px;">
-              <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'active' : ''" style="border:none;background:transparent;color:#fff;padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.25rem;" :style="viewMode === 'grid' ? 'background:rgba(108,92,231,0.25);color:#fff;' : 'color:#777;'">
+              <button type="button" @click="viewMode = 'grid'" :class="{ active: viewMode === 'grid' }" style="border:none !important;outline:none !important;background:transparent;padding:0.25rem 0.65rem !important;font-size:0.7rem !important;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.3rem;margin:0 !important;box-shadow:none !important;" :style="viewMode === 'grid' ? 'background:rgba(108,92,231,0.25) !important;color:#fff !important;' : 'color:#777 !important;'">
                 <iconify-icon icon="lucide:layout-grid" style="width:13px;height:13px;"></iconify-icon>
                 Grid
               </button>
-              <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'active' : ''" style="border:none;background:transparent;color:#fff;padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.25rem;" :style="viewMode === 'table' ? 'background:rgba(108,92,231,0.25);color:#fff;' : 'color:#777;'">
+              <button type="button" @click="viewMode = 'table'" :class="{ active: viewMode === 'table' }" style="border:none !important;outline:none !important;background:transparent;padding:0.25rem 0.65rem !important;font-size:0.7rem !important;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:0.3rem;margin:0 !important;box-shadow:none !important;" :style="viewMode === 'table' ? 'background:rgba(108,92,231,0.25) !important;color:#fff !important;' : 'color:#777 !important;'">
                 <iconify-icon icon="lucide:list" style="width:13px;height:13px;"></iconify-icon>
                 Tabla
               </button>
@@ -86,7 +92,7 @@
             </select>
           </div>
 
-          <div class="filter-tabs">
+          <div class="filter-tabs" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
             <button class="filter-tab" :class="activeFilter === 'todos' ? 'active' : ''" @click="activeFilter = 'todos'">
               Todos (<span x-text="servers.length"></span>)
             </button>
@@ -96,9 +102,9 @@
             <button class="filter-tab" :class="activeFilter === 'Inactivo' ? 'active' : ''" @click="activeFilter = 'Inactivo'">
               Inactivos (<span x-text="countByStatus('Inactivo')"></span>)
             </button>
-            <button class="filter-tab" :class="activeFilter === 'Pendiente' ? 'active' : ''" @click="activeFilter = 'Pendiente'">
-              Pendientes (<span x-text="countByStatus('Pendiente')"></span>)
-            </button>
+            <template x-for="st in serviceTypes" :key="st">
+              <button class="filter-tab" :class="activeFilter === st ? 'active' : ''" @click="activeFilter = st" x-text="st"></button>
+            </template>
           </div>
         </div>
 
@@ -126,8 +132,14 @@
                   </div>
                 </div>
               </div>
-              <div style="padding:0.75rem 1rem;font-size:0.72rem;color:#888;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
-                <span>IP: <strong style="color:#ccc;" x-text="s.ip || 'N/A'"></strong></span>
+              <div style="padding:0.65rem 1rem;font-size:0.7rem;color:#888;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem;">
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <span>IP: <strong style="color:#ccc;" x-text="s.ip || 'N/A'"></strong></span>
+                  <span title="Usuario SSH" style="display:inline-flex;align-items:center;gap:0.2rem;color:#aaa;">
+                    <iconify-icon icon="lucide:user" style="width:11px;height:11px;color:#888;"></iconify-icon>
+                    <span x-text="credsMap[s.id]?.usuario || 'root'"></span>
+                  </span>
+                </div>
                 <span class="status-badge" :class="(s.estado || 'Activo').toLowerCase()" x-text="s.estado || 'Activo'"></span>
               </div>
             </div>
@@ -142,6 +154,7 @@
                 <tr style="text-align:left;color:#777;border-bottom:1px solid rgba(255,255,255,0.06);">
                   <th style="padding:0.6rem;">Hostname</th>
                   <th style="padding:0.6rem;">IP Principal</th>
+                  <th style="padding:0.6rem;">Usuario SSH</th>
                   <th style="padding:0.6rem;">Modelo / Fabricante</th>
                   <th style="padding:0.6rem;">Ubicación</th>
                   <th style="padding:0.6rem;">Estado</th>
@@ -153,6 +166,10 @@
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;" @click="gotoServer(s.id)">
                     <td style="padding:0.6rem;font-weight:700;color:#fff;" x-text="s.hostname"></td>
                     <td style="padding:0.6rem;font-family:monospace;color:#6c5ce7;" x-text="s.ip || 'N/A'"></td>
+                    <td style="padding:0.6rem;color:#ccc;font-size:0.72rem;">
+                      <iconify-icon icon="lucide:user" style="width:11px;height:11px;color:#888;margin-right:3px;vertical-align:middle;"></iconify-icon>
+                      <span x-text="credsMap[s.id]?.usuario || 'root'"></span>
+                    </td>
                     <td style="padding:0.6rem;color:#aaa;" x-text="s.modelo || 'N/A'"></td>
                     <td style="padding:0.6rem;color:#888;" x-text="s.ubicacion || 'N/A'"></td>
                     <td style="padding:0.6rem;">

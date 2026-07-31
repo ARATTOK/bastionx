@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Catálogo de Tipos de Servicio</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    [x-cloak] { display: none !important; }
+    .admin-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  </style>
+</head>
+<body>
+<div x-data="adminServicesApp()" x-init="init()">
+
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="admin-page">
+
+    <!-- BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación" style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0;max-height:32px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 1.5rem;border-radius:6px;">
+      <a href="dashboard.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Dashboard</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <a href="admin.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Administrador</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <span aria-current="page" style="font-size:0.68rem;color:#ccc;font-weight:600;padding:0 0.25rem;">Tipos de Servicio</span>
+    </nav>
+
+    <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+      <iconify-icon icon="lucide:loader" style="width:24px;height:24px;color:#6c5ce7;animation:spin 1s linear infinite;"></iconify-icon>
+      Cargando Catálogo de Tipos de Servicio...
+    </div>
+
+    <div x-show="!loading && isSuperAdmin" x-cloak>
+      <!-- TOPBAR -->
+      <div class="topbar" style="margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="btn" @click="window.location.href='admin.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+            <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+            Volver al Hub
+          </button>
+          <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+            <iconify-icon icon="lucide:boxes" style="width:18px;height:18px;color:#6c5ce7;margin-right:6px;"></iconify-icon>
+            Gestión de Tipos de Servicio Globales
+          </h1>
+        </div>
+      </div>
+
+      <!-- SERVICE TYPES FORM & CATALOG SECTION -->
+      <div class="admin-card-section" style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:1.5rem;">
+        <div style="font-size:0.95rem;font-weight:700;color:#fff;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:plus-circle" style="color:#6c5ce7;"></iconify-icon>
+          Agregar Nuevo Tipo de Servicio
+        </div>
+        <div style="font-size:0.72rem;color:#888;margin-bottom:1.25rem;">
+          Los tipos de servicio aquí registrados alimentan dinámicamente las pestañas de filtro en la vista general de servidores y el autocompletado en el formulario de edición.
+        </div>
+
+        <form @submit.prevent="addServiceType()" style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap;align-items:center;">
+          <input type="text" x-model="newServiceTypeName" placeholder="Ej: PostgreSQL, Redis, Nginx, Kafka..." required style="max-width:320px;height:38px;font-size:0.78rem;">
+          <input type="color" x-model="newServiceTypeColor" style="width:40px;height:38px;padding:2px;border:1px solid var(--border-subtle);border-radius:8px;background:#12121a;cursor:pointer;" title="Color del badge">
+          <button type="submit" class="at-btn" style="height:38px;font-size:0.75rem;background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:0 1.2rem;font-weight:600;cursor:pointer;">
+            <iconify-icon icon="lucide:plus"></iconify-icon>
+            Guardar Servicio
+          </button>
+        </form>
+
+        <div style="font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:1rem;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:tags" style="color:#00cec9;"></iconify-icon>
+          Catálogo Actual (<span x-text="serviceTypes.length"></span>)
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:1rem;">
+          <template x-for="st in serviceTypes" :key="st.id || st.name">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;">
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span style="width:10px;height:10px;border-radius:50%;" :style="'background:' + (st.color || '#6c5ce7') + ';'"></span>
+                <strong style="font-size:0.8rem;color:#fff;" x-text="st.name"></strong>
+              </div>
+              <button type="button" @click="deleteServiceType(st.id, st.name)" style="background:transparent;border:none;color:#ff7675;cursor:pointer;padding:0.2rem;display:flex;align-items:center;" title="Eliminar servicio">
+                <iconify-icon icon="lucide:trash-2" style="width:14px;height:14px;"></iconify-icon>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/admin-services.js"></script>
+</body>
+</html>

@@ -29,6 +29,7 @@ document.addEventListener('alpine:init', () => {
 
     servers: [],
     credsMap: {},
+    serviceTypes: [],
     searchQuery: '',
     activeFilter: 'todos',
     selectedLocation: 'todos',
@@ -54,13 +55,26 @@ document.addEventListener('alpine:init', () => {
       const { data } = await sb.from('servers').select('*').order('hostname')
       if (data) this.servers = data
 
-      // Load IPMI creds for quick connect launch buttons
-      const { data: creds } = await sb.from('server_credentials').select('server_id, ipmi')
+      // Load credentials (ipmi, usuario) for quick launch and SSH user display
+      const { data: creds } = await sb.from('server_credentials').select('server_id, ipmi, usuario')
       if (creds) {
         const map = {}
-        creds.forEach(c => { if (c.ipmi) map[c.server_id] = c.ipmi })
+        creds.forEach(c => { map[c.server_id] = c })
         this.credsMap = map
       }
+
+      // Load dynamic tags / service types for filtering
+      try {
+        const { data: tags } = await sb.from('tags').select('*').order('name')
+        if (tags && tags.length > 0) {
+          this.serviceTypes = tags.map(t => t.name)
+        } else {
+          this.serviceTypes = ['PostgreSQL', 'MySQL', 'Redis', 'Nginx', 'SSH', 'HTTPS']
+        }
+      } catch(e) {
+        this.serviceTypes = ['PostgreSQL', 'MySQL', 'Redis', 'Nginx', 'SSH', 'HTTPS']
+      }
+
       this.loading = false
     },
 
@@ -74,7 +88,15 @@ document.addEventListener('alpine:init', () => {
       return this.servers.filter(s => {
         const q = this.searchQuery.toLowerCase().trim()
         const matchesQ = !q || s.hostname?.toLowerCase().includes(q) || s.ip?.toLowerCase().includes(q) || s.modelo?.toLowerCase().includes(q)
-        const matchesFilter = this.activeFilter === 'todos' || (s.estado && s.estado.toLowerCase() === this.activeFilter.toLowerCase())
+        
+        let matchesFilter = this.activeFilter === 'todos'
+        if (!matchesFilter) {
+          const filterLower = this.activeFilter.toLowerCase()
+          const statusMatch = s.estado && s.estado.toLowerCase() === filterLower
+          const serviceMatch = Array.isArray(s.servicios) && s.servicios.some(srv => srv.nombre?.toLowerCase().includes(filterLower))
+          matchesFilter = statusMatch || serviceMatch
+        }
+
         const matchesLoc = this.selectedLocation === 'todos' || s.ubicacion === this.selectedLocation
         return matchesQ && matchesFilter && matchesLoc
       })

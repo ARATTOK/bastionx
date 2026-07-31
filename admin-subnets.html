@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Gestión de Subredes & VLANs</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    [x-cloak] { display: none !important; }
+    .admin-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  </style>
+</head>
+<body>
+<div x-data="adminSubnetsApp()" x-init="init()">
+
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="admin-page">
+
+    <!-- BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación" style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0;max-height:32px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 1.5rem;border-radius:6px;">
+      <a href="dashboard.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Dashboard</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <a href="admin.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Administrador</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <span aria-current="page" style="font-size:0.68rem;color:#ccc;font-weight:600;padding:0 0.25rem;">Subredes & VLANs</span>
+    </nav>
+
+    <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+      <iconify-icon icon="lucide:loader" style="width:24px;height:24px;color:#00cec9;animation:spin 1s linear infinite;"></iconify-icon>
+      Cargando Configuración de Subredes & VLANs...
+    </div>
+
+    <div x-show="!loading && isSuperAdmin" x-cloak>
+      <!-- TOPBAR -->
+      <div class="topbar" style="margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="btn" @click="window.location.href='admin.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+            <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+            Volver al Hub
+          </button>
+          <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+            <iconify-icon icon="lucide:network" style="width:18px;height:18px;color:#00cec9;margin-right:6px;"></iconify-icon>
+            Gestión de Subredes CIDR & VLANs
+          </h1>
+        </div>
+      </div>
+
+      <!-- MANAGED SUBNETS SECTION -->
+      <div class="admin-card-section" style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:1.5rem;">
+        <div style="font-size:0.95rem;font-weight:700;color:#fff;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:plus-circle" style="color:#00cec9;"></iconify-icon>
+          Registrar Nueva Subred o Segmento VLAN
+        </div>
+        <div style="font-size:0.72rem;color:#888;margin-bottom:1.25rem;">
+          Define los rangos CIDR permitidos (ej: 192.168.1.0/24). Estas subredes poblarán la selección e interfaz de autocompletado en el formulario de edición de servidores.
+        </div>
+
+        <form @submit.prevent="addSubnet()" style="display:flex;gap:0.65rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+          <input type="text" x-model="newSubnetCidr" placeholder="CIDR (Ej: 192.168.1.0/24)" required style="max-width:220px;height:38px;font-size:0.75rem;">
+          <input type="text" x-model="newSubnetName" placeholder="Nombre (Ej: VLAN 10 Producción)" style="max-width:260px;height:38px;font-size:0.75rem;">
+          <input type="text" x-model="newSubnetVlan" placeholder="VLAN ID (Ej: 10)" style="max-width:120px;height:38px;font-size:0.75rem;">
+          <button type="submit" class="at-btn" style="height:38px;font-size:0.75rem;background:#00cec9;color:#000;font-weight:700;border:none;border-radius:8px;padding:0 1.2rem;cursor:pointer;">
+            <iconify-icon icon="lucide:plus"></iconify-icon>
+            Registrar Subred
+          </button>
+        </form>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-subtle);text-align:left;color:#777;">
+                <th style="padding:0.6rem;">Rango CIDR</th>
+                <th style="padding:0.6rem;">Nombre de Red</th>
+                <th style="padding:0.6rem;">VLAN</th>
+                <th style="padding:0.6rem;text-align:right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="sub in subnetsList" :key="sub.cidr">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                  <td style="padding:0.6rem;font-family:monospace;color:#00cec9;font-weight:700;" x-text="sub.cidr"></td>
+                  <td style="padding:0.6rem;color:#fff;" x-text="sub.name"></td>
+                  <td style="padding:0.6rem;color:#aaa;" x-text="'VLAN ' + (sub.vlan || '1')"></td>
+                  <td style="padding:0.6rem;text-align:right;">
+                    <button class="at-btn" @click="deleteSubnet(sub.cidr)" style="padding:0.25rem 0.6rem;font-size:0.65rem;color:#ff7675;border-color:rgba(255,118,117,0.3);" title="Eliminar subred">
+                      <iconify-icon icon="lucide:trash-2"></iconify-icon>
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/admin-subnets.js"></script>
+</body>
+</html>

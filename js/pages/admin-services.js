@@ -1,5 +1,5 @@
 document.addEventListener('alpine:init', () => {
-  Alpine.data('adminApp', () => ({
+  Alpine.data('adminServicesApp', () => ({
     loading: true,
     user: null,
     realUserRole: 'readonly',
@@ -13,12 +13,10 @@ document.addEventListener('alpine:init', () => {
       return this.userRole === 'superadmin'
     },
 
-    stats: {
-      usersCount: 0,
-      serviceTypesCount: 0,
-      subnetsCount: 0,
-      auditLogsCount: 0
-    },
+    serviceTypes: [],
+    newServiceTypeName: '',
+    newServiceTypeColor: '#6c5ce7',
+    editingTag: null,
 
     simulateRole(role) {
       this.simulatedRole = role
@@ -53,43 +51,50 @@ document.addEventListener('alpine:init', () => {
           return
         }
 
-        await this.loadHubStats()
+        await this.loadServiceTypes()
       } catch (err) {
-        console.error('Admin hub init error:', err)
+        console.error('Admin services init error:', err)
       } finally {
         this.loading = false
       }
     },
 
-    async loadHubStats() {
+    async loadServiceTypes() {
       try {
-        const { count: usersCount } = await sb.from('user_profiles').select('*', { count: 'exact', head: true })
-        this.stats.usersCount = usersCount || 0
-      } catch(e) {}
-
-      try {
-        const { count: tagsCount } = await sb.from('tags').select('*', { count: 'exact', head: true })
-        this.stats.serviceTypesCount = tagsCount || 0
-      } catch(e) {}
-
-      try {
-        const storedSubnets = localStorage.getItem('bastion_managed_subnets')
-        if (storedSubnets) {
-          const parsed = JSON.parse(storedSubnets)
-          this.stats.subnetsCount = parsed.length
-        } else {
-          this.stats.subnetsCount = 3
-        }
-      } catch(e) {}
-
-      try {
-        const { count: auditCount } = await sb.from('audit_logs').select('*', { count: 'exact', head: true })
-        this.stats.auditLogsCount = auditCount || 0
+        const { data } = await sb.from('tags').select('*').order('name')
+        if (data) this.serviceTypes = data
       } catch(e) {}
     },
 
-    gotoModule(url) {
-      window.location.href = url
+    async addServiceType() {
+      const name = this.newServiceTypeName.trim()
+      if (!name) return
+      try {
+        const { data, error } = await sb.from('tags').insert({ name, color: this.newServiceTypeColor }).select().single()
+        if (error) {
+          BastionUtils.showToast('error', 'Error al crear tipo de servicio: ' + error.message)
+        } else {
+          BastionUtils.showToast('success', `Tipo de servicio "${name}" creado exitosamente`)
+          this.newServiceTypeName = ''
+          this.newServiceTypeColor = '#6c5ce7'
+          await this.loadServiceTypes()
+          await auditLog(null, this.user?.id, 'service_type.created', { name }, `Superadmin creo tipo de servicio global: ${name}`)
+        }
+      } catch(e) {
+        BastionUtils.showToast('error', 'Error al guardar tipo de servicio')
+      }
+    },
+
+    async deleteServiceType(tagId, name) {
+      try {
+        const { error } = await sb.from('tags').delete().eq('id', tagId)
+        if (error) {
+          BastionUtils.showToast('error', 'Error al eliminar: ' + error.message)
+        } else {
+          BastionUtils.showToast('success', `Tipo de servicio "${name}" eliminado`)
+          await this.loadServiceTypes()
+        }
+      } catch(e) {}
     }
   }))
 })

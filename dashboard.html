@@ -129,10 +129,76 @@
     }
     .rs-check { color: #6c5ce7; flex-shrink: 0; }
 
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bx-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-height: 32px;
+      background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 0 1.5rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+    .bx-breadcrumb a,
+    .bx-breadcrumb span {
+      font-size: 0.68rem;
+      color: #555;
+      text-decoration: none;
+      white-space: nowrap;
+      line-height: 32px;
+      padding: 0 0.25rem;
+      transition: color 0.12s;
+    }
+    .bx-breadcrumb a:hover { color: #999; }
+    .bx-breadcrumb span[aria-current='page'] {
+      color: #ccc;
+      font-weight: 600;
+    }
+    .bx-breadcrumb .bc-sep {
+      width: 10px;
+      height: 10px;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    /* ─── Admin Link Button (Glassmorphism + LED) ─────── */
+    .admin-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid rgba(108, 92, 247, 0.3);
+      background: rgba(108, 92, 247, 0.12);
+      color: #a29bfe;
+      text-decoration: none;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+    .admin-link-btn:hover {
+      background: rgba(108, 92, 247, 0.22);
+      border-color: rgba(108, 92, 247, 0.5);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(108, 92, 247, 0.25);
+    }
+    .admin-led {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #6c5ce7;
+      box-shadow: 0 0 6px #6c5ce7, 0 0 10px #6c5ce7;
+      display: inline-block;
+    }
+
     /* ─── KPI Cards (compact summary row) ─────────── */
     .hub-kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 0.65rem;
       margin-bottom: 0;
     }
@@ -342,6 +408,12 @@
 
   <div style="max-width:1300px;margin:0 auto;padding:1.5rem;">
 
+    <!-- GLOBAL BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación">
+      <iconify-icon icon="lucide:layout-dashboard" style="width:12px;height:12px;color:#6c5ce7;margin-right:4px;"></iconify-icon>
+      <span aria-current="page">Dashboard</span>
+    </nav>
+
     <!-- TOPBAR -->
     <div class="topbar" style="margin-bottom:2rem;">
       <div>
@@ -417,7 +489,8 @@
            @click.prevent="window.location.href='admin.html'"
            title="Panel de control Superadmin"
            aria-label="Ir al panel de administración">
-          <iconify-icon icon="lucide:shield-cog" style="width:14px;height:14px;"></iconify-icon>
+          <span class="admin-led"></span>
+          <iconify-icon icon="lucide:shield-check" style="width:14px;height:14px;"></iconify-icon>
           Admin
         </a>
 

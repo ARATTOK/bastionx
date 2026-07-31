@@ -99,9 +99,40 @@ document.addEventListener('alpine:init', () => {
       })
       return Object.keys(map).map(loc => ({
         location: loc,
-        serversCount: map[loc].count,
-        ramTotal: map[loc].ram
+        count: map[loc].count,
+        ram: map[loc].ram
       }))
+    },
+
+    get rackUnits() {
+      // 42U Rack Simulation
+      const units = []
+      const occupiedMap = {}
+
+      this.servers.forEach((s, idx) => {
+        // Infer U slot from s.ubicacion (e.g. U36) or fallback to index assignment
+        let uNum = 42 - (idx * 3)
+        const matchU = (s.ubicacion || '').match(/U(\d+)/i)
+        if (matchU) uNum = parseInt(matchU[1], 10)
+        if (uNum > 0 && uNum <= 42) {
+          occupiedMap[uNum] = s
+        }
+      })
+
+      for (let u = 42; u >= 1; u--) {
+        const server = occupiedMap[u] || null
+        units.push({
+          u: u,
+          server: server,
+          isOccupied: !!server
+        })
+      }
+      return units
+    },
+
+    gotoServer(id) {
+      if (!id) return
+      window.location.href = 'server-detail.html?id=' + id
     }
   }))
 })

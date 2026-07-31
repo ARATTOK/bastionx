@@ -106,9 +106,75 @@ document.addEventListener('alpine:init', () => {
       const { data: sts } = await sb.from('server_tags').select('tag_id').eq('server_id', id)
       if (sts) this.selectedTagIds = sts.map(s => s.tag_id)
       this._origTagIds = [...this.selectedTagIds]
-      this._formSnapshot = JSON.stringify(this.form) + JSON.stringify(this.selectedTagIds)
 
+      await this.loadSubnetsAndOccupiedIps(id)
+
+      this._formSnapshot = JSON.stringify(this.form) + JSON.stringify(this.selectedTagIds)
       this.loading = false
+    },
+
+    subnets: [],
+    occupiedIps: new Set(),
+    selectedSubnetCidr: '192.168.1.0/24',
+
+    async loadSubnetsAndOccupiedIps(currentServerId) {
+      // Managed subnets
+      const stored = localStorage.getItem('bastion_managed_subnets')
+      if (stored) {
+        try { this.subnets = JSON.parse(stored) } catch(e) {}
+      } else {
+        this.subnets = [
+          { cidr: '192.168.1.0/24', name: 'Red Producción VLAN 10', vlan: '10' },
+          { cidr: '10.0.0.0/24', name: 'Red Servicios VLAN 20', vlan: '20' },
+          { cidr: '172.16.0.0/24', name: 'DMZ / IPMI VLAN 30', vlan: '30' }
+        ]
+      }
+
+      // Fetch all occupied IPs
+      const set = new Set()
+      const { data: servers } = await sb.from('servers').select('id, ip, servicios')
+      if (servers) {
+        servers.forEach(s => {
+          if (s.id !== currentServerId) {
+            if (s.ip) set.add(s.ip.trim())
+            if (Array.isArray(s.servicios)) {
+              s.servicios.forEach(svc => {
+                if (Array.isArray(svc.ips)) svc.ips.forEach(ip => { if (ip) set.add(ip.trim()) })
+              })
+            }
+          }
+        })
+      }
+      this.occupiedIps = set
+    },
+
+    isIpDuplicate(ip) {
+      if (!ip || !ip.trim()) return false
+      return this.occupiedIps.has(ip.trim())
+    },
+
+    autoAssignIp(svcIdx, ipIdx) {
+      const cidr = this.selectedSubnetCidr || '192.168.1.0/24'
+      const baseMatch = cidr.match(/^(\d+\.\d+\.\d+)\./)
+      if (!baseMatch) {
+        BastionUtils.showToast('error', 'CIDR inválido')
+        return
+      }
+      const base = baseMatch[1]
+      let foundIp = ''
+      for (let i = 10; i <= 254; i++) {
+        const candidate = `${base}.${i}`
+        if (!this.occupiedIps.has(candidate)) {
+          foundIp = candidate
+          break
+        }
+      }
+      if (foundIp) {
+        this.form.servicios[svcIdx].ips[ipIdx] = foundIp
+        BastionUtils.showToast('success', `IP disponible asignada: ${foundIp}`)
+      } else {
+        BastionUtils.showToast('error', 'No se encontraron IPs libres en este rango')
+      }
     },
 
     get formChanged() {

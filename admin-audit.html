@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BASTIONX LAB — Logs de Auditoría & Trazabilidad</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
+  <meta name="theme-color" content="#151515">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    [x-cloak] { display: none !important; }
+    .admin-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .log-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.65rem; font-weight: 600; font-family: monospace; }
+    .log-creada { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+    .log-eliminada { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .log-completada { background: rgba(108,92,231,0.15); color: #8e7ff3; border: 1px solid rgba(108,92,231,0.3); }
+    .log-desmarcada { background: rgba(243,156,18,0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3); }
+  </style>
+</head>
+<body>
+<div x-data="adminAuditApp()" x-init="init()">
+
+  <!-- SIMULATION MODE BANNER -->
+  <div class="simulation-active-banner" x-show="realUserRole === 'superadmin' && simulatedRole" style="background:linear-gradient(90deg, rgba(243,156,18,0.25), rgba(108,92,231,0.25));border-bottom:1px solid rgba(243,156,18,0.4);padding:0.4rem 1rem;text-align:center;font-size:0.75rem;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;color:#f39c12;">
+      <iconify-icon icon="lucide:eye" style="width:16px;height:16px;"></iconify-icon>
+      MODO SIMULACIÓN DE ROL ACTIVO: Viendo la interfaz como [<span x-text="simulatedRole.toUpperCase()" style="color:#fff;"></span>]
+    </span>
+    <button @click="resetSimulation()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.68rem;padding:0.15rem 0.55rem;border-radius:4px;cursor:pointer;font-weight:600;">
+      Restablecer a Superadmin
+    </button>
+  </div>
+
+  <div class="admin-page">
+
+    <!-- BREADCRUMB -->
+    <nav class="bx-breadcrumb" aria-label="Ruta de navegación" style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0;max-height:32px;background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 1.5rem;border-radius:6px;">
+      <a href="dashboard.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Dashboard</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <a href="admin.html" style="font-size:0.68rem;color:#555;text-decoration:none;padding:0 0.25rem;">Administrador</a>
+      <iconify-icon icon="lucide:chevron-right" style="width:10px;height:10px;color:#333;flex-shrink:0;"></iconify-icon>
+      <span aria-current="page" style="font-size:0.68rem;color:#ccc;font-weight:600;padding:0 0.25rem;">Logs de Auditoría</span>
+    </nav>
+
+    <div class="loading-state" x-show="loading" style="padding:4rem;text-align:center;">
+      <iconify-icon icon="lucide:loader" style="width:24px;height:24px;color:#f39c12;animation:spin 1s linear infinite;"></iconify-icon>
+      Cargando Historial de Auditoría & Eventos...
+    </div>
+
+    <div x-show="!loading && isSuperAdmin" x-cloak>
+      <!-- TOPBAR -->
+      <div class="topbar" style="margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="btn" @click="window.location.href='admin.html'" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.35rem 0.7rem;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.7rem;background:#12121a;color:#888;cursor:pointer;">
+            <iconify-icon icon="lucide:arrow-left" style="width:11px;height:11px;"></iconify-icon>
+            Volver al Hub
+          </button>
+          <h1 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">
+            <iconify-icon icon="lucide:file-text" style="width:18px;height:18px;color:#f39c12;margin-right:6px;"></iconify-icon>
+            Logs de Auditoría & Trazabilidad de Eventos
+          </h1>
+        </div>
+      </div>
+
+      <!-- AUDIT LOGS TABLE SECTION -->
+      <div class="admin-card-section" style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div class="search-compact" style="width:280px;">
+              <iconify-icon icon="lucide:search" class="sb-icon"></iconify-icon>
+              <input type="text" class="sb-input" x-model="searchAuditQuery" placeholder="Buscar por acción, usuario o descripción...">
+              <button class="sb-clear" x-show="searchAuditQuery" @click="searchAuditQuery=''" title="Limpiar">
+                <iconify-icon icon="lucide:x" style="width:12px;height:12px;"></iconify-icon>
+              </button>
+            </div>
+            <select class="role-select" style="padding:0.3rem 0.6rem !important;font-size:0.72rem !important;height:34px !important;background:#12121a !important;color:#fff !important;border:1px solid var(--border-subtle) !important;border-radius:8px !important;" x-model="auditActionFilter">
+              <option value="all">Todas las Acciones</option>
+              <option value="servidores">Servidores</option>
+              <option value="usuarios">Usuarios & Permisos</option>
+              <option value="tareas">Tareas & Mantenimiento</option>
+            </select>
+          </div>
+          <div style="font-size:0.72rem;color:#888;">
+            Mostrando <strong style="color:#fff;" x-text="filteredAuditLogs.length"></strong> registros de auditoría
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-subtle);text-align:left;color:#777;">
+                <th style="padding:0.6rem;">Fecha / Hora</th>
+                <th style="padding:0.6rem;">Usuario / Ejecutor</th>
+                <th style="padding:0.6rem;">Acción / Evento</th>
+                <th style="padding:0.6rem;">Descripción</th>
+                <th style="padding:0.6rem;text-align:right;">Detalles / Diff</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="log in filteredAuditLogs" :key="log.id">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                  <td style="padding:0.6rem;font-family:monospace;color:#aaa;white-space:nowrap;" x-text="formatDate(log.created_at)"></td>
+                  <td style="padding:0.6rem;color:#fff;" x-text="log.user_email"></td>
+                  <td style="padding:0.6rem;">
+                    <span class="log-badge" :class="logAccionClass(log.accion)" x-text="log.accion"></span>
+                  </td>
+                  <td style="padding:0.6rem;color:#ccc;" x-text="log.descripcion || '—'"></td>
+                  <td style="padding:0.6rem;text-align:right;">
+                    <button class="at-btn" x-show="log.cambios" @click="viewAuditDetail(log)" style="padding:0.2rem 0.5rem;font-size:0.65rem;color:#6c5ce7;border-color:rgba(108,92,231,0.3);" title="Ver Diff de Cambios">
+                      <iconify-icon icon="lucide:code"></iconify-icon> Ver Diff
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETAIL AUDIT LOG -->
+  <div class="modal-overlay" x-show="auditDetailItem" x-cloak @click.self="auditDetailItem = null" @keydown.escape.window="auditDetailItem = null">
+    <div class="modal" style="max-width:600px;width:92%;padding:1.5rem;" x-show="auditDetailItem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;">
+          <iconify-icon icon="lucide:code" style="width:18px;height:18px;color:#6c5ce7;"></iconify-icon>
+          Detalle del Evento de Auditoría
+        </h3>
+        <button class="btn-icon" @click="auditDetailItem = null" style="background:transparent;border:none;color:#888;cursor:pointer;">
+          <iconify-icon icon="lucide:x" style="width:16px;height:16px;"></iconify-icon>
+        </button>
+      </div>
+
+      <div style="background:#0c0c14;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:1rem;">
+        <pre style="font-size:0.72rem;color:#2ecc71;margin:0;white-space:pre-wrap;font-family:monospace;" x-text="JSON.stringify(auditDetailItem?.cambios, null, 2)"></pre>
+      </div>
+      <div style="margin-top:1.25rem;display:flex;justify-content:flex-end;">
+        <button class="btn" @click="auditDetailItem = null" style="font-size:0.75rem;padding:0.35rem 0.85rem;background:var(--bg-dark);border:1px solid var(--border-subtle);color:#888;border-radius:6px;cursor:pointer;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/core/supabase.js"></script>
+<script src="js/core/toast.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/audit.js"></script>
+<script src="js/pages/admin-audit.js"></script>
+</body>
+</html>
